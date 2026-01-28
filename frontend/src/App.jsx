@@ -1,11 +1,14 @@
 import Home from "./pages/Home";
 import Navbar from "./components/Navbar";
+import { AuthProvider } from "./context/AuthContext";
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-slate-100">
-      <Navbar />
-      <Home />
-    </div>
+    <AuthProvider>
+      <div className="min-h-screen bg-canvas text-white">
+        <Navbar />
+        <Home />
+      </div>
+    </AuthProvider>
   );
 }

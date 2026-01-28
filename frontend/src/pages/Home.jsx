@@ -1,144 +1,218 @@
-import React, { useEffect, useState } from "react";
-import { fetchIndicator, fetchLorenzSegments } from "../api/worldBankAPI";
+import React, { useContext, useEffect, useMemo, useState } from "react";
+
+import { fetchObservations, listCountries, listIndicators } from "../api/analyticsApi";
+import AuthContext from "../context/AuthContext";
+import { DEFAULT_COUNTRIES, DEFAULT_INDICATORS } from "../data/indicatorCatalog";
+import AgreementPanel from "../components/AgreementPanel";
+import AuthPanel from "../components/AuthPanel";
+import ComparisonDashboard from "../components/ComparisonDashboard";
 import CountryMultiSelect from "../components/CountryMultiSelect";
-import IndicatorSelector from "../components/IndicatorSelector";
-import ChartDisplay from "../components/ChartDisplay";
-import FilterPanel from "../components/FilterPanel";
+import ForecastPanel from "../components/ForecastPanel";
+import IndicatorMultiSelect from "../components/IndicatorMultiSelect";
+
+const CHART_TYPES = [
+  { value: "line", label: "Line" },
+  { value: "bar", label: "Bar" },
+  { value: "scatter", label: "Scatter" },
+];
 
 export default function Home() {
+  const { user } = useContext(AuthContext);
   const currentYear = new Date().getFullYear();
-  const defaultStartYear = Math.max(1960, currentYear - 10);
-  const [countries, setCountries] = useState([]);
-  const [indicator, setIndicator] = useState("");
-  const [datasets, setDatasets] = useState([]);
+  const [countries, setCountries] = useState(DEFAULT_COUNTRIES);
+  const [indicators, setIndicators] = useState(DEFAULT_INDICATORS);
+  const [selectedCountries, setSelectedCountries] = useState([]);
+  const [selectedIndicators, setSelectedIndicators] = useState([]);
   const [chartType, setChartType] = useState("line");
-  const [startYear, setStartYear] = useState(defaultStartYear);
-  const [endYear, setEndYear] = useState(currentYear);
-  const [viewMode, setViewMode] = useState("timeSeries");
-  const [lorenzYear, setLorenzYear] = useState(currentYear - 1);
+  const [startYear, setStartYear] = useState(Math.max(1990, currentYear - 20));
+  const [endYear, setEndYear] = useState(currentYear - 1);
+  const [datasets, setDatasets] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    setDatasets([]);
-    setError("");
-  }, [viewMode]);
-
-  const buildLorenzPoints = (segments) => {
-    let cumulativePopulation = 0;
-    let cumulativeIncome = 0;
-    const points = [{ x: 0, y: 0 }];
-
-    segments.forEach((segment) => {
-      const incomeShare = typeof segment.incomeShare === "number" ? segment.incomeShare / 100 : 0;
-      cumulativePopulation = Number((cumulativePopulation + segment.populationShare).toFixed(4));
-      cumulativeIncome = Number((cumulativeIncome + incomeShare).toFixed(4));
-      points.push({ x: cumulativePopulation, y: cumulativeIncome });
-    });
-
-    return points;
-  };
-
-  const fetchLorenzData = async () => {
-    const requests = countries.map(async (countryCode) => {
-      const segments = await fetchLorenzSegments(countryCode, lorenzYear);
-      const missing = segments.filter((segment) => segment.incomeShare == null);
-      if (missing.length > 0) {
-        throw new Error(
-          `No Lorenz data for ${countryCode.toUpperCase()} in ${lorenzYear}. Try another year.`
-        );
+    const loadCatalog = async () => {
+      try {
+        const [countriesData, indicatorData] = await Promise.all([
+          listCountries(),
+          listIndicators(),
+        ]);
+        if (countriesData.length) {
+          setCountries(countriesData);
+        }
+        if (indicatorData.length) {
+          const mapped = indicatorData.map((item) => ({
+            code: item.code,
+            label: item.name || item.code,
+          }));
+          setIndicators((prev) => {
+            const merged = new Map(prev.map((entry) => [entry.code, entry]));
+            mapped.forEach((entry) => merged.set(entry.code, entry));
+            return Array.from(merged.values());
+          });
+        }
+      } catch (err) {
+        setError("Catalog service is unavailable. Using default lists.");
       }
-      const points = buildLorenzPoints(segments);
-      const resolvedYear = segments.find((segment) => segment.dataYear)?.dataYear ?? lorenzYear;
-      return { country: countryCode, data: points, year: resolvedYear };
-    });
+    };
 
-    return Promise.all(requests);
-  };
+    loadCatalog();
+  }, []);
 
-  const handleFetch = async () => {
-    if (countries.length === 0) {
-      setError("Please select at least one country.");
+  const correlationPair = useMemo(() => {
+    if (selectedIndicators.length >= 2) {
+      return [selectedIndicators[0], selectedIndicators[1]];
+    }
+    return [];
+  }, [selectedIndicators]);
+
+  const runComparison = async () => {
+    if (!selectedCountries.length || !selectedIndicators.length) {
+      setError("Select at least one country and one indicator.");
       return;
     }
-
-    if (viewMode === "timeSeries" && !indicator) {
-      setError("Select an indicator for the time-series view.");
-      return;
-    }
-
-    if (viewMode === "timeSeries" && startYear > endYear) {
+    if (startYear > endYear) {
       setError("Start year must be less than or equal to end year.");
       return;
     }
-
-    if (viewMode === "lorenz" && (Number.isNaN(lorenzYear) || lorenzYear < 1960)) {
-      setError("Lorenz year must be 1960 or later.");
-      return;
-    }
-
-    setIsLoading(true);
     setError("");
+    setIsLoading(true);
     try {
-      if (viewMode === "lorenz") {
-        const lorenzDatasets = await fetchLorenzData();
-        setDatasets(lorenzDatasets);
-      } else {
-        const allData = await Promise.all(
-          countries.map(async (countryCode) => {
-            const data = await fetchIndicator(countryCode, indicator, {
-              start: startYear,
-              end: endYear,
-            });
-            return { country: countryCode, data };
-          })
-        );
-        setDatasets(allData);
-      }
+      const data = await Promise.all(
+        selectedIndicators.map(async (indicator) => {
+          const series = await Promise.all(
+            selectedCountries.map(async (country) => {
+              const payload = await fetchObservations({
+                country,
+                indicator,
+                start_year: startYear,
+                end_year: endYear,
+              });
+              return { country, data: payload };
+            })
+          );
+          return { indicator, series };
+        })
+      );
+      setDatasets(data);
     } catch (err) {
-      setError(err.message);
+      setError("Failed to load analytics. Check that FastAPI service is running.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <main className="max-w-4xl mx-auto p-6 space-y-6">
-      <div>
-        <h2 className="text-3xl font-semibold text-slate-900">
-          Analyze the Lorenz Curve &amp; Gini Index
-        </h2>
-        <p className="text-slate-500">
-          Select countries, inequality indicators, and a time range to examine income concentration trends.
-        </p>
-      </div>
+    <main className="page">
+      <section className="hero">
+        <div>
+          <p className="hero-kicker">Diploma research workspace</p>
+          <h2 className="hero-title">Compare inequality with macroeconomic pressure points.</h2>
+          <p className="hero-subtitle">
+            Normalize indicators across countries, align timelines, and explore correlations between
+            inequality and growth, inflation, or unemployment. Forecasts are explicitly labeled as
+            probabilistic.
+          </p>
+        </div>
+        <div className="hero-card">
+          <h3 className="panel-title">Data assurance</h3>
+          <ul className="text-xs text-slate-200/70 space-y-2">
+            <li>Source: World Bank catalog + planned IMF/OECD ingestion.</li>
+            <li>Historical vs derived vs forecast values are separated.</li>
+            <li>Missing data is preserved and surfaced for transparency.</li>
+          </ul>
+        </div>
+      </section>
 
-      <CountryMultiSelect onSelect={setCountries} />
-      <IndicatorSelector onSelect={setIndicator} disabled={viewMode === "lorenz"} />
-      <FilterPanel
+      <section className="grid lg:grid-cols-[1fr_1.2fr] gap-6">
+        <div className="space-y-6">
+          <AuthPanel />
+          <AgreementPanel />
+        </div>
+        <div className="panel">
+          <h3 className="panel-title">Comparison Controls</h3>
+          <div className="grid md:grid-cols-2 gap-6 mt-4">
+            <CountryMultiSelect
+              countries={countries}
+              selected={selectedCountries}
+              onSelect={setSelectedCountries}
+            />
+            <IndicatorMultiSelect
+              indicators={indicators}
+              selected={selectedIndicators}
+              onChange={setSelectedIndicators}
+            />
+          </div>
+          <div className="grid md:grid-cols-3 gap-4 mt-6">
+            <div>
+              <label className="block text-xs uppercase tracking-widest text-slate-200/80">
+                Chart Type
+              </label>
+              <select
+                className="input"
+                value={chartType}
+                onChange={(event) => setChartType(event.target.value)}
+              >
+                {CHART_TYPES.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs uppercase tracking-widest text-slate-200/80">
+                Start Year
+              </label>
+              <input
+                className="input"
+                type="number"
+                min="1960"
+                max={currentYear}
+                value={startYear}
+                onChange={(event) => setStartYear(Number(event.target.value))}
+              />
+            </div>
+            <div>
+              <label className="block text-xs uppercase tracking-widest text-slate-200/80">
+                End Year
+              </label>
+              <input
+                className="input"
+                type="number"
+                min="1960"
+                max={currentYear}
+                value={endYear}
+                onChange={(event) => setEndYear(Number(event.target.value))}
+              />
+            </div>
+          </div>
+          <div className="flex items-center justify-between mt-6">
+            <button className="btn-primary" type="button" onClick={runComparison}>
+              {isLoading ? "Loading..." : "Run comparison"}
+            </button>
+            <div className="text-xs text-slate-200/70">
+              {selectedCountries.length} countries · {selectedIndicators.length} indicators
+            </div>
+          </div>
+          {error && <p className="text-xs text-rose-200/90 mt-3">{error}</p>}
+        </div>
+      </section>
+
+      <ComparisonDashboard
+        datasets={datasets}
         chartType={chartType}
-        setChartType={setChartType}
-        startYear={startYear}
-        endYear={endYear}
-        setStartYear={setStartYear}
-        setEndYear={setEndYear}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        lorenzYear={lorenzYear}
-        setLorenzYear={setLorenzYear}
+        correlationPair={correlationPair}
+        indicators={indicators}
       />
 
-      <button
-        onClick={handleFetch}
-        className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition disabled:bg-blue-300"
-        disabled={isLoading}
-      >
-        {isLoading ? "Loading..." : "Fetch Data"}
-      </button>
-
-      {error && <p className="text-red-600 text-sm">{error}</p>}
-
-      <ChartDisplay datasets={datasets} chartType={chartType} viewMode={viewMode} />
+      <ForecastPanel
+        canAccess={Boolean(user?.agreement_accepted)}
+        countries={countries}
+        indicators={indicators}
+        defaultCountry={selectedCountries[0] || ""}
+        defaultIndicator={selectedIndicators[0] || ""}
+      />
     </main>
   );
 }

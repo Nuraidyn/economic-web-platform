@@ -2,32 +2,32 @@ import React from "react";
 
 export default function Navbar() {
   return (
-    <header className="bg-white shadow-sm">
-      <nav className="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
+    <header className="border-b border-white/10 bg-slate-950/70 backdrop-blur">
+      <nav className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between px-6 py-6 gap-4">
         <div>
-          <p className="text-xs uppercase tracking-widest text-slate-500">
-            The Lorenz Curve &amp; Gini Index
+          <p className="text-xs uppercase tracking-[0.35em] text-slate-400/80">
+            Inequality and macroeconomic intelligence
           </p>
-          <h1 className="text-2xl font-semibold text-slate-900">
-            Income Inequality Explorer
+          <h1 className="text-3xl font-semibold text-white">
+            Economic Signals Studio
           </h1>
         </div>
-        <div className="text-sm text-slate-500 space-x-4">
+        <div className="text-xs uppercase tracking-[0.2em] text-slate-300/80 flex gap-4">
           <a
-            className="hover:text-slate-900 transition"
+            className="hover:text-white transition"
             href="https://data.worldbank.org/indicator"
             target="_blank"
             rel="noreferrer"
           >
-            Indicator Catalog
+            World Bank
           </a>
           <a
-            className="hover:text-slate-900 transition"
+            className="hover:text-white transition"
             href="https://github.com/nuraidynseitkapar1"
             target="_blank"
             rel="noreferrer"
           >
-            GitHub
+            Lab Notes
           </a>
         </div>
       </nav>

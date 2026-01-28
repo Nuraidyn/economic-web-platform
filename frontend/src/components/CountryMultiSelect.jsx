@@ -1,36 +1,31 @@
 import React from "react";
 
-const COUNTRIES = [
-  { code: "KZ", name: "Kazakhstan" },
-  { code: "RU", name: "Russia" },
-  { code: "US", name: "United States" },
-  { code: "CN", name: "China" },
-  { code: "DE", name: "Germany" },
-  { code: "JP", name: "Japan" },
-];
-
-export default function CountryMultiSelect({ onSelect }) {
+export default function CountryMultiSelect({ countries, onSelect, selected }) {
   const handleChange = (event) => {
-    const selected = Array.from(event.target.selectedOptions, (opt) => opt.value);
-    onSelect(selected);
+    const selectedValues = Array.from(event.target.selectedOptions, (opt) => opt.value);
+    onSelect(selectedValues);
   };
 
   return (
-    <div>
-      <label className="block mb-2 text-sm font-semibold text-slate-700">
-        Countries (select multiple with Ctrl/Cmd)
+    <div className="space-y-2">
+      <label className="block text-xs uppercase tracking-widest text-slate-200/80">
+        Countries
       </label>
       <select
         multiple
+        value={selected}
         onChange={handleChange}
-        className="border p-2 rounded w-full h-32 bg-white focus:ring-2 focus:ring-blue-500"
+        className="input h-40"
       >
-        {COUNTRIES.map((country) => (
+        {countries.map((country) => (
           <option key={country.code} value={country.code}>
             {country.name}
           </option>
         ))}
       </select>
+      <p className="text-[11px] text-slate-200/70">
+        Multi-select countries to compare inequality and macroeconomic signals side by side.
+      </p>
     </div>
   );
 }

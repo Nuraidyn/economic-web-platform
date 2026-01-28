@@ -1,0 +1,33 @@
+import { fastapiClient } from "./client";
+
+export const listCountries = async () => {
+  const res = await fastapiClient.get("/countries");
+  return res.data;
+};
+
+export const listIndicators = async () => {
+  const res = await fastapiClient.get("/indicators");
+  return res.data;
+};
+
+export const fetchObservations = async (params) => {
+  const res = await fastapiClient.get("/observations", { params });
+  return res.data;
+};
+
+export const fetchLorenz = async (params) => {
+  const res = await fastapiClient.get("/lorenz", { params });
+  return res.data;
+};
+
+export const createForecast = async ({ country, indicator, horizon_years }) => {
+  const res = await fastapiClient.post("/forecast", null, {
+    params: { country, indicator, horizon_years },
+  });
+  return res.data;
+};
+
+export const fetchLatestForecast = async ({ country, indicator }) => {
+  const res = await fastapiClient.get("/forecast/latest", { params: { country, indicator } });
+  return res.data;
+};

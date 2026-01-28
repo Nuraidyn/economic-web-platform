@@ -1,0 +1,92 @@
+from django.contrib.auth import get_user_model
+from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+from .models import AgreementAcceptance
+from .serializers import AgreementSerializer, RegisterSerializer, UserSerializer
+from .tokens import CustomTokenObtainPairSerializer
+from .utils import get_active_agreement, has_accepted_active_agreement
+
+User = get_user_model()
+
+
+class RegisterView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        user = serializer.save()
+        profile = getattr(user, "profile", None)
+        payload = {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "role": profile.role if profile else "user",
+            "agreement_accepted": has_accepted_active_agreement(user),
+        }
+        return Response(payload, status=status.HTTP_201_CREATED)
+
+
+class CustomTokenView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+
+class ActiveAgreementView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        agreement = get_active_agreement()
+        if not agreement:
+            return Response({"detail": "No active agreement"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(AgreementSerializer(agreement).data)
+
+
+class AcceptAgreementView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        agreement = get_active_agreement()
+        if not agreement:
+            return Response({"detail": "No active agreement"}, status=status.HTTP_404_NOT_FOUND)
+        acceptance, created = AgreementAcceptance.objects.get_or_create(
+            user=request.user,
+            agreement=agreement,
+            defaults={"ip_address": request.META.get("REMOTE_ADDR")},
+        )
+        if not created:
+            return Response({"detail": "Agreement already accepted"}, status=status.HTTP_200_OK)
+        return Response({"detail": "Agreement accepted"}, status=status.HTTP_201_CREATED)
+
+
+class MeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        profile = getattr(request.user, "profile", None)
+        data = {
+            "id": request.user.id,
+            "username": request.user.username,
+            "email": request.user.email,
+            "role": profile.role if profile else "user",
+            "agreement_accepted": has_accepted_active_agreement(request.user),
+        }
+        return Response(data)
+
+
+class IntrospectTokenView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        profile = getattr(request.user, "profile", None)
+        return Response(
+            {
+                "user_id": request.user.id,
+                "role": profile.role if profile else "user",
+                "agreement_accepted": has_accepted_active_agreement(request.user),
+            }
+        )

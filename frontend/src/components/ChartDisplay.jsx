@@ -8,6 +8,8 @@ const palette = [
   { border: "#9333ea", bg: "rgba(147,51,234,0.3)" },
   { border: "#eab308", bg: "rgba(234,179,8,0.3)" },
 ];
+const axisColor = "rgba(226, 232, 240, 0.7)";
+const gridColor = "rgba(148, 163, 184, 0.2)";
 
 export default function ChartDisplay({ datasets, chartType, viewMode }) {
   if (!datasets || datasets.length === 0) {
@@ -52,7 +54,7 @@ export default function ChartDisplay({ datasets, chartType, viewMode }) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: "bottom" },
+        legend: { position: "bottom", labels: { color: axisColor } },
         tooltip: {
           callbacks: {
             label: (context) => {
@@ -70,8 +72,10 @@ export default function ChartDisplay({ datasets, chartType, viewMode }) {
           max: 1,
           ticks: {
             callback: (value) => `${value * 100}%`,
+            color: axisColor,
           },
-          title: { display: true, text: "Cumulative population share" },
+          title: { display: true, text: "Cumulative population share", color: axisColor },
+          grid: { color: gridColor },
         },
         y: {
           type: "linear",
@@ -79,14 +83,16 @@ export default function ChartDisplay({ datasets, chartType, viewMode }) {
           max: 1,
           ticks: {
             callback: (value) => `${value * 100}%`,
+            color: axisColor,
           },
-          title: { display: true, text: "Cumulative income share" },
+          title: { display: true, text: "Cumulative income share", color: axisColor },
+          grid: { color: gridColor },
         },
       },
     };
 
     return (
-      <div className="bg-white p-4 shadow-lg rounded-lg mt-6 h-96">
+      <div className="chart-card">
         <Scatter data={lorenzData} options={lorenzOptions} />
       </div>
     );
@@ -132,7 +138,7 @@ export default function ChartDisplay({ datasets, chartType, viewMode }) {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { position: "bottom" },
+      legend: { position: "bottom", labels: { color: axisColor } },
       tooltip: { mode: "index", intersect: false },
     },
     interaction: { mode: isScatter ? "nearest" : "index", axis: "x", intersect: false },
@@ -141,20 +147,21 @@ export default function ChartDisplay({ datasets, chartType, viewMode }) {
           x: {
             title: { display: true, text: "Year" },
             type: "linear",
-            ticks: { precision: 0 },
+            ticks: { precision: 0, color: axisColor },
+            grid: { color: gridColor },
           },
-          y: { title: { display: true, text: "Value" } },
+          y: { title: { display: true, text: "Value", color: axisColor }, ticks: { color: axisColor }, grid: { color: gridColor } },
         }
       : {
-          x: { title: { display: true, text: "Year" } },
-          y: { title: { display: true, text: "Value" } },
+          x: { title: { display: true, text: "Year", color: axisColor }, ticks: { color: axisColor }, grid: { color: gridColor } },
+          y: { title: { display: true, text: "Value", color: axisColor }, ticks: { color: axisColor }, grid: { color: gridColor } },
         },
   };
 
   const ChartComponent = chartType === "bar" ? Bar : chartType === "scatter" ? Scatter : Line;
 
   return (
-    <div className="bg-white p-4 shadow-lg rounded-lg mt-6 h-96">
+    <div className="chart-card">
       <ChartComponent data={chartData} options={options} />
     </div>
   );
