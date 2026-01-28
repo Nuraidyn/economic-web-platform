@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.analytics import router as analytics_router
 from app.api.v1.catalog import router as catalog_router
@@ -16,6 +17,17 @@ app = FastAPI(
     title="Economic Analytics Service",
     version="0.1.0",
     description="Analytics, ingestion, and forecasting APIs for economic indicators.",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(health_router, prefix="/api/v1")
