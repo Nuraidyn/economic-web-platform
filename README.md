@@ -10,21 +10,45 @@ Full-stack учебный проект дипломной тематики «Dev
 - Time-series сравнение индикаторов неравенства (Gini index, доли дохода по децилям/квинтилям) для нескольких стран.
 - Lorenz Curve режим: фронтенд автоматически грузит квинтильные доли дохода (`SI.DST.*` индикаторы) и строит кривую Лоренца с линией абсолютного равенства.
 
-## Быстрый запуск (актуально)
+## Быстрый запуск (1 команда)
+
+Запускать из корня репозитория:
+
+```bash
+bash dev.sh
+```
+
+После запуска:
+
+- **Frontend (UI)**: `http://localhost:5173`
+- **Django API**: `http://127.0.0.1:8000/api` (может быть уже запущен отдельно; `dev.sh` пропустит запуск, если порт занят)
+- **FastAPI API**: `http://127.0.0.1:8001/api/v1`
+
+### Простой режим данных (по умолчанию)
+
+Для функций сравнения (`/observations`) и прогнозирования (`/forecast`) **не требуется ingestion**.
+Если в FastAPI базе нет данных, сервис **запрашивает временные ряды напрямую из World Bank API** и возвращает их “на лету”.
+
+Это означает:
+
+- `backend/fastapi_service/fastapi.db` может оставаться пустой (`observations = 0`) — это нормально.
+- Графики и forecast должны работать сразу после запуска.
+
+## Запуск по отдельности (если нужно)
 
 **Django**
 ```bash
 cd backend/django_service
-python -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r ../requirements-django.txt
 python manage.py migrate
-python manage.py runserver
+python manage.py runserver 127.0.0.1:8000
 ```
 
 **FastAPI**
 ```bash
 cd backend/fastapi_service
-python -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r ../requirements-fastapi.txt
 uvicorn app.main:app --reload --port 8001
 ```
@@ -56,14 +80,18 @@ npm run dev
 
 По умолчанию Django и FastAPI используют разные SQLite файлы. Если нужна общая БД, укажите одинаковый сервер/базу в Django и `DATABASE_URL` в FastAPI.
 
-## Базовая загрузка индикаторов (FastAPI)
+## (Опционально) Базовая загрузка индикаторов (FastAPI / ingestion)
+
+Если нужно **сохранить данные в FastAPI БД** (кэширование/офлайн-режим), можно выполнить ingestion.
+
+Требуется JWT с ролью `researcher` или `admin`.
 
 1) Получите JWT с ролью researcher/admin из Django (`/api/auth/token`).
 2) Запустите FastAPI сервис.
 3) Запустите скрипт базовой загрузки:
 ```bash
 cd backend/fastapi_service
-python -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r ../requirements-fastapi.txt
 python scripts/ingest_baseline.py --token YOUR_JWT
 ```

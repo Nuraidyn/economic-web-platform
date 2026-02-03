@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.deps import get_current_user
 from app.models import Country, Indicator, Observation
 from app.schemas import ObservationRead
+from app.services.world_bank import fetch_indicator_series
 
 router = APIRouter(tags=["observations"])
 
@@ -16,28 +16,52 @@ def list_observations(
     start_year: int | None = Query(None),
     end_year: int | None = Query(None),
     db: Session = Depends(get_db),
-    _: dict = Depends(get_current_user),
 ):
-    country_row = db.query(Country).filter(Country.code == country.upper()).first()
-    indicator_row = db.query(Indicator).filter(Indicator.code == indicator).first()
-    if not country_row or not indicator_row:
-        return []
-    query = (
-        db.query(Observation)
-        .filter(Observation.country_id == country_row.id)
-        .filter(Observation.indicator_id == indicator_row.id)
-    )
+    country_code = country.upper()
+    indicator_code = indicator
+    country_row = db.query(Country).filter(Country.code == country_code).first()
+    indicator_row = db.query(Indicator).filter(Indicator.code == indicator_code).first()
+    observations = []
+
+    if country_row and indicator_row:
+        query = (
+            db.query(Observation)
+            .filter(Observation.country_id == country_row.id)
+            .filter(Observation.indicator_id == indicator_row.id)
+        )
+        if start_year is not None:
+            query = query.filter(Observation.year >= start_year)
+        if end_year is not None:
+            query = query.filter(Observation.year <= end_year)
+        observations = query.order_by(Observation.year).all()
+
+    if observations:
+        return [
+            ObservationRead(
+                country=country_row.code,
+                indicator=indicator_row.code,
+                year=row.year,
+                value=row.value,
+            )
+            for row in observations
+        ]
+
+    try:
+        series = fetch_indicator_series(country_code, indicator_code)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
     if start_year is not None:
-        query = query.filter(Observation.year >= start_year)
+        series = [row for row in series if row["year"] >= start_year]
     if end_year is not None:
-        query = query.filter(Observation.year <= end_year)
-    observations = query.order_by(Observation.year).all()
+        series = [row for row in series if row["year"] <= end_year]
+
     return [
         ObservationRead(
-            country=country_row.code,
-            indicator=indicator_row.code,
-            year=row.year,
-            value=row.value,
+            country=country_code,
+            indicator=indicator_code,
+            year=row["year"],
+            value=row["value"],
         )
-        for row in observations
+        for row in series
     ]
