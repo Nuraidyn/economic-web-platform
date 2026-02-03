@@ -12,7 +12,9 @@ def get_active_agreement() -> Optional[UserAgreement]:
 
 
 def has_accepted_active_agreement(user) -> bool:
-    agreement = get_active_agreement()
-    if not agreement or not user.is_authenticated:
+    if not user.is_authenticated:
         return False
+    agreement = get_active_agreement()
+    if not agreement:
+        return True
     return AgreementAcceptance.objects.filter(user=user, agreement=agreement).exists()
