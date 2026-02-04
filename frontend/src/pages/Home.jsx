@@ -90,7 +90,7 @@ export default function Home() {
         </div>
         <div className="hero-card">
           <h3 className="panel-title">Data assurance</h3>
-          <ul className="text-xs text-slate-200/70 space-y-2">
+          <ul className="text-xs text-muted space-y-2">
             <li>Source: World Bank catalog + planned IMF/OECD ingestion.</li>
             <li>Historical vs derived vs forecast values are separated.</li>
             <li>Missing data is preserved and surfaced for transparency.</li>
@@ -106,7 +106,7 @@ export default function Home() {
         </div>
         <div className="grid md:grid-cols-3 gap-4 mt-6">
           <div>
-            <label className="block text-xs uppercase tracking-widest text-slate-200/80">Chart Type</label>
+            <label className="label">Chart Type</label>
             <select className="input" value={chartType} onChange={(event) => setChartType(event.target.value)}>
               {CHART_TYPES.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -116,7 +116,7 @@ export default function Home() {
             </select>
           </div>
           <div>
-            <label className="block text-xs uppercase tracking-widest text-slate-200/80">Start Year</label>
+            <label className="label">Start Year</label>
             <input
               className="input"
               type="number"
@@ -127,7 +127,7 @@ export default function Home() {
             />
           </div>
           <div>
-            <label className="block text-xs uppercase tracking-widest text-slate-200/80">End Year</label>
+            <label className="label">End Year</label>
             <input
               className="input"
               type="number"
@@ -142,7 +142,7 @@ export default function Home() {
           <button className="btn-primary" type="button" onClick={runComparison}>
             {isLoading ? "Loading..." : "Run comparison"}
           </button>
-          <div className="text-xs text-slate-200/70">
+          <div className="text-xs text-muted">
             {selectedCountries.length} countries · {selectedIndicators.length} indicators
           </div>
         </div>

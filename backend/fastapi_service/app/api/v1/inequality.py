@@ -47,8 +47,8 @@ def _load_series(db: Session, country_code: str, indicator_code: str):
 @router.get("/inequality/gini/trend", response_model=GiniTrendResponse)
 def gini_trend(
     country: CountryCodeParam,
-    start_year: OptionalYearParam,
-    end_year: OptionalYearParam,
+    start_year: OptionalYearParam = None,
+    end_year: OptionalYearParam = None,
     db: Session = Depends(get_db),
     _: dict = Depends(require_agreement),
 ):
@@ -105,4 +105,3 @@ def gini_ranking(
     # Sort: known values first (descending inequality), then missing
     rows.sort(key=lambda item: (item.value is None, -(item.value or 0.0)))
     return rows
-

@@ -1,7 +1,8 @@
-import { djangoClient } from "./client";
+import { djangoClient, djangoPublicClient } from "./client";
 
 export const fetchActiveAgreement = async () => {
-  const res = await djangoClient.get("/agreements/active");
+  const res = await djangoPublicClient.get("/agreements/active");
+  if (res.data && res.data.active === false) return null;
   return res.data;
 };
 

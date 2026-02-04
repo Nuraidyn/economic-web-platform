@@ -52,11 +52,11 @@ export default function AuthPanel() {
     return (
       <div className="panel">
         <h3 className="panel-title">Session</h3>
-        <div className="space-y-2 text-sm text-slate-200/80">
+        <div className="space-y-2 text-sm text-muted">
           <p>
-            Signed in as <span className="text-white font-semibold">{user.username}</span>
+            Signed in as <span className="font-semibold">{user.username}</span>
           </p>
-          <p className="uppercase tracking-[0.2em] text-xs text-slate-300/70">{user.role}</p>
+          <p className="uppercase tracking-[0.2em] text-xs text-faint">{user.role}</p>
           <button className="btn-secondary" type="button" onClick={logout}>
             Sign out
           </button>
@@ -87,7 +87,7 @@ export default function AuthPanel() {
         </div>
       </div>
       <form onSubmit={handleSubmit} className="space-y-3 mt-4">
-        <label className="block text-xs uppercase tracking-widest text-slate-300/80">Username</label>
+        <label className="label">Username</label>
         <input
           className="input"
           name="username"
@@ -97,7 +97,7 @@ export default function AuthPanel() {
         />
         {mode === "register" && (
           <>
-            <label className="block text-xs uppercase tracking-widest text-slate-300/80">Email</label>
+            <label className="label">Email</label>
             <input
               className="input"
               type="email"
@@ -107,7 +107,7 @@ export default function AuthPanel() {
             />
           </>
         )}
-        <label className="block text-xs uppercase tracking-widest text-slate-300/80">Password</label>
+        <label className="label">Password</label>
         <input
           className="input"
           type="password"
@@ -117,7 +117,7 @@ export default function AuthPanel() {
           required
         />
         {mode === "register" && agreement && (
-          <label className="flex items-center gap-2 text-xs text-slate-200/80">
+          <label className="flex items-center gap-2 text-xs text-muted">
             <input
               type="checkbox"
               name="acceptAgreement"

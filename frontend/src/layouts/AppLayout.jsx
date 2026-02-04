@@ -13,10 +13,10 @@ export default function AppLayout() {
   const { presetPayload, applyPresetPayload } = useAnalysis();
 
   return (
-    <div className="min-h-screen bg-canvas text-white">
+    <div className="min-h-screen bg-canvas">
       <Navbar />
       <main className="page">
-        <section className="grid lg:grid-cols-[1fr_1.4fr] gap-6">
+        <section className="grid lg:grid-cols-[360px_minmax(0,1fr)] gap-6 items-start">
           <aside className="space-y-6">
             <div className="panel">
               <h3 className="panel-title">Navigation</h3>
@@ -47,7 +47,7 @@ export default function AppLayout() {
             <SavedPresetsPanel user={user} currentPayload={presetPayload} onLoad={applyPresetPayload} />
           </aside>
 
-          <div className="space-y-6">
+          <div className="space-y-6 min-w-0">
             <Outlet />
           </div>
         </section>
@@ -55,4 +55,3 @@ export default function AppLayout() {
     </div>
   );
 }
-

@@ -17,7 +17,7 @@ export default function AgreementPanel() {
     return (
       <div className="panel">
         <h3 className="panel-title">User Agreement</h3>
-        <p className="text-xs text-slate-200/70">Loading agreement...</p>
+        <p className="text-xs text-muted">Loading agreement...</p>
       </div>
     );
   }
@@ -26,7 +26,7 @@ export default function AgreementPanel() {
     return (
       <div className="panel">
         <h3 className="panel-title">User Agreement</h3>
-        <p className="text-xs text-slate-200/70">No active agreement published.</p>
+        <p className="text-xs text-muted">No active agreement published.</p>
       </div>
     );
   }
@@ -34,13 +34,13 @@ export default function AgreementPanel() {
   return (
     <div className="panel">
       <h3 className="panel-title">User Agreement</h3>
-      <div className="text-xs text-slate-200/80 space-y-3">
-        <p className="uppercase tracking-[0.2em] text-slate-300/60">Version {agreement.version}</p>
+      <div className="text-xs text-muted space-y-3">
+        <p className="uppercase tracking-[0.2em] text-faint">Version {agreement.version}</p>
         <p className="leading-relaxed max-h-28 overflow-y-auto pr-2">
           {agreement.content}
         </p>
         <div className="flex items-center justify-between">
-          <span className="text-[11px] text-slate-300/70">
+          <span className="text-[11px] text-faint">
             Agreement required for forecasts and advanced analytics.
           </span>
           <button

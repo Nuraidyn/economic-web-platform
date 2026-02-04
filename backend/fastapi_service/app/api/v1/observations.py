@@ -16,10 +16,10 @@ router = APIRouter(tags=["observations"])
 def list_observations(
     country: CountryCodeParam,
     indicator: IndicatorCodeParam,
-    start_year: OptionalYearParam,
-    end_year: OptionalYearParam,
-    db: Session = Depends(get_db),
     response: Response,
+    start_year: OptionalYearParam = None,
+    end_year: OptionalYearParam = None,
+    db: Session = Depends(get_db),
 ):
     if start_year is not None and end_year is not None and start_year > end_year:
         raise HTTPException(status_code=400, detail="start_year must be <= end_year")

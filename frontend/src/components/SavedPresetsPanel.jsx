@@ -109,20 +109,18 @@ export default function SavedPresetsPanel({ user, currentPayload, onLoad }) {
     <div className="panel">
       <h3 className="panel-title">Saved presets</h3>
       {!canUse ? (
-        <p className="text-xs text-slate-200/70 mt-2">Sign in to save and restore analysis setups.</p>
+        <p className="text-xs text-muted mt-2">Sign in to save and restore analysis setups.</p>
       ) : (
         <div className="space-y-3 mt-4">
           <div className="space-y-2">
-            <label className="block text-xs uppercase tracking-widest text-slate-200/80">
-              Preset name
-            </label>
+            <label className="label">Preset name</label>
             <input
               className="input"
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder="e.g. KZ vs RU · Gini + inflation"
             />
-            <label className="flex items-center gap-2 text-xs text-slate-200/80">
+            <label className="flex items-center gap-2 text-xs text-muted">
               <input
                 type="checkbox"
                 checked={overwrite}
@@ -138,19 +136,19 @@ export default function SavedPresetsPanel({ user, currentPayload, onLoad }) {
           {status.error && <p className="text-xs text-rose-200/90">{status.error}</p>}
           {status.info && <p className="text-xs text-emerald-200/90">{status.info}</p>}
 
-          <div className="pt-2 border-t border-white/10">
+          <div className="pt-2 border-t border-slate-900/10 dark:border-white/10">
             {presets.length === 0 ? (
-              <p className="text-xs text-slate-200/70">No presets saved yet.</p>
+              <p className="text-xs text-muted">No presets saved yet.</p>
             ) : (
               <div className="space-y-2">
                 {presets.map((preset) => (
                   <div
                     key={preset.id}
-                    className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100/15 bg-slate-900/40 px-4 py-3"
+                    className="flex items-center justify-between gap-3 surface px-4 py-3"
                   >
                     <div className="min-w-0">
-                      <p className="text-sm text-white font-medium truncate">{preset.name}</p>
-                      <p className="text-[11px] text-slate-200/70">
+                      <p className="text-sm font-medium truncate">{preset.name}</p>
+                      <p className="text-[11px] text-muted">
                         Updated {new Date(preset.updated_at).toLocaleString()}
                       </p>
                     </div>
@@ -177,4 +175,3 @@ export default function SavedPresetsPanel({ user, currentPayload, onLoad }) {
     </div>
   );
 }
-

@@ -27,5 +27,4 @@ IndicatorCodeParam = Annotated[
 ]
 
 YearParam = Annotated[int, Query(..., ge=1960, le=2100)]
-OptionalYearParam = Annotated[int | None, Query(None, ge=1960, le=2100)]
-
+OptionalYearParam = Annotated[int | None, Query(ge=1960, le=2100)]

@@ -20,7 +20,7 @@ export default function ForecastPage() {
         </div>
         <div className="hero-card">
           <h3 className="panel-title">Access</h3>
-          <p className="text-xs text-slate-200/70 mt-2">
+          <p className="text-xs text-muted mt-2">
             Agreement acceptance is required to access forecasting endpoints.
           </p>
         </div>
@@ -36,4 +36,3 @@ export default function ForecastPage() {
     </>
   );
 }
-

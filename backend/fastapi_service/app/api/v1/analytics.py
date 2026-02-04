@@ -50,8 +50,8 @@ def correlation(
     country: CountryCodeParam,
     indicator_a: IndicatorCodeParam,
     indicator_b: IndicatorCodeParam,
-    start_year: OptionalYearParam,
-    end_year: OptionalYearParam,
+    start_year: OptionalYearParam = None,
+    end_year: OptionalYearParam = None,
     db: Session = Depends(get_db),
     _: dict = Depends(require_agreement),
 ):

@@ -5,20 +5,54 @@
 @tailwind utilities;
 
 :root {
+  color-scheme: light;
+  --canvas: #f5f6fb;
+  --panel: rgba(255, 255, 255, 0.86);
+  --panel-soft: rgba(255, 255, 255, 0.7);
+  --panel-border: rgba(15, 23, 42, 0.12);
+  /* Primary accent (buttons, active tabs, focus rings). */
+  --accent: #2563eb;
+  --accent-strong: #06b6d4;
+  --text: rgba(15, 23, 42, 0.92);
+  --text-dim: rgba(15, 23, 42, 0.66);
+  --text-faint: rgba(15, 23, 42, 0.52);
+  --body-bg: radial-gradient(circle at top, rgba(37, 99, 235, 0.18), transparent 58%),
+    linear-gradient(160deg, #f5f6fb, #eef2ff 55%, #e2e8f0 100%);
+  --input-bg: rgba(255, 255, 255, 0.78);
+  --input-border: rgba(15, 23, 42, 0.14);
+  --chart-axis: rgba(15, 23, 42, 0.66);
+  --chart-grid: rgba(15, 23, 42, 0.12);
+  --tab-active-bg: rgba(37, 99, 235, 0.12);
+  --tab-active-border: rgba(37, 99, 235, 0.35);
+  --tab-active-text: rgba(12, 74, 110, 0.92);
+}
+
+html.dark {
   color-scheme: dark;
   --canvas: #05070d;
   --panel: rgba(10, 14, 26, 0.82);
   --panel-soft: rgba(22, 29, 48, 0.7);
-  --accent: #ffb347;
-  --accent-strong: #ff7b3a;
+  --panel-border: rgba(148, 163, 184, 0.16);
+  --accent: #38bdf8;
+  --accent-strong: #22d3ee;
+  --text: rgba(255, 255, 255, 0.96);
   --text-dim: rgba(226, 232, 240, 0.7);
+  --text-faint: rgba(226, 232, 240, 0.55);
+  --body-bg: radial-gradient(circle at top, rgba(30, 58, 138, 0.25), transparent 55%),
+    linear-gradient(160deg, #05070d, #0b1220 55%, #111827 100%);
+  --input-bg: rgba(15, 23, 42, 0.6);
+  --input-border: rgba(148, 163, 184, 0.2);
+  --chart-axis: rgba(226, 232, 240, 0.7);
+  --chart-grid: rgba(148, 163, 184, 0.2);
+  --tab-active-bg: rgba(56, 189, 248, 0.16);
+  --tab-active-border: rgba(56, 189, 248, 0.45);
+  --tab-active-text: rgba(186, 230, 253, 0.95);
 }
 
 body {
   font-family: "Space Grotesk", "Helvetica Neue", sans-serif;
-  background: radial-gradient(circle at top, rgba(30, 58, 138, 0.25), transparent 55%),
-    linear-gradient(160deg, #05070d, #0b1220 55%, #111827 100%);
-  color: white;
+  background: var(--body-bg);
+  color: var(--text);
 }
 
 h1,
@@ -32,12 +66,35 @@ h3 {
 }
 
 .page {
-  max-width: 1100px;
+  width: 100%;
+  max-width: 1480px;
   margin: 0 auto;
-  padding: 2.5rem 1.5rem 4rem;
+  padding: 2.5rem 1.75rem 4rem;
   display: flex;
   flex-direction: column;
   gap: 2.5rem;
+}
+
+.text-muted {
+  color: var(--text-dim);
+}
+
+.text-faint {
+  color: var(--text-faint);
+}
+
+.label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--text-faint);
+}
+
+.surface {
+  background: var(--panel-soft);
+  border: 1px solid var(--panel-border);
+  border-radius: 1.25rem;
 }
 
 .hero {
@@ -51,7 +108,7 @@ h3 {
   text-transform: uppercase;
   letter-spacing: 0.35em;
   font-size: 0.65rem;
-  color: rgba(226, 232, 240, 0.55);
+  color: var(--text-faint);
 }
 
 .hero-title {
@@ -69,7 +126,7 @@ h3 {
 
 .hero-card {
   background: var(--panel);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid var(--panel-border);
   border-radius: 1.5rem;
   padding: 1.5rem;
 }
@@ -77,7 +134,7 @@ h3 {
 .panel,
 .panel-wide {
   background: var(--panel);
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  border: 1px solid var(--panel-border);
   border-radius: 1.5rem;
   padding: 1.5rem;
 }
@@ -89,42 +146,42 @@ h3 {
 .panel-title {
   font-size: 1.3rem;
   font-weight: 600;
-  color: white;
+  color: var(--text);
 }
 
 .input {
   width: 100%;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
   border-radius: 0.75rem;
   padding: 0.6rem 0.8rem;
-  color: white;
+  color: var(--text);
   font-size: 0.9rem;
 }
 
 .input:focus {
-  outline: 2px solid rgba(255, 179, 71, 0.5);
-  border-color: rgba(255, 179, 71, 0.8);
+  outline: 2px solid rgba(37, 99, 235, 0.35);
+  border-color: rgba(37, 99, 235, 0.55);
 }
 
 .btn-primary {
   background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-  color: #1f2937;
+  color: #04121f;
   font-weight: 600;
   padding: 0.65rem 1.4rem;
   border-radius: 999px;
-  box-shadow: 0 12px 25px rgba(255, 115, 40, 0.25);
+  box-shadow: 0 12px 25px rgba(37, 99, 235, 0.22);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 16px 35px rgba(255, 115, 40, 0.35);
+  box-shadow: 0 16px 35px rgba(6, 182, 212, 0.26);
 }
 
 .btn-secondary {
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  color: white;
+  border: 1px solid var(--panel-border);
+  color: var(--text);
   padding: 0.5rem 1rem;
   border-radius: 999px;
   font-size: 0.75rem;
@@ -142,22 +199,22 @@ h3 {
 }
 
 .tab {
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  color: rgba(226, 232, 240, 0.7);
+  border: 1px solid var(--panel-border);
+  color: var(--text-dim);
 }
 
 .tab-active {
-  background: rgba(255, 179, 71, 0.2);
-  border: 1px solid rgba(255, 179, 71, 0.5);
-  color: #fde68a;
+  background: var(--tab-active-bg);
+  border: 1px solid var(--tab-active-border);
+  color: var(--tab-active-text);
 }
 
 .chart-card {
-  background: rgba(15, 23, 42, 0.6);
+  background: var(--panel-soft);
   border-radius: 1.25rem;
   padding: 1rem;
-  height: 24rem;
-  border: 1px solid rgba(148, 163, 184, 0.15);
+  height: clamp(22rem, 46vh, 38rem);
+  border: 1px solid var(--panel-border);
 }
 
 @media (max-width: 768px) {

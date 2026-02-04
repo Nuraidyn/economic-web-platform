@@ -8,7 +8,7 @@ export default function CountryMultiSelect({ countries, onSelect, selected }) {
 
   return (
     <div className="space-y-2">
-      <label className="block text-xs uppercase tracking-widest text-slate-200/80">
+      <label className="label">
         Countries
       </label>
       <select
@@ -23,7 +23,7 @@ export default function CountryMultiSelect({ countries, onSelect, selected }) {
           </option>
         ))}
       </select>
-      <p className="text-[11px] text-slate-200/70">
+      <p className="text-[11px] text-muted">
         Multi-select countries to compare inequality and macroeconomic signals side by side.
       </p>
     </div>

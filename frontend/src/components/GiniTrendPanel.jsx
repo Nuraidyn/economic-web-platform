@@ -55,7 +55,7 @@ export default function GiniTrendPanel({ canAccess, countries, startYear, endYea
       <div className="flex items-start justify-between gap-6">
         <div>
           <h3 className="panel-title">Inequality trend (Gini)</h3>
-          <p className="text-xs text-slate-200/70 mt-2">
+          <p className="text-xs text-muted mt-2">
             Trend line based on World Bank Gini indicator ({`SI.POV.GINI`}). Use it for cross-country trend context and YoY shifts.
           </p>
         </div>
@@ -74,13 +74,13 @@ export default function GiniTrendPanel({ canAccess, countries, startYear, endYea
             {summaryRows.map((row) => (
               <div
                 key={row.country}
-                className="rounded-2xl border border-slate-100/15 bg-slate-900/50 p-4"
+                className="surface p-4"
               >
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-300/70">{row.country}</p>
-                <p className="text-2xl font-semibold text-white mt-2">
+                <p className="text-xs uppercase tracking-[0.2em] text-faint">{row.country}</p>
+                <p className="text-2xl font-semibold mt-2">
                   {row.latestValue == null ? "n/a" : row.latestValue.toFixed(2)}
                 </p>
-                <p className="text-[11px] text-slate-300/70">
+                <p className="text-[11px] text-faint">
                   {row.latestYear ? `Last year: ${row.latestYear}` : "No data"} · Source {row.source}
                 </p>
               </div>
@@ -91,4 +91,3 @@ export default function GiniTrendPanel({ canAccess, countries, startYear, endYea
     </section>
   );
 }
-

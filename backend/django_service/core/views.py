@@ -48,8 +48,10 @@ class ActiveAgreementView(APIView):
     def get(self, request):
         agreement = get_active_agreement()
         if not agreement:
-            return Response({"detail": "No active agreement"}, status=status.HTTP_404_NOT_FOUND)
-        return Response(AgreementSerializer(agreement).data)
+            return Response({"active": False}, status=status.HTTP_200_OK)
+        data = AgreementSerializer(agreement).data
+        data["active"] = True
+        return Response(data)
 
 
 class AcceptAgreementView(APIView):

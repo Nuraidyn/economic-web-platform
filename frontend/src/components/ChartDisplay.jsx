@@ -2,6 +2,8 @@ import React, { useMemo, useRef } from "react";
 import { Line, Bar, Scatter } from "react-chartjs-2";
 import { Chart as ChartJS } from "chart.js/auto";
 
+import { useTheme } from "../context/ThemeContext";
+
 const palette = [
   { border: "#2563eb", bg: "rgba(37,99,235,0.3)" },
   { border: "#dc2626", bg: "rgba(220,38,38,0.3)" },
@@ -9,11 +11,18 @@ const palette = [
   { border: "#9333ea", bg: "rgba(147,51,234,0.3)" },
   { border: "#eab308", bg: "rgba(234,179,8,0.3)" },
 ];
-const axisColor = "rgba(226, 232, 240, 0.7)";
-const gridColor = "rgba(148, 163, 184, 0.2)";
+
+const getCssVar = (name, fallback) => {
+  if (typeof window === "undefined") return fallback;
+  const value = window.getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+};
 
 export default function ChartDisplay({ datasets, chartType, viewMode }) {
+  const { theme } = useTheme();
   const chartRef = useRef(null);
+  const axisColor = useMemo(() => getCssVar("--chart-axis", "rgba(226, 232, 240, 0.7)"), [theme]);
+  const gridColor = useMemo(() => getCssVar("--chart-grid", "rgba(148, 163, 184, 0.2)"), [theme]);
 
   const downloadName = useMemo(() => {
     if (!datasets?.length) return "chart";
@@ -33,7 +42,7 @@ export default function ChartDisplay({ datasets, chartType, viewMode }) {
   };
 
   if (!datasets || datasets.length === 0) {
-    return <p className="text-gray-500 text-center mt-4">Select filters and fetch data.</p>;
+    return <p className="text-muted text-center mt-4">Select filters and fetch data.</p>;
   }
 
   if (viewMode === "lorenz") {

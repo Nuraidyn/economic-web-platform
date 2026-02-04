@@ -20,7 +20,7 @@ export default function InequalityPage() {
         </div>
         <div className="hero-card">
           <h3 className="panel-title">Notes</h3>
-          <ul className="text-xs text-slate-200/70 space-y-2">
+          <ul className="text-xs text-muted space-y-2">
             <li>Server-side enforcement: agreement required.</li>
             <li>Sources are surfaced for transparency.</li>
           </ul>
@@ -37,4 +37,3 @@ export default function InequalityPage() {
     </>
   );
 }
-

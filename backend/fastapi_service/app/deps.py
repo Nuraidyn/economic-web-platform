@@ -37,12 +37,12 @@ def get_current_user(
     return verify_jwt(token) or {}
 
 
-def get_authz_context(token: str = Depends(get_token), jwt_payload: dict = Depends(get_jwt_payload)) -> AuthzContext:
+def get_authz_context(token: str = Depends(get_token)) -> AuthzContext:
     """
     Returns live authorization context (role + agreement) from Django introspection.
 
-    We still validate JWT locally first (shared secret / algorithm), then we call Django
-    to obtain the latest role/agreement acceptance state (cached briefly).
+    We prefer Django introspection for the latest role/agreement state, and only fall back
+    to local JWT verification if introspection is unavailable and non-strict mode is enabled.
     """
     try:
         return introspect_with_django(token)
@@ -54,6 +54,9 @@ def get_authz_context(token: str = Depends(get_token), jwt_payload: dict = Depen
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Auth service unavailable",
             ) from exc
+        jwt_payload = verify_jwt(token)
+        if not jwt_payload:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from exc
         # fallback to JWT claims (best-effort) when non-strict
         user_id = jwt_payload.get("user_id") or jwt_payload.get("id") or jwt_payload.get("sub") or 0
         try:

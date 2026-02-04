@@ -3,6 +3,13 @@ import { Line } from "react-chartjs-2";
 import { Chart as ChartJS } from "chart.js/auto";
 
 import { createForecast, fetchLatestForecast, fetchObservationsWithMeta } from "../api/analyticsApi";
+import { useTheme } from "../context/ThemeContext";
+
+const getCssVar = (name, fallback) => {
+  if (typeof window === "undefined") return fallback;
+  const value = window.getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+};
 
 const buildForecastChart = (history, forecast) => {
   const historyPoints = history.map((row) => ({ x: row.year, y: row.value }));
@@ -111,6 +118,7 @@ export default function ForecastPanel({
   defaultCountry,
   defaultIndicator,
 }) {
+  const { theme } = useTheme();
   const [country, setCountry] = useState(defaultCountry || "");
   const [indicator, setIndicator] = useState(defaultIndicator || "");
   const [horizon, setHorizon] = useState(5);
@@ -185,6 +193,8 @@ export default function ForecastPanel({
   }, [history, forecast]);
 
   const coverage = useMemo(() => computeCoverage(history), [history]);
+  const axisColor = useMemo(() => getCssVar("--chart-axis", "#e2e8f0"), [theme]);
+  const gridColor = useMemo(() => getCssVar("--chart-grid", "rgba(148,163,184,0.2)"), [theme]);
 
   const summary = useMemo(() => {
     if (!forecast) {
@@ -215,23 +225,21 @@ export default function ForecastPanel({
       <div className="flex items-start justify-between gap-6">
         <div>
           <h3 className="panel-title">Forecasting Studio</h3>
-          <p className="text-sm text-slate-200/80 mt-2 max-w-2xl">
+          <p className="text-sm text-muted mt-2 max-w-2xl">
             Forecasts are probabilistic, not guaranteed. Use them for academic exploration and
             scenario comparison rather than direct policy decisions.
           </p>
         </div>
-        <div className="text-xs uppercase tracking-[0.2em] text-amber-200/80">
+        <div className="text-xs uppercase tracking-[0.2em] text-amber-700/80 dark:text-amber-200/80">
           Predictions only
         </div>
       </div>
 
       <div className="mt-6 grid lg:grid-cols-[1.2fr_1fr] gap-6">
-        <div className="rounded-2xl border border-slate-100/10 bg-slate-900/50 p-4 space-y-4">
+        <div className="surface p-4 space-y-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs uppercase tracking-widest text-slate-200/80">
-                Country
-              </label>
+              <label className="label">Country</label>
               <select
                 className="input"
                 value={country}
@@ -246,9 +254,7 @@ export default function ForecastPanel({
               </select>
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-widest text-slate-200/80">
-                Indicator
-              </label>
+              <label className="label">Indicator</label>
               <select
                 className="input"
                 value={indicator}
@@ -265,9 +271,7 @@ export default function ForecastPanel({
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs uppercase tracking-widest text-slate-200/80">
-                Horizon (years)
-              </label>
+              <label className="label">Horizon (years)</label>
               <input
                 className="input"
                 type="number"
@@ -298,18 +302,18 @@ export default function ForecastPanel({
           </div>
           {status.error && <p className="text-xs text-rose-200/90">{status.error}</p>}
           {!canAccess && (
-            <p className="text-xs text-amber-200/80">
+            <p className="text-xs text-amber-700/80 dark:text-amber-200/80">
               Accept the active user agreement to unlock forecasting endpoints.
             </p>
           )}
           {coverage && (
-            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-200/80">
-              <span className="uppercase tracking-[0.2em] text-slate-300/70">Data quality</span>
-              <span className="rounded-full border border-slate-100/20 px-3 py-1">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+              <span className="uppercase tracking-[0.2em] text-faint">Data quality</span>
+              <span className="rounded-full border border-slate-900/10 dark:border-slate-100/20 px-3 py-1">
                 Coverage {coverage.percent}% ({coverage.actual}/{coverage.expected})
               </span>
               {historyMeta?.source && (
-                <span className="rounded-full border border-slate-100/20 px-3 py-1">
+                <span className="rounded-full border border-slate-900/10 dark:border-slate-100/20 px-3 py-1">
                   Source {historyMeta.source}
                 </span>
               )}
@@ -318,7 +322,7 @@ export default function ForecastPanel({
                   Low coverage
                 </span>
               )}
-              <span className="text-[11px] text-slate-300/70">
+              <span className="text-[11px] text-faint">
                 {coverage.minYear}–{coverage.maxYear}
               </span>
             </div>
@@ -344,28 +348,28 @@ export default function ForecastPanel({
 
       {forecast && summary && (
         <div className="mt-6 grid md:grid-cols-3 gap-4">
-          <div className="rounded-2xl border border-slate-100/15 bg-slate-900/50 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-300/70">Baseline</p>
-            <p className="text-xl font-semibold text-white mt-2">
+          <div className="surface p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-faint">Baseline</p>
+            <p className="text-xl font-semibold mt-2">
               {summary.lastHistory.value.toFixed(2)}
             </p>
-            <p className="text-xs text-slate-200/70">Last historical value</p>
+            <p className="text-xs text-muted">Last historical value</p>
           </div>
-          <div className="rounded-2xl border border-slate-100/15 bg-slate-900/50 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-300/70">Change</p>
-            <p className="text-xl font-semibold text-white mt-2">
+          <div className="surface p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-faint">Change</p>
+            <p className="text-xl font-semibold mt-2">
               {summary.absoluteChange.toFixed(2)}
             </p>
-            <p className="text-xs text-slate-200/70">
+            <p className="text-xs text-muted">
               Avg annual: {summary.avgAnnualChange.toFixed(2)}
             </p>
           </div>
-          <div className="rounded-2xl border border-slate-100/15 bg-slate-900/50 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-300/70">Percent</p>
-            <p className="text-xl font-semibold text-white mt-2">
+          <div className="surface p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-faint">Percent</p>
+            <p className="text-xl font-semibold mt-2">
               {summary.percentChange == null ? "n/a" : `${summary.percentChange.toFixed(2)}%`}
             </p>
-            <p className="text-xs text-slate-200/70">Horizon total shift</p>
+            <p className="text-xs text-muted">Horizon total shift</p>
           </div>
         </div>
       )}
@@ -377,10 +381,10 @@ export default function ForecastPanel({
             options={{
               responsive: true,
               maintainAspectRatio: false,
-              plugins: { legend: { position: "bottom", labels: { color: "#e2e8f0" } } },
+              plugins: { legend: { position: "bottom", labels: { color: axisColor } } },
               scales: {
-                x: { ticks: { color: "#e2e8f0" }, grid: { color: "rgba(148,163,184,0.2)" } },
-                y: { ticks: { color: "#e2e8f0" }, grid: { color: "rgba(148,163,184,0.2)" } },
+                x: { ticks: { color: axisColor }, grid: { color: gridColor } },
+                y: { ticks: { color: axisColor }, grid: { color: gridColor } },
               },
             }}
           />

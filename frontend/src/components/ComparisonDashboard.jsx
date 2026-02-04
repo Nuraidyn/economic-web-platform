@@ -87,7 +87,7 @@ export default function ComparisonDashboard({ datasets, chartType, correlationPa
   if (!datasets.length) {
     return (
       <section className="panel-wide">
-        <p className="text-sm text-slate-200/70">
+        <p className="text-sm text-muted">
           Select countries and indicators, then run the comparison to populate charts.
         </p>
       </section>
@@ -101,7 +101,7 @@ export default function ComparisonDashboard({ datasets, chartType, correlationPa
           <div className="flex items-start justify-between gap-4">
             <div>
               <h3 className="panel-title">{indicatorLabel(entry.indicator)}</h3>
-              <p className="text-xs text-slate-200/70 mb-4">
+              <p className="text-xs text-muted mb-4">
                 Historical series by country. Missing values are left blank to preserve data integrity.
               </p>
             </div>
@@ -116,7 +116,7 @@ export default function ComparisonDashboard({ datasets, chartType, correlationPa
       {correlationTable.length > 0 && (
         <div className="panel-wide">
           <h3 className="panel-title">Correlation Snapshot</h3>
-          <p className="text-xs text-slate-200/70 mb-4">
+          <p className="text-xs text-muted mb-4">
             Pearson correlation between {indicatorLabel(correlationPair[0])} and
             {" "}
             {indicatorLabel(correlationPair[1])} on overlapping years.
@@ -125,12 +125,12 @@ export default function ComparisonDashboard({ datasets, chartType, correlationPa
             {correlationTable.map((row) => (
               <div
                 key={row.country}
-                className="rounded-2xl border border-slate-100/20 bg-slate-900/50 p-4"
+                className="surface p-4"
               >
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-300/70">
+                <p className="text-xs uppercase tracking-[0.2em] text-faint">
                   {row.country}
                 </p>
-                <p className="text-2xl font-semibold text-white mt-2">
+                <p className="text-2xl font-semibold mt-2">
                   {row.correlation == null ? "n/a" : row.correlation.toFixed(2)}
                 </p>
               </div>
