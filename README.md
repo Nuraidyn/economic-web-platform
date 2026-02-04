@@ -4,6 +4,7 @@ Full-stack учебный проект дипломной тематики «Dev
 Фронтенд (React + Vite + Tailwind + Chart.js) строит графики Lorenz/Gini и сравнения по странам. Бэкенд разделен на Django (аутентификация, роли, соглашения, админ) и FastAPI (ингест данных, аналитика, прогнозы).
 
 Документация по архитектуре: `docs/architecture.md`.
+План апгрейда до market-ready продукта: `docs/upgrade_plan.md` (ветка `feature/market-ready-platform`).
 
 ## Возможности
 
@@ -79,6 +80,14 @@ npm run dev
 - `JWT_ALGORITHM` (по умолчанию `HS256`)
 
 По умолчанию Django и FastAPI используют разные SQLite файлы. Если нужна общая БД, укажите одинаковый сервер/базу в Django и `DATABASE_URL` в FastAPI.
+
+## Security model (важно)
+
+- Django выдаёт JWT (SimpleJWT) с клеймами `role` и `agreement_accepted`.
+- FastAPI использует тот же JWT для доступа к защищённым эндпойнтам (analytics/forecast/ingestion).
+- Для корректной валидации JWT **секрет в FastAPI** (`DJANGO_SECRET_KEY` или `JWT_SECRET`) должен совпадать с `DJANGO_SECRET_KEY` в Django.
+
+Примечание: в ветке market-ready (`feature/market-ready-platform`) будет включено серверное ограничение доступа к forecast/advanced analytics на основе принятого соглашения + rate limiting.
 
 ## (Опционально) Базовая загрузка индикаторов (FastAPI / ingestion)
 
