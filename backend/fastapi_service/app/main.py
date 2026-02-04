@@ -8,7 +8,9 @@ from app.api.v1.health import router as health_router
 from app.api.v1.ingestion import router as ingestion_router
 from app.api.v1.ingestion_runs import router as ingestion_runs_router
 from app.api.v1.observations import router as observations_router
+from app.core.config import CORS_ALLOW_ORIGINS, RATE_LIMIT_BURST, RATE_LIMIT_ENABLED, RATE_LIMIT_RPS
 from app.db import Base, engine
+from app.middleware.rate_limit import RateLimitMiddleware
 import app.models_analytics  # noqa: F401
 import app.models_forecast  # noqa: F401
 import app.models_ingestion  # noqa: F401
@@ -20,11 +22,15 @@ app = FastAPI(
 )
 
 app.add_middleware(
+    RateLimitMiddleware,
+    enabled=RATE_LIMIT_ENABLED,
+    rps=RATE_LIMIT_RPS,
+    burst=RATE_LIMIT_BURST,
+)
+
+app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=CORS_ALLOW_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

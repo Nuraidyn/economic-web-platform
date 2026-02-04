@@ -6,6 +6,16 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./fastapi.db")
 JWT_SECRET = os.getenv("DJANGO_SECRET_KEY", os.getenv("JWT_SECRET", "dev-secret-key"))
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 
+# CORS
+CORS_ALLOW_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ALLOW_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173",
+    ).split(",")
+    if origin.strip()
+]
+
 # AuthZ (live role/agreement) via Django introspection
 AUTHZ_INTROSPECT_PATH = os.getenv("AUTHZ_INTROSPECT_PATH", "/api/auth/introspect")
 AUTHZ_INTROSPECT_TIMEOUT_SECONDS = float(os.getenv("AUTHZ_INTROSPECT_TIMEOUT_SECONDS", "3.5"))

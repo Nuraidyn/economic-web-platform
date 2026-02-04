@@ -5,18 +5,22 @@ from app.db import get_db
 from app.models import Country, Indicator, Observation
 from app.schemas import ObservationRead
 from app.services.world_bank import fetch_indicator_series
+from app.api.v1.params import CountryCodeParam, IndicatorCodeParam, OptionalYearParam
 
 router = APIRouter(tags=["observations"])
 
 
 @router.get("/observations", response_model=list[ObservationRead])
 def list_observations(
-    country: str = Query(...),
-    indicator: str = Query(...),
-    start_year: int | None = Query(None),
-    end_year: int | None = Query(None),
+    country: CountryCodeParam,
+    indicator: IndicatorCodeParam,
+    start_year: OptionalYearParam,
+    end_year: OptionalYearParam,
     db: Session = Depends(get_db),
 ):
+    if start_year is not None and end_year is not None and start_year > end_year:
+        raise HTTPException(status_code=400, detail="start_year must be <= end_year")
+
     country_code = country.upper()
     indicator_code = indicator
     country_row = db.query(Country).filter(Country.code == country_code).first()

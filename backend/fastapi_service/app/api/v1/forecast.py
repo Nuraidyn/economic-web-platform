@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.api.v1.params import CountryCodeParam, IndicatorCodeParam
 from app.db import get_db
 from app.deps import require_agreement
 from app.models import Country, Indicator
@@ -14,8 +15,8 @@ router = APIRouter(tags=["forecast"])
 
 @router.post("/forecast", response_model=ForecastResponse)
 def create_forecast(
-    country: str = Query(...),
-    indicator: str = Query(...),
+    country: CountryCodeParam,
+    indicator: IndicatorCodeParam,
     horizon_years: int = Query(5, ge=1, le=20),
     db: Session = Depends(get_db),
     _: dict = Depends(require_agreement),
@@ -58,8 +59,8 @@ def create_forecast(
 
 @router.get("/forecast/latest", response_model=ForecastResponse)
 def latest_forecast(
-    country: str = Query(...),
-    indicator: str = Query(...),
+    country: CountryCodeParam,
+    indicator: IndicatorCodeParam,
     db: Session = Depends(get_db),
     _: dict = Depends(require_agreement),
 ):
