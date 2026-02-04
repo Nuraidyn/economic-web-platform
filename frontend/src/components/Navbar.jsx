@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 export default function Navbar() {
   return (
@@ -9,7 +10,9 @@ export default function Navbar() {
             Inequality and macroeconomic intelligence
           </p>
           <h1 className="text-3xl font-semibold text-white">
-            Economic Signals Studio
+            <Link to="/" className="hover:text-white transition">
+              Economic Signals Studio
+            </Link>
           </h1>
         </div>
         <div className="text-xs uppercase tracking-[0.2em] text-slate-300/80 flex gap-4">
