@@ -72,6 +72,8 @@ npm run dev
 - `DJANGO_DEBUG` (0/1)
 - `DJANGO_ALLOWED_HOSTS` (через запятую)
 - `DJANGO_DB_*` параметры, если нужна БД отличная от SQLite
+- `DJANGO_THROTTLE_AUTH` (по умолчанию `20/min`) — rate limit для register/login/refresh
+- `DJANGO_THROTTLE_AGREEMENTS` (по умолчанию `60/min`) — rate limit для accept agreement
 
 **FastAPI**
 - `DATABASE_URL` (по умолчанию `sqlite:///./fastapi.db`)
