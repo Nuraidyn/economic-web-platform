@@ -1,3 +1,4 @@
+import React, { useMemo, useRef } from "react";
 import { Line, Bar, Scatter } from "react-chartjs-2";
 import { Chart as ChartJS } from "chart.js/auto";
 
@@ -12,6 +13,25 @@ const axisColor = "rgba(226, 232, 240, 0.7)";
 const gridColor = "rgba(148, 163, 184, 0.2)";
 
 export default function ChartDisplay({ datasets, chartType, viewMode }) {
+  const chartRef = useRef(null);
+
+  const downloadName = useMemo(() => {
+    if (!datasets?.length) return "chart";
+    const suffix = viewMode === "lorenz" ? "lorenz" : "series";
+    const countries = datasets.map((item) => item.country).filter(Boolean).slice(0, 3).join("-");
+    return `${suffix}_${countries || "data"}`;
+  }, [datasets, viewMode]);
+
+  const handleDownload = () => {
+    const chart = chartRef.current;
+    const url = chart?.toBase64Image?.();
+    if (!url) return;
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${downloadName}.png`;
+    link.click();
+  };
+
   if (!datasets || datasets.length === 0) {
     return <p className="text-gray-500 text-center mt-4">Select filters and fetch data.</p>;
   }
@@ -93,7 +113,12 @@ export default function ChartDisplay({ datasets, chartType, viewMode }) {
 
     return (
       <div className="chart-card">
-        <Scatter data={lorenzData} options={lorenzOptions} />
+        <div className="flex items-center justify-end mb-2">
+          <button className="btn-secondary" type="button" onClick={handleDownload}>
+            Download PNG
+          </button>
+        </div>
+        <Scatter ref={chartRef} data={lorenzData} options={lorenzOptions} />
       </div>
     );
   }
@@ -162,7 +187,12 @@ export default function ChartDisplay({ datasets, chartType, viewMode }) {
 
   return (
     <div className="chart-card">
-      <ChartComponent data={chartData} options={options} />
+      <div className="flex items-center justify-end mb-2">
+        <button className="btn-secondary" type="button" onClick={handleDownload}>
+          Download PNG
+        </button>
+      </div>
+      <ChartComponent ref={chartRef} data={chartData} options={options} />
     </div>
   );
 }

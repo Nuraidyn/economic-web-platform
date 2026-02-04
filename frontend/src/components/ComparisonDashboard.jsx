@@ -2,6 +2,31 @@ import React, { useMemo } from "react";
 
 import ChartDisplay from "./ChartDisplay";
 
+const exportIndicatorCsv = (entry) => {
+  const years = new Set();
+  entry.series.forEach((series) => series.data.forEach((row) => years.add(row.year)));
+  const sortedYears = Array.from(years).sort((a, b) => a - b);
+  const countries = entry.series.map((row) => row.country);
+  const rows = [["year", ...countries]];
+
+  sortedYears.forEach((year) => {
+    const values = entry.series.map((series) => {
+      const found = series.data.find((row) => row.year === year);
+      return found?.value ?? "";
+    });
+    rows.push([year, ...values]);
+  });
+
+  const csv = rows.map((row) => row.join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `comparison_${entry.indicator}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
 const computeCorrelation = (seriesA, seriesB) => {
   const mapA = new Map(seriesA.map((row) => [row.year, row.value]));
   const paired = seriesB
@@ -73,10 +98,17 @@ export default function ComparisonDashboard({ datasets, chartType, correlationPa
     <section className="space-y-8">
       {datasets.map((entry) => (
         <div className="panel-wide" key={entry.indicator}>
-          <h3 className="panel-title">{indicatorLabel(entry.indicator)}</h3>
-          <p className="text-xs text-slate-200/70 mb-4">
-            Historical series by country. Missing values are left blank to preserve data integrity.
-          </p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="panel-title">{indicatorLabel(entry.indicator)}</h3>
+              <p className="text-xs text-slate-200/70 mb-4">
+                Historical series by country. Missing values are left blank to preserve data integrity.
+              </p>
+            </div>
+            <button className="btn-secondary" type="button" onClick={() => exportIndicatorCsv(entry)}>
+              Export CSV
+            </button>
+          </div>
           <ChartDisplay datasets={entry.series} chartType={chartType} viewMode="timeSeries" />
         </div>
       ))}
