@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
 from app.db import get_db
@@ -17,6 +19,7 @@ def list_observations(
     start_year: OptionalYearParam,
     end_year: OptionalYearParam,
     db: Session = Depends(get_db),
+    response: Response,
 ):
     if start_year is not None and end_year is not None and start_year > end_year:
         raise HTTPException(status_code=400, detail="start_year must be <= end_year")
@@ -40,6 +43,7 @@ def list_observations(
         observations = query.order_by(Observation.year).all()
 
     if observations:
+        response.headers["X-Data-Source"] = "cache_db"
         return [
             ObservationRead(
                 country=country_row.code,
@@ -59,6 +63,9 @@ def list_observations(
         series = [row for row in series if row["year"] >= start_year]
     if end_year is not None:
         series = [row for row in series if row["year"] <= end_year]
+
+    response.headers["X-Data-Source"] = "world_bank_live"
+    response.headers["X-Fetched-At"] = datetime.now(timezone.utc).isoformat()
 
     return [
         ObservationRead(

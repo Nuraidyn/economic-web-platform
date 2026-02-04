@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Line } from "react-chartjs-2";
 import { Chart as ChartJS } from "chart.js/auto";
 
-import { createForecast, fetchLatestForecast, fetchObservations } from "../api/analyticsApi";
+import { createForecast, fetchLatestForecast, fetchObservationsWithMeta } from "../api/analyticsApi";
 
 const buildForecastChart = (history, forecast) => {
   const historyPoints = history.map((row) => ({ x: row.year, y: row.value }));
@@ -116,6 +116,7 @@ export default function ForecastPanel({
   const [horizon, setHorizon] = useState(5);
   const [forecast, setForecast] = useState(null);
   const [history, setHistory] = useState([]);
+  const [historyMeta, setHistoryMeta] = useState(null);
   const [status, setStatus] = useState({ loading: false, error: "" });
 
   const canRun = canAccess && country && indicator;
@@ -128,7 +129,7 @@ export default function ForecastPanel({
     setStatus({ loading: true, error: "" });
     try {
       const [historyData, forecastData] = await Promise.all([
-        fetchObservations({
+        fetchObservationsWithMeta({
           country,
           indicator,
           start_year: 1960,
@@ -136,7 +137,8 @@ export default function ForecastPanel({
         }),
         createForecast({ country, indicator, horizon_years: horizon }),
       ]);
-      setHistory(historyData);
+      setHistory(historyData.data);
+      setHistoryMeta(historyData.meta);
       setForecast(forecastData);
       setStatus({ loading: false, error: "" });
     } catch (err) {
@@ -155,7 +157,7 @@ export default function ForecastPanel({
     setStatus({ loading: true, error: "" });
     try {
       const [historyData, forecastData] = await Promise.all([
-        fetchObservations({
+        fetchObservationsWithMeta({
           country,
           indicator,
           start_year: 1960,
@@ -163,7 +165,8 @@ export default function ForecastPanel({
         }),
         fetchLatestForecast({ country, indicator }),
       ]);
-      setHistory(historyData);
+      setHistory(historyData.data);
+      setHistoryMeta(historyData.meta);
       setForecast(forecastData);
       setStatus({ loading: false, error: "" });
     } catch (err) {
@@ -305,6 +308,11 @@ export default function ForecastPanel({
               <span className="rounded-full border border-slate-100/20 px-3 py-1">
                 Coverage {coverage.percent}% ({coverage.actual}/{coverage.expected})
               </span>
+              {historyMeta?.source && (
+                <span className="rounded-full border border-slate-100/20 px-3 py-1">
+                  Source {historyMeta.source}
+                </span>
+              )}
               {coverage.percent < 60 && (
                 <span className="rounded-full border border-rose-200/40 bg-rose-500/20 px-3 py-1 text-rose-100">
                   Low coverage

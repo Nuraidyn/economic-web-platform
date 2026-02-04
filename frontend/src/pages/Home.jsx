@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 
-import { fetchObservations, listCountries, listIndicators } from "../api/analyticsApi";
+import { fetchObservationsWithMeta, listCountries, listIndicators } from "../api/analyticsApi";
 import AuthContext from "../context/AuthContext";
 import { DEFAULT_COUNTRIES, DEFAULT_INDICATORS } from "../data/indicatorCatalog";
 import AgreementPanel from "../components/AgreementPanel";
@@ -94,13 +94,13 @@ export default function Home() {
         selectedIndicators.map(async (indicator) => {
           const series = await Promise.all(
             selectedCountries.map(async (country) => {
-              const payload = await fetchObservations({
+              const payload = await fetchObservationsWithMeta({
                 country,
                 indicator,
                 start_year: startYear,
                 end_year: endYear,
               });
-              return { country, data: payload };
+              return { country, data: payload.data, meta: payload.meta };
             })
           );
           return { indicator, series };

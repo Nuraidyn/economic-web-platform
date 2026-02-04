@@ -15,6 +15,17 @@ export const fetchObservations = async (params) => {
   return res.data;
 };
 
+export const fetchObservationsWithMeta = async (params) => {
+  const res = await fastapiClient.get("/observations", { params });
+  return {
+    data: res.data,
+    meta: {
+      source: res.headers["x-data-source"] || "unknown",
+      fetchedAt: res.headers["x-fetched-at"] || null,
+    },
+  };
+};
+
 export const fetchLorenz = async (params) => {
   const res = await fastapiClient.get("/lorenz", { params });
   return res.data;
