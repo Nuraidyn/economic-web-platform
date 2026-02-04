@@ -41,6 +41,35 @@ def linear_forecast(values, years, horizon):
     return future_years, predictions, std
 
 
+def backtest_linear(values, years, test_points: int = 5):
+    """
+    Simple rolling-origin backtest for linear trend model.
+
+    Fits on the prefix and predicts the next observed point.
+    Returns MAE/RMSE on the last `test_points` observations.
+    """
+    if len(values) < 10:
+        return None
+    n = len(values)
+    k = max(1, min(int(test_points), n - 5))
+    errors = []
+    for idx in range(n - k, n):
+        train_x = np.array(years[:idx])
+        train_y = np.array(values[:idx])
+        if len(train_y) < 5:
+            continue
+        slope, intercept = np.polyfit(train_x, train_y, deg=1)
+        pred = float(slope * years[idx] + intercept)
+        actual = float(values[idx])
+        errors.append(actual - pred)
+    if not errors:
+        return None
+    abs_errors = [abs(e) for e in errors]
+    mae = float(np.mean(abs_errors))
+    rmse = float(np.sqrt(np.mean([e * e for e in errors])))
+    return {"points": len(errors), "mae": mae, "rmse": rmse}
+
+
 def run_forecast(
     db: Session,
     country_code: str,
@@ -56,13 +85,17 @@ def run_forecast(
     if len(values) < 8:
         return None
     future_years, predictions, std = linear_forecast(values, years, horizon)
+    backtest = backtest_linear(values, years, test_points=5) or {}
+    metrics = f"residual_std={std:.4f}"
+    if backtest:
+        metrics = f"{metrics}; backtest_points={backtest.get('points')}; mae={backtest.get('mae'):.4f}; rmse={backtest.get('rmse'):.4f}"
     run = ForecastRun(
         country_id=country.id,
         target_indicator_id=indicator.id,
         model_name=model_name,
         horizon_years=horizon,
         assumptions="Linear trend on historical values; residual std used for intervals.",
-        metrics=f"residual_std={std:.4f}",
+        metrics=metrics,
     )
     db.add(run)
     db.flush()
