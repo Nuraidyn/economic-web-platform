@@ -42,3 +42,24 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.user_id}:{self.role}"
+
+
+class AnalysisPreset(models.Model):
+    """
+    Saved analysis session/preset for a user.
+
+    Payload is frontend-owned JSON (selected countries/indicators, chart type, filters, etc.).
+    """
+
+    user = models.ForeignKey("auth.User", on_delete=models.CASCADE, related_name="analysis_presets")
+    name = models.CharField(max_length=120)
+    payload = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("user", "name")
+        ordering = ("-updated_at", "-id")
+
+    def __str__(self):
+        return f"{self.user_id}:{self.name}"

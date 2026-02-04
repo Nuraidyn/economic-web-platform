@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from .models import AgreementAcceptance, UserAgreement
+from .models import AgreementAcceptance, AnalysisPreset, UserAgreement
 from .utils import get_active_agreement
 
 User = get_user_model()
@@ -52,3 +52,17 @@ class AgreementAcceptanceSerializer(serializers.ModelSerializer):
         model = AgreementAcceptance
         fields = ("id", "agreement", "accepted_at")
         read_only_fields = ("id", "accepted_at")
+
+
+class AnalysisPresetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AnalysisPreset
+        fields = ("id", "name", "payload", "created_at", "updated_at")
+        read_only_fields = ("id", "created_at", "updated_at")
+
+    def validate_name(self, value: str):
+        value = (value or "").strip()
+        if len(value) < 3:
+            raise serializers.ValidationError("Name must be at least 3 characters.")
+        return value
+
