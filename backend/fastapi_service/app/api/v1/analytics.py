@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.deps import get_current_user
+from app.deps import require_agreement
 from app.schemas import CorrelationResponse, GiniResponse, LorenzResponse
 from app.services.analytics import get_lorenz_segments, get_or_create_lorenz_result
 from app.services.correlation import correlation_for_country
@@ -15,7 +15,7 @@ def lorenz_curve(
     country: str = Query(...),
     year: int = Query(..., ge=1960),
     db: Session = Depends(get_db),
-    _: dict = Depends(get_current_user),
+    _: dict = Depends(require_agreement),
 ):
     cached = get_or_create_lorenz_result(db, country, year)
     if cached:
@@ -36,7 +36,7 @@ def gini_index(
     country: str = Query(...),
     year: int = Query(..., ge=1960),
     db: Session = Depends(get_db),
-    _: dict = Depends(get_current_user),
+    _: dict = Depends(require_agreement),
 ):
     cached = get_or_create_lorenz_result(db, country, year)
     if not cached:
@@ -52,7 +52,7 @@ def correlation(
     start_year: int | None = Query(None),
     end_year: int | None = Query(None),
     db: Session = Depends(get_db),
-    _: dict = Depends(get_current_user),
+    _: dict = Depends(require_agreement),
 ):
     result = correlation_for_country(db, country, indicator_a, indicator_b, start_year, end_year)
     if not result:

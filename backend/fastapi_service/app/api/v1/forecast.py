@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.db import get_db
+from app.deps import require_agreement
 from app.models import Country, Indicator
 from app.models_forecast import ForecastPoint, ForecastRun
 from app.schemas import ForecastPointSchema, ForecastRequest, ForecastResponse, ForecastSeries
@@ -17,6 +18,7 @@ def create_forecast(
     indicator: str = Query(...),
     horizon_years: int = Query(5, ge=1, le=20),
     db: Session = Depends(get_db),
+    _: dict = Depends(require_agreement),
 ):
     result = run_forecast(db, country, indicator, horizon_years)
     if result:
@@ -59,6 +61,7 @@ def latest_forecast(
     country: str = Query(...),
     indicator: str = Query(...),
     db: Session = Depends(get_db),
+    _: dict = Depends(require_agreement),
 ):
     country_row = db.query(Country).filter(Country.code == country.upper()).first()
     indicator_row = db.query(Indicator).filter(Indicator.code == indicator).first()
