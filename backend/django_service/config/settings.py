@@ -92,6 +92,15 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticatedOrReadOnly",
     ),
+    "DEFAULT_THROTTLE_CLASSES": (
+        "rest_framework.throttling.ScopedRateThrottle",
+    ),
+    "DEFAULT_THROTTLE_RATES": {
+        # Protect login/register from brute-force / abuse
+        "auth": os.getenv("DJANGO_THROTTLE_AUTH", "20/min"),
+        # Protect agreement acceptance endpoint from spam
+        "agreements": os.getenv("DJANGO_THROTTLE_AGREEMENTS", "60/min"),
+    },
 }
 
 CORS_ALLOW_ALL_ORIGINS = os.getenv("DJANGO_CORS_ALLOW_ALL", "0") == "1"

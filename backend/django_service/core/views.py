@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .models import AgreementAcceptance
 from .serializers import AgreementSerializer, RegisterSerializer, UserSerializer
@@ -15,6 +15,7 @@ User = get_user_model()
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
+    throttle_scope = "auth"
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
@@ -34,6 +35,11 @@ class RegisterView(APIView):
 
 class CustomTokenView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+    throttle_scope = "auth"
+
+
+class CustomTokenRefreshView(TokenRefreshView):
+    throttle_scope = "auth"
 
 
 class ActiveAgreementView(APIView):
@@ -48,6 +54,7 @@ class ActiveAgreementView(APIView):
 
 class AcceptAgreementView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_scope = "agreements"
 
     def post(self, request):
         agreement = get_active_agreement()
