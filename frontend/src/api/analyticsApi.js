@@ -31,6 +31,18 @@ export const fetchLorenz = async (params) => {
   return res.data;
 };
 
+export const fetchGiniTrend = async (params) => {
+  const res = await fastapiClient.get("/inequality/gini/trend", { params });
+  return res.data;
+};
+
+export const fetchGiniRanking = async ({ year, countries }) => {
+  const res = await fastapiClient.get("/inequality/gini/ranking", {
+    params: { year, countries: countries.join(",") },
+  });
+  return res.data;
+};
+
 export const createForecast = async ({ country, indicator, horizon_years }) => {
   const res = await fastapiClient.post("/forecast", null, {
     params: { country, indicator, horizon_years },

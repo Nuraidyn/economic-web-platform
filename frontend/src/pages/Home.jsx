@@ -10,6 +10,7 @@ import CountryMultiSelect from "../components/CountryMultiSelect";
 import ForecastPanel from "../components/ForecastPanel";
 import IndicatorMultiSelect from "../components/IndicatorMultiSelect";
 import SavedPresetsPanel from "../components/SavedPresetsPanel";
+import GiniTrendPanel from "../components/GiniTrendPanel";
 
 const CHART_TYPES = [
   { value: "line", label: "Line" },
@@ -227,6 +228,14 @@ export default function Home() {
         chartType={chartType}
         correlationPair={correlationPair}
         indicators={indicators}
+      />
+
+      <GiniTrendPanel
+        canAccess={Boolean(user?.agreement_accepted)}
+        countries={selectedCountries}
+        startYear={startYear}
+        endYear={endYear}
+        chartType={chartType}
       />
 
       <ForecastPanel
