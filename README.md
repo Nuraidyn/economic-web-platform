@@ -78,14 +78,24 @@ npm run dev
 - `DJANGO_AUTH_URL` (по умолчанию `http://127.0.0.1:8000`)
 - `DJANGO_SECRET_KEY` или `JWT_SECRET` (должен совпадать с Django для валидации JWT)
 - `JWT_ALGORITHM` (по умолчанию `HS256`)
+- `CORS_ALLOW_ORIGINS` (по умолчанию `http://localhost:5173,http://127.0.0.1:5173`)
+- `AUTHZ_INTROSPECT_PATH` (по умолчанию `/api/auth/introspect`)
+- `AUTHZ_CACHE_TTL_SECONDS` (по умолчанию `60`)
+- `AUTHZ_INTROSPECT_TIMEOUT_SECONDS` (по умолчанию `3.5`)
+- `AUTHZ_INTROSPECT_STRICT` (по умолчанию `1`; если `1`, protected endpoints fail-closed при недоступном Django)
+- `RATE_LIMIT_ENABLED` (по умолчанию `1`)
+- `RATE_LIMIT_RPS` (по умолчанию `5`)
+- `RATE_LIMIT_BURST` (по умолчанию `20`)
 
 По умолчанию Django и FastAPI используют разные SQLite файлы. Если нужна общая БД, укажите одинаковый сервер/базу в Django и `DATABASE_URL` в FastAPI.
 
 ## Security model (важно)
 
 - Django выдаёт JWT (SimpleJWT) с клеймами `role` и `agreement_accepted`.
-- FastAPI использует тот же JWT для доступа к защищённым эндпойнтам (analytics/forecast/ingestion).
-- Для корректной валидации JWT **секрет в FastAPI** (`DJANGO_SECRET_KEY` или `JWT_SECRET`) должен совпадать с `DJANGO_SECRET_KEY` в Django.
+- FastAPI использует тот же JWT для доступа к защищённым эндпойнтам (advanced analytics / forecast / ingestion).
+- FastAPI:
+  - валидирует JWT локально (по `DJANGO_SECRET_KEY`/`JWT_SECRET`)
+  - запрашивает “живое” состояние авторизации (роль + принято ли соглашение) через Django `/api/auth/introspect` (с коротким кэшем), чтобы доступ корректно обновлялся сразу после принятия соглашения.
 
 Примечание: в ветке market-ready (`feature/market-ready-platform`) будет включено серверное ограничение доступа к forecast/advanced analytics на основе принятого соглашения + rate limiting.
 
