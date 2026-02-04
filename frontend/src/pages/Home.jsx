@@ -9,6 +9,7 @@ import ComparisonDashboard from "../components/ComparisonDashboard";
 import CountryMultiSelect from "../components/CountryMultiSelect";
 import ForecastPanel from "../components/ForecastPanel";
 import IndicatorMultiSelect from "../components/IndicatorMultiSelect";
+import SavedPresetsPanel from "../components/SavedPresetsPanel";
 
 const CHART_TYPES = [
   { value: "line", label: "Line" },
@@ -29,6 +30,17 @@ export default function Home() {
   const [datasets, setDatasets] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const presetPayload = useMemo(
+    () => ({
+      selectedCountries,
+      selectedIndicators,
+      chartType,
+      startYear,
+      endYear,
+    }),
+    [selectedCountries, selectedIndicators, chartType, startYear, endYear]
+  );
 
   useEffect(() => {
     const loadCatalog = async () => {
@@ -128,6 +140,17 @@ export default function Home() {
         <div className="space-y-6">
           <AuthPanel />
           <AgreementPanel />
+          <SavedPresetsPanel
+            user={user}
+            currentPayload={presetPayload}
+            onLoad={(payload) => {
+              if (payload.selectedCountries) setSelectedCountries(payload.selectedCountries);
+              if (payload.selectedIndicators) setSelectedIndicators(payload.selectedIndicators);
+              if (payload.chartType) setChartType(payload.chartType);
+              if (typeof payload.startYear === "number") setStartYear(payload.startYear);
+              if (typeof payload.endYear === "number") setEndYear(payload.endYear);
+            }}
+          />
         </div>
         <div className="panel">
           <h3 className="panel-title">Comparison Controls</h3>
