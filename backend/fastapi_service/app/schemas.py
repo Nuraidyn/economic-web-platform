@@ -138,3 +138,28 @@ class ForecastResponse(BaseModel):
                 for item in points
             ],
         )
+
+
+class GiniTrendPoint(BaseModel):
+    year: int
+    value: float | None = None
+    yoy_change: float | None = None
+
+
+class GiniTrendMeta(BaseModel):
+    source: str
+    fetched_at: str | None = None
+
+
+class GiniTrendResponse(BaseModel):
+    country: str
+    indicator: str
+    points: list[GiniTrendPoint]
+    meta: GiniTrendMeta
+
+
+class GiniRankingRow(BaseModel):
+    country: str
+    year: int
+    value: float | None = None
+
