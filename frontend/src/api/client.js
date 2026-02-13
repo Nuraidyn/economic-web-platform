@@ -5,6 +5,12 @@ export const djangoClient = axios.create({
   timeout: 12000,
 });
 
+// Endpoints like `/agreements/active` are public; avoid sending a possibly-stale JWT by default.
+export const djangoPublicClient = axios.create({
+  baseURL: import.meta.env.VITE_DJANGO_URL || "http://127.0.0.1:8000/api",
+  timeout: 12000,
+});
+
 export const fastapiClient = axios.create({
   baseURL: import.meta.env.VITE_FASTAPI_URL || "http://127.0.0.1:8001/api/v1",
   timeout: 12000,

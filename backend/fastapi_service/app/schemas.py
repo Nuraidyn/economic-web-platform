@@ -138,3 +138,58 @@ class ForecastResponse(BaseModel):
                 for item in points
             ],
         )
+
+
+class GiniTrendPoint(BaseModel):
+    year: int
+    value: float | None = None
+    yoy_change: float | None = None
+
+
+class GiniTrendMeta(BaseModel):
+    source: str
+    fetched_at: str | None = None
+
+
+class GiniTrendResponse(BaseModel):
+    country: str
+    indicator: str
+    points: list[GiniTrendPoint]
+    meta: GiniTrendMeta
+
+
+class GiniRankingRow(BaseModel):
+    country: str
+    year: int
+    value: float | None = None
+
+
+class ChartExplainPoint(BaseModel):
+    year: int
+    value: float | None = None
+
+
+class ChartExplainSeries(BaseModel):
+    country: str
+    data: list[ChartExplainPoint]
+
+
+class ChartExplainDataset(BaseModel):
+    indicator: str
+    indicator_label: str | None = None
+    series: list[ChartExplainSeries]
+
+
+class ChartExplainRequest(BaseModel):
+    question: str
+    datasets: list[ChartExplainDataset]
+    language: str | None = None
+    start_year: int | None = None
+    end_year: int | None = None
+
+
+class ChartExplainResponse(BaseModel):
+    answer: str
+    provider: str
+    model: str | None = None
+    warning: str | None = None

@@ -1,63 +1,47 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 
-import { fetchObservations, listCountries, listIndicators } from "../api/analyticsApi";
-import AuthContext from "../context/AuthContext";
-import { DEFAULT_COUNTRIES, DEFAULT_INDICATORS } from "../data/indicatorCatalog";
-import AgreementPanel from "../components/AgreementPanel";
-import AuthPanel from "../components/AuthPanel";
+import { fetchObservationsWithMeta } from "../api/analyticsApi";
+import ChartInsightAgent from "../components/ChartInsightAgent";
 import ComparisonDashboard from "../components/ComparisonDashboard";
 import CountryMultiSelect from "../components/CountryMultiSelect";
-import ForecastPanel from "../components/ForecastPanel";
 import IndicatorMultiSelect from "../components/IndicatorMultiSelect";
+import { useAnalysis } from "../context/AnalysisContext";
+import { useI18n } from "../context/I18nContext";
 
-const CHART_TYPES = [
-  { value: "line", label: "Line" },
-  { value: "bar", label: "Bar" },
-  { value: "scatter", label: "Scatter" },
-];
+const MAX_COUNTRIES = 4;
+const MAX_INDICATORS = 4;
 
 export default function Home() {
-  const { user } = useContext(AuthContext);
-  const currentYear = new Date().getFullYear();
-  const [countries, setCountries] = useState(DEFAULT_COUNTRIES);
-  const [indicators, setIndicators] = useState(DEFAULT_INDICATORS);
-  const [selectedCountries, setSelectedCountries] = useState([]);
-  const [selectedIndicators, setSelectedIndicators] = useState([]);
-  const [chartType, setChartType] = useState("line");
-  const [startYear, setStartYear] = useState(Math.max(1990, currentYear - 20));
-  const [endYear, setEndYear] = useState(currentYear - 1);
+  const { t } = useI18n();
+  const {
+    countries,
+    indicators,
+    catalogStatus,
+    selectedCountries,
+    setSelectedCountries,
+    selectedIndicators,
+    setSelectedIndicators,
+    chartType,
+    setChartType,
+    startYear,
+    setStartYear,
+    endYear,
+    setEndYear,
+    minAnalysisYear,
+    maxAnalysisYear,
+  } = useAnalysis();
   const [datasets, setDatasets] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    const loadCatalog = async () => {
-      try {
-        const [countriesData, indicatorData] = await Promise.all([
-          listCountries(),
-          listIndicators(),
-        ]);
-        if (countriesData.length) {
-          setCountries(countriesData);
-        }
-        if (indicatorData.length) {
-          const mapped = indicatorData.map((item) => ({
-            code: item.code,
-            label: item.name || item.code,
-          }));
-          setIndicators((prev) => {
-            const merged = new Map(prev.map((entry) => [entry.code, entry]));
-            mapped.forEach((entry) => merged.set(entry.code, entry));
-            return Array.from(merged.values());
-          });
-        }
-      } catch (err) {
-        setError("Catalog service is unavailable. Using default lists.");
-      }
-    };
-
-    loadCatalog();
-  }, []);
+  const [selectionWarning, setSelectionWarning] = useState("");
+  const chartTypes = useMemo(
+    () => [
+      { value: "line", label: t("home.chartLine") },
+      { value: "bar", label: t("home.chartBar") },
+      { value: "scatter", label: t("home.chartScatter") },
+    ],
+    [t]
+  );
 
   const correlationPair = useMemo(() => {
     if (selectedIndicators.length >= 2) {
@@ -66,153 +50,179 @@ export default function Home() {
     return [];
   }, [selectedIndicators]);
 
+  const yearOptions = useMemo(() => {
+    const options = [];
+    for (let year = maxAnalysisYear; year >= minAnalysisYear; year -= 1) {
+      options.push(year);
+    }
+    return options;
+  }, [minAnalysisYear, maxAnalysisYear]);
+
   const runComparison = async () => {
     if (!selectedCountries.length || !selectedIndicators.length) {
-      setError("Select at least one country and one indicator.");
+      setError(t("home.errorSelectMin"));
+      return;
+    }
+    if (selectedCountries.length > MAX_COUNTRIES || selectedIndicators.length > MAX_INDICATORS) {
+      setError(t("home.errorTooManySelection", { countries: MAX_COUNTRIES, indicators: MAX_INDICATORS }));
       return;
     }
     if (startYear > endYear) {
-      setError("Start year must be less than or equal to end year.");
+      setError(t("home.errorStartEnd"));
+      return;
+    }
+    if (startYear < minAnalysisYear || endYear > maxAnalysisYear) {
+      setError(t("home.errorYearRange", { min: minAnalysisYear, max: maxAnalysisYear }));
       return;
     }
     setError("");
+    setSelectionWarning("");
     setIsLoading(true);
     try {
-      const data = await Promise.all(
-        selectedIndicators.map(async (indicator) => {
-          const series = await Promise.all(
-            selectedCountries.map(async (country) => {
-              const payload = await fetchObservations({
-                country,
-                indicator,
-                start_year: startYear,
-                end_year: endYear,
-              });
-              return { country, data: payload };
-            })
-          );
-          return { indicator, series };
-        })
-      );
+      const data = [];
+      for (const indicator of selectedIndicators) {
+        const series = [];
+        for (const country of selectedCountries) {
+          const payload = await fetchObservationsWithMeta({
+            country,
+            indicator,
+            start_year: startYear,
+            end_year: endYear,
+          });
+          series.push({ country, data: payload.data, meta: payload.meta });
+        }
+        data.push({ indicator, series });
+      }
       setDatasets(data);
     } catch (err) {
-      setError("Failed to load analytics. Check that FastAPI service is running.");
+      setError(t("home.errorLoad"));
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <main className="page">
+    <>
       <section className="hero">
         <div>
-          <p className="hero-kicker">Diploma research workspace</p>
-          <h2 className="hero-title">Compare inequality with macroeconomic pressure points.</h2>
+          <p className="hero-kicker">{t("home.heroKicker")}</p>
+          <h2 className="hero-title">{t("home.heroTitle")}</h2>
           <p className="hero-subtitle">
-            Normalize indicators across countries, align timelines, and explore correlations between
-            inequality and growth, inflation, or unemployment. Forecasts are explicitly labeled as
-            probabilistic.
+            {t("home.heroSubtitle")}
           </p>
         </div>
         <div className="hero-card">
-          <h3 className="panel-title">Data assurance</h3>
-          <ul className="text-xs text-slate-200/70 space-y-2">
-            <li>Source: World Bank catalog + planned IMF/OECD ingestion.</li>
-            <li>Historical vs derived vs forecast values are separated.</li>
-            <li>Missing data is preserved and surfaced for transparency.</li>
+          <h3 className="panel-title">{t("home.dataAssurance")}</h3>
+          <ul className="text-xs text-muted space-y-2">
+            <li>{t("home.dataSourceItem")}</li>
+            <li>{t("home.dataHistoryItem")}</li>
+            <li>{t("home.dataMissingItem")}</li>
           </ul>
         </div>
       </section>
 
-      <section className="grid lg:grid-cols-[1fr_1.2fr] gap-6">
-        <div className="space-y-6">
-          <AuthPanel />
-          <AgreementPanel />
+      <section className="panel">
+        <h3 className="panel-title">{t("home.controlsTitle")}</h3>
+        <div className="grid md:grid-cols-2 gap-6 mt-4">
+          <CountryMultiSelect
+            countries={countries}
+            selected={selectedCountries}
+            maxSelection={MAX_COUNTRIES}
+            onSelect={(next) => {
+              setSelectionWarning("");
+              setSelectedCountries(next);
+            }}
+            onLimitReached={setSelectionWarning}
+          />
+          <IndicatorMultiSelect
+            indicators={indicators}
+            selected={selectedIndicators}
+            maxSelection={MAX_INDICATORS}
+            onChange={(next) => {
+              setSelectionWarning("");
+              setSelectedIndicators(next);
+            }}
+            onLimitReached={setSelectionWarning}
+          />
         </div>
-        <div className="panel">
-          <h3 className="panel-title">Comparison Controls</h3>
-          <div className="grid md:grid-cols-2 gap-6 mt-4">
-            <CountryMultiSelect
-              countries={countries}
-              selected={selectedCountries}
-              onSelect={setSelectedCountries}
-            />
-            <IndicatorMultiSelect
-              indicators={indicators}
-              selected={selectedIndicators}
-              onChange={setSelectedIndicators}
-            />
+        <div className="grid md:grid-cols-3 gap-4 mt-6">
+          <div>
+            <label className="label">{t("home.chartType")}</label>
+            <select className="input" value={chartType} onChange={(event) => setChartType(event.target.value)}>
+              {chartTypes.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
-          <div className="grid md:grid-cols-3 gap-4 mt-6">
-            <div>
-              <label className="block text-xs uppercase tracking-widest text-slate-200/80">
-                Chart Type
-              </label>
-              <select
-                className="input"
-                value={chartType}
-                onChange={(event) => setChartType(event.target.value)}
-              >
-                {CHART_TYPES.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs uppercase tracking-widest text-slate-200/80">
-                Start Year
-              </label>
-              <input
-                className="input"
-                type="number"
-                min="1960"
-                max={currentYear}
-                value={startYear}
-                onChange={(event) => setStartYear(Number(event.target.value))}
-              />
-            </div>
-            <div>
-              <label className="block text-xs uppercase tracking-widest text-slate-200/80">
-                End Year
-              </label>
-              <input
-                className="input"
-                type="number"
-                min="1960"
-                max={currentYear}
-                value={endYear}
-                onChange={(event) => setEndYear(Number(event.target.value))}
-              />
-            </div>
+          <div>
+            <label className="label">{t("home.startYear")}</label>
+            <select
+              className="input"
+              value={startYear}
+              onChange={(event) => {
+                const nextStart = Number(event.target.value);
+                setStartYear(nextStart);
+                if (nextStart > endYear) {
+                  setEndYear(nextStart);
+                }
+              }}
+            >
+              {yearOptions.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
           </div>
-          <div className="flex items-center justify-between mt-6">
-            <button className="btn-primary" type="button" onClick={runComparison}>
-              {isLoading ? "Loading..." : "Run comparison"}
-            </button>
-            <div className="text-xs text-slate-200/70">
-              {selectedCountries.length} countries · {selectedIndicators.length} indicators
-            </div>
+          <div>
+            <label className="label">{t("home.endYear")}</label>
+            <select
+              className="input"
+              value={endYear}
+              onChange={(event) => {
+                const nextEnd = Number(event.target.value);
+                setEndYear(nextEnd);
+                if (nextEnd < startYear) {
+                  setStartYear(nextEnd);
+                }
+              }}
+            >
+              {yearOptions.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
           </div>
-          {error && <p className="text-xs text-rose-200/90 mt-3">{error}</p>}
         </div>
+        <p className="text-[11px] text-muted mt-2">
+          {t("home.availableYearRange", { min: minAnalysisYear, max: maxAnalysisYear })}
+        </p>
+        <div className="flex items-center justify-between mt-6">
+          <button className="btn-primary" type="button" onClick={runComparison}>
+            {isLoading ? t("home.loading") : t("home.runComparison")}
+          </button>
+          <div className="text-xs text-muted">
+            {t("home.countSummary", { countries: selectedCountries.length, indicators: selectedIndicators.length })}
+          </div>
+        </div>
+        {(catalogStatus.error || error) && (
+          <p className="text-xs text-rose-200/90 mt-3">{catalogStatus.error || error}</p>
+        )}
+        {selectionWarning && (
+          <p className="text-xs text-amber-700/90 dark:text-amber-200/90 mt-2">{selectionWarning}</p>
+        )}
       </section>
 
-      <ComparisonDashboard
+      <ComparisonDashboard datasets={datasets} chartType={chartType} correlationPair={correlationPair} indicators={indicators} />
+      <ChartInsightAgent
         datasets={datasets}
-        chartType={chartType}
-        correlationPair={correlationPair}
         indicators={indicators}
+        startYear={startYear}
+        endYear={endYear}
       />
-
-      <ForecastPanel
-        canAccess={Boolean(user?.agreement_accepted)}
-        countries={countries}
-        indicators={indicators}
-        defaultCountry={selectedCountries[0] || ""}
-        defaultIndicator={selectedIndicators[0] || ""}
-      />
-    </main>
+    </>
   );
 }

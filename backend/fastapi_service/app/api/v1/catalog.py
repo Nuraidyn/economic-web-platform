@@ -40,9 +40,33 @@ DEFAULT_INDICATORS = [
 @router.get("/countries", response_model=list[CountryRead])
 def list_countries(db: Session = Depends(get_db)):
     rows = db.query(Country).order_by(Country.name).all()
-    if rows:
-        return rows
-    return [CountryRead(id=index + 1, **row) for index, row in enumerate(DEFAULT_COUNTRIES)]
+    defaults_by_code = {row["code"].upper(): row["name"] for row in DEFAULT_COUNTRIES}
+    by_code: dict[str, Country | CountryRead] = {}
+    max_id = 0
+    for row in rows:
+        code = row.code.upper()
+        by_code[code] = row
+        if row.id and row.id > max_id:
+            max_id = row.id
+
+    for code, name in defaults_by_code.items():
+        if code in by_code:
+            continue
+        max_id += 1
+        by_code[code] = CountryRead(id=max_id, code=code, name=name)
+
+    result: list[CountryRead] = []
+    for code, entry in by_code.items():
+        if isinstance(entry, Country):
+            display_name = entry.name
+            if display_name == entry.code and code in defaults_by_code:
+                display_name = defaults_by_code[code]
+            result.append(CountryRead(id=entry.id, code=entry.code, name=display_name))
+        else:
+            result.append(entry)
+
+    result.sort(key=lambda item: item.name)
+    return result
 
 
 @router.get("/indicators", response_model=list[IndicatorRead])

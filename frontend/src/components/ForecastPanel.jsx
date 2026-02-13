@@ -2,25 +2,48 @@ import React, { useMemo, useState } from "react";
 import { Line } from "react-chartjs-2";
 import { Chart as ChartJS } from "chart.js/auto";
 
-import { createForecast, fetchLatestForecast, fetchObservations } from "../api/analyticsApi";
+import { createForecast, fetchLatestForecast, fetchObservationsWithMeta } from "../api/analyticsApi";
+import { useI18n } from "../context/I18nContext";
+import { useTheme } from "../context/ThemeContext";
 
-const buildForecastChart = (history, forecast) => {
-  const historyPoints = history.map((row) => ({ x: row.year, y: row.value }));
-  const forecastPoints = forecast.points.map((row) => ({ x: row.year, y: row.value }));
-  const lowerPoints = forecast.points.map((row) => ({ x: row.year, y: row.lower }));
-  const upperPoints = forecast.points.map((row) => ({ x: row.year, y: row.upper }));
+const FORECAST_HISTORY_WINDOW_YEARS = 20;
+
+const getCssVar = (name, fallback) => {
+  if (typeof window === "undefined") return fallback;
+  const value = window.getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+};
+
+const buildForecastChart = (history, forecast, labels) => {
+  const sortByYear = (left, right) => left.x - right.x;
+  const historyPoints = history
+    .filter((row) => typeof row.year === "number" && typeof row.value === "number")
+    .map((row) => ({ x: row.year, y: row.value }))
+    .sort(sortByYear);
+  const forecastPoints = forecast.points
+    .filter((row) => typeof row.year === "number" && typeof row.value === "number")
+    .map((row) => ({ x: row.year, y: row.value }))
+    .sort(sortByYear);
+  const lowerPoints = forecast.points
+    .filter((row) => typeof row.year === "number" && typeof row.lower === "number")
+    .map((row) => ({ x: row.year, y: row.lower }))
+    .sort(sortByYear);
+  const upperPoints = forecast.points
+    .filter((row) => typeof row.year === "number" && typeof row.upper === "number")
+    .map((row) => ({ x: row.year, y: row.upper }))
+    .sort(sortByYear);
 
   return {
     datasets: [
       {
-        label: "Historical",
+        label: labels.historical,
         data: historyPoints,
         borderColor: "#38bdf8",
         backgroundColor: "rgba(56,189,248,0.2)",
         tension: 0.2,
       },
       {
-        label: "Forecast",
+        label: labels.forecast,
         data: forecastPoints,
         borderColor: "#fbbf24",
         backgroundColor: "rgba(251,191,36,0.2)",
@@ -28,7 +51,7 @@ const buildForecastChart = (history, forecast) => {
         tension: 0.2,
       },
       {
-        label: "Lower bound",
+        label: labels.lowerBound,
         data: lowerPoints,
         borderColor: "rgba(248,113,113,0.6)",
         backgroundColor: "rgba(248,113,113,0.15)",
@@ -36,7 +59,7 @@ const buildForecastChart = (history, forecast) => {
         pointRadius: 0,
       },
       {
-        label: "Upper bound",
+        label: labels.upperBound,
         data: upperPoints,
         borderColor: "rgba(34,211,238,0.6)",
         backgroundColor: "rgba(34,211,238,0.15)",
@@ -111,65 +134,78 @@ export default function ForecastPanel({
   defaultCountry,
   defaultIndicator,
 }) {
+  const { theme } = useTheme();
+  const { t } = useI18n();
+  const currentYear = new Date().getFullYear();
+  const historyStartYear = Math.max(1990, currentYear - FORECAST_HISTORY_WINDOW_YEARS);
+  const historyEndYear = Math.max(1990, currentYear - 1);
   const [country, setCountry] = useState(defaultCountry || "");
   const [indicator, setIndicator] = useState(defaultIndicator || "");
   const [horizon, setHorizon] = useState(5);
   const [forecast, setForecast] = useState(null);
   const [history, setHistory] = useState([]);
+  const [historyMeta, setHistoryMeta] = useState(null);
   const [status, setStatus] = useState({ loading: false, error: "" });
 
   const canRun = canAccess && country && indicator;
 
   const handleForecast = async () => {
     if (!canRun) {
-      setStatus({ loading: false, error: "Select a country and indicator." });
+      setStatus({ loading: false, error: t("forecast.errorSelect") });
       return;
     }
     setStatus({ loading: true, error: "" });
     try {
       const [historyData, forecastData] = await Promise.all([
-        fetchObservations({
+        fetchObservationsWithMeta({
           country,
           indicator,
-          start_year: 1960,
-          end_year: new Date().getFullYear(),
+          start_year: historyStartYear,
+          end_year: historyEndYear,
         }),
         createForecast({ country, indicator, horizon_years: horizon }),
       ]);
-      setHistory(historyData);
+      setHistory(historyData.data);
+      setHistoryMeta(historyData.meta);
       setForecast(forecastData);
       setStatus({ loading: false, error: "" });
     } catch (err) {
       setStatus({
         loading: false,
-        error: "Unable to generate forecast. Ensure data is ingested and agreement accepted.",
+        error: t("forecast.errorGenerate"),
       });
     }
   };
 
   const handleLatest = async () => {
     if (!canRun) {
-      setStatus({ loading: false, error: "Select a country and indicator." });
+      setStatus({ loading: false, error: t("forecast.errorSelect") });
       return;
     }
     setStatus({ loading: true, error: "" });
     try {
-      const [historyData, forecastData] = await Promise.all([
-        fetchObservations({
-          country,
-          indicator,
-          start_year: 1960,
-          end_year: new Date().getFullYear(),
-        }),
-        fetchLatestForecast({ country, indicator }),
-      ]);
-      setHistory(historyData);
+      const historyData = await fetchObservationsWithMeta({
+        country,
+        indicator,
+        start_year: historyStartYear,
+        end_year: historyEndYear,
+      });
+
+      let forecastData = await fetchLatestForecast({ country, indicator });
+      const assumptions = String(forecastData?.assumptions || "").toLowerCase();
+      // Legacy runs (without robust preprocessing) can produce extreme, misleading values.
+      if (!assumptions.includes("winsorized")) {
+        forecastData = await createForecast({ country, indicator, horizon_years: horizon });
+      }
+
+      setHistory(historyData.data);
+      setHistoryMeta(historyData.meta);
       setForecast(forecastData);
       setStatus({ loading: false, error: "" });
     } catch (err) {
       setStatus({
         loading: false,
-        error: "No saved forecast found for this selection.",
+        error: t("forecast.errorLatest"),
       });
     }
   };
@@ -178,10 +214,17 @@ export default function ForecastPanel({
     if (!forecast) {
       return null;
     }
-    return buildForecastChart(history, forecast);
-  }, [history, forecast]);
+    return buildForecastChart(history, forecast, {
+      historical: t("forecast.chartHistorical"),
+      forecast: t("forecast.chartForecast"),
+      lowerBound: t("forecast.chartLower"),
+      upperBound: t("forecast.chartUpper"),
+    });
+  }, [history, forecast, t]);
 
   const coverage = useMemo(() => computeCoverage(history), [history]);
+  const axisColor = useMemo(() => getCssVar("--chart-axis", "#e2e8f0"), [theme]);
+  const gridColor = useMemo(() => getCssVar("--chart-grid", "rgba(148,163,184,0.2)"), [theme]);
 
   const summary = useMemo(() => {
     if (!forecast) {
@@ -211,30 +254,27 @@ export default function ForecastPanel({
     <section className="panel-wide">
       <div className="flex items-start justify-between gap-6">
         <div>
-          <h3 className="panel-title">Forecasting Studio</h3>
-          <p className="text-sm text-slate-200/80 mt-2 max-w-2xl">
-            Forecasts are probabilistic, not guaranteed. Use them for academic exploration and
-            scenario comparison rather than direct policy decisions.
+          <h3 className="panel-title">{t("forecast.title")}</h3>
+          <p className="text-sm text-muted mt-2 max-w-2xl">
+            {t("forecast.subtitle")}
           </p>
         </div>
-        <div className="text-xs uppercase tracking-[0.2em] text-amber-200/80">
-          Predictions only
+        <div className="text-xs uppercase tracking-[0.2em] text-amber-700/80 dark:text-amber-200/80">
+          {t("forecast.predictionsOnly")}
         </div>
       </div>
 
       <div className="mt-6 grid lg:grid-cols-[1.2fr_1fr] gap-6">
-        <div className="rounded-2xl border border-slate-100/10 bg-slate-900/50 p-4 space-y-4">
+        <div className="surface p-4 space-y-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs uppercase tracking-widest text-slate-200/80">
-                Country
-              </label>
+              <label className="label">{t("forecast.country")}</label>
               <select
                 className="input"
                 value={country}
                 onChange={(event) => setCountry(event.target.value)}
               >
-                <option value="">Select country</option>
+                <option value="">{t("forecast.selectCountry")}</option>
                 {countries.map((item) => (
                   <option key={item.code} value={item.code}>
                     {item.name}
@@ -243,15 +283,13 @@ export default function ForecastPanel({
               </select>
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-widest text-slate-200/80">
-                Indicator
-              </label>
+              <label className="label">{t("forecast.indicator")}</label>
               <select
                 className="input"
                 value={indicator}
                 onChange={(event) => setIndicator(event.target.value)}
               >
-                <option value="">Select indicator</option>
+                <option value="">{t("forecast.selectIndicator")}</option>
                 {indicators.map((item) => (
                   <option key={item.code} value={item.code}>
                     {item.label || item.name}
@@ -262,9 +300,7 @@ export default function ForecastPanel({
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs uppercase tracking-widest text-slate-200/80">
-                Horizon (years)
-              </label>
+              <label className="label">{t("forecast.horizon")}</label>
               <input
                 className="input"
                 type="number"
@@ -281,7 +317,7 @@ export default function ForecastPanel({
                 onClick={handleForecast}
                 disabled={!canAccess}
               >
-                {status.loading ? "Running..." : "Generate"}
+                {status.loading ? t("forecast.running") : t("forecast.generate")}
               </button>
               <button
                 className="btn-secondary"
@@ -289,46 +325,53 @@ export default function ForecastPanel({
                 onClick={handleLatest}
                 disabled={!canAccess}
               >
-                Latest run
+                {t("forecast.latestRun")}
               </button>
             </div>
           </div>
           {status.error && <p className="text-xs text-rose-200/90">{status.error}</p>}
           {!canAccess && (
-            <p className="text-xs text-amber-200/80">
-              Accept the active user agreement to unlock forecasting endpoints.
+            <p className="text-xs text-amber-700/80 dark:text-amber-200/80">
+              {t("forecast.needAgreement")}
             </p>
           )}
           {coverage && (
-            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-200/80">
-              <span className="uppercase tracking-[0.2em] text-slate-300/70">Data quality</span>
-              <span className="rounded-full border border-slate-100/20 px-3 py-1">
-                Coverage {coverage.percent}% ({coverage.actual}/{coverage.expected})
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+              <span className="uppercase tracking-[0.2em] text-faint">{t("forecast.dataQuality")}</span>
+              <span className="rounded-full border border-slate-900/10 dark:border-slate-100/20 px-3 py-1">
+                {t("forecast.coverage", {
+                  percent: coverage.percent,
+                  actual: coverage.actual,
+                  expected: coverage.expected,
+                })}
               </span>
-              {coverage.percent < 60 && (
-                <span className="rounded-full border border-rose-200/40 bg-rose-500/20 px-3 py-1 text-rose-100">
-                  Low coverage
+              {historyMeta?.source && (
+                <span className="rounded-full border border-slate-900/10 dark:border-slate-100/20 px-3 py-1">
+                  {t("forecast.source", { source: historyMeta.source })}
                 </span>
               )}
-              <span className="text-[11px] text-slate-300/70">
+              {coverage.percent < 60 && (
+                <span className="rounded-full border border-rose-200/40 bg-rose-500/20 px-3 py-1 text-rose-100">
+                  {t("forecast.lowCoverage")}
+                </span>
+              )}
+              <span className="text-[11px] text-faint">
                 {coverage.minYear}–{coverage.maxYear}
               </span>
             </div>
           )}
         </div>
 
-        <div className="rounded-2xl border border-amber-200/30 bg-amber-200/10 p-4 text-sm text-amber-50">
-          <p className="font-semibold mb-2">Academic disclaimer</p>
+        <div className="rounded-2xl border border-amber-300/45 bg-amber-100/55 dark:border-amber-200/30 dark:bg-amber-200/10 p-4 text-sm text-amber-900 dark:text-amber-50">
+          <p className="font-semibold mb-2">{t("forecast.disclaimerTitle")}</p>
           <p className="leading-relaxed">
-            Forecasts are generated from historical indicators (Gini, GDP, inflation, employment)
-            and reflect model assumptions. The platform is not responsible for decisions based on
-            predicted values.
+            {t("forecast.disclaimerText")}
           </p>
           {forecast && (
-            <div className="mt-4 text-xs text-amber-100/80 space-y-1">
-              <p>Model: {forecast.model_name}</p>
-              <p>Assumptions: {forecast.assumptions}</p>
-              <p>Metrics: {forecast.metrics}</p>
+            <div className="mt-4 text-xs text-amber-900/80 dark:text-amber-100/80 space-y-1">
+              <p>{t("forecast.model", { value: forecast.model_name })}</p>
+              <p>{t("forecast.assumptions", { value: forecast.assumptions })}</p>
+              <p>{t("forecast.metrics", { value: forecast.metrics })}</p>
             </div>
           )}
         </div>
@@ -336,28 +379,28 @@ export default function ForecastPanel({
 
       {forecast && summary && (
         <div className="mt-6 grid md:grid-cols-3 gap-4">
-          <div className="rounded-2xl border border-slate-100/15 bg-slate-900/50 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-300/70">Baseline</p>
-            <p className="text-xl font-semibold text-white mt-2">
+          <div className="surface p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-faint">{t("forecast.baseline")}</p>
+            <p className="text-xl font-semibold mt-2">
               {summary.lastHistory.value.toFixed(2)}
             </p>
-            <p className="text-xs text-slate-200/70">Last historical value</p>
+            <p className="text-xs text-muted">{t("forecast.lastHistorical")}</p>
           </div>
-          <div className="rounded-2xl border border-slate-100/15 bg-slate-900/50 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-300/70">Change</p>
-            <p className="text-xl font-semibold text-white mt-2">
+          <div className="surface p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-faint">{t("forecast.change")}</p>
+            <p className="text-xl font-semibold mt-2">
               {summary.absoluteChange.toFixed(2)}
             </p>
-            <p className="text-xs text-slate-200/70">
-              Avg annual: {summary.avgAnnualChange.toFixed(2)}
+            <p className="text-xs text-muted">
+              {t("forecast.avgAnnual", { value: summary.avgAnnualChange.toFixed(2) })}
             </p>
           </div>
-          <div className="rounded-2xl border border-slate-100/15 bg-slate-900/50 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-300/70">Percent</p>
-            <p className="text-xl font-semibold text-white mt-2">
-              {summary.percentChange == null ? "n/a" : `${summary.percentChange.toFixed(2)}%`}
+          <div className="surface p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-faint">{t("forecast.percent")}</p>
+            <p className="text-xl font-semibold mt-2">
+              {summary.percentChange == null ? t("common.na") : `${summary.percentChange.toFixed(2)}%`}
             </p>
-            <p className="text-xs text-slate-200/70">Horizon total shift</p>
+            <p className="text-xs text-muted">{t("forecast.horizonShift")}</p>
           </div>
         </div>
       )}
@@ -369,10 +412,19 @@ export default function ForecastPanel({
             options={{
               responsive: true,
               maintainAspectRatio: false,
-              plugins: { legend: { position: "bottom", labels: { color: "#e2e8f0" } } },
+              plugins: { legend: { position: "bottom", labels: { color: axisColor } } },
               scales: {
-                x: { ticks: { color: "#e2e8f0" }, grid: { color: "rgba(148,163,184,0.2)" } },
-                y: { ticks: { color: "#e2e8f0" }, grid: { color: "rgba(148,163,184,0.2)" } },
+                x: {
+                  type: "linear",
+                  ticks: { color: axisColor, precision: 0 },
+                  title: { display: true, text: t("chart.year"), color: axisColor },
+                  grid: { color: gridColor },
+                },
+                y: {
+                  ticks: { color: axisColor },
+                  title: { display: true, text: t("chart.value"), color: axisColor },
+                  grid: { color: gridColor },
+                },
               },
             }}
           />
@@ -386,7 +438,7 @@ export default function ForecastPanel({
             type="button"
             onClick={() => exportForecastCsv(history, forecast, coverage)}
           >
-            Export CSV
+            {t("comparison.exportCsv")}
           </button>
         </div>
       )}

@@ -1,6 +1,32 @@
 import React, { useMemo } from "react";
 
 import ChartDisplay from "./ChartDisplay";
+import { useI18n } from "../context/I18nContext";
+
+const exportIndicatorCsv = (entry) => {
+  const years = new Set();
+  entry.series.forEach((series) => series.data.forEach((row) => years.add(row.year)));
+  const sortedYears = Array.from(years).sort((a, b) => a - b);
+  const countries = entry.series.map((row) => row.country);
+  const rows = [["year", ...countries]];
+
+  sortedYears.forEach((year) => {
+    const values = entry.series.map((series) => {
+      const found = series.data.find((row) => row.year === year);
+      return found?.value ?? "";
+    });
+    rows.push([year, ...values]);
+  });
+
+  const csv = rows.map((row) => row.join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `comparison_${entry.indicator}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+};
 
 const computeCorrelation = (seriesA, seriesB) => {
   const mapA = new Map(seriesA.map((row) => [row.year, row.value]));
@@ -32,6 +58,7 @@ const computeCorrelation = (seriesA, seriesB) => {
 };
 
 export default function ComparisonDashboard({ datasets, chartType, correlationPair, indicators }) {
+  const { t } = useI18n();
   const indicatorLabel = (code) =>
     indicators.find((item) => item.code === code)?.label || code;
 
@@ -62,8 +89,8 @@ export default function ComparisonDashboard({ datasets, chartType, correlationPa
   if (!datasets.length) {
     return (
       <section className="panel-wide">
-        <p className="text-sm text-slate-200/70">
-          Select countries and indicators, then run the comparison to populate charts.
+        <p className="text-sm text-muted">
+          {t("comparison.empty")}
         </p>
       </section>
     );
@@ -73,33 +100,41 @@ export default function ComparisonDashboard({ datasets, chartType, correlationPa
     <section className="space-y-8">
       {datasets.map((entry) => (
         <div className="panel-wide" key={entry.indicator}>
-          <h3 className="panel-title">{indicatorLabel(entry.indicator)}</h3>
-          <p className="text-xs text-slate-200/70 mb-4">
-            Historical series by country. Missing values are left blank to preserve data integrity.
-          </p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="panel-title">{indicatorLabel(entry.indicator)}</h3>
+              <p className="text-xs text-muted mb-4">
+                {t("comparison.historicalByCountry")}
+              </p>
+            </div>
+            <button className="btn-secondary" type="button" onClick={() => exportIndicatorCsv(entry)}>
+              {t("comparison.exportCsv")}
+            </button>
+          </div>
           <ChartDisplay datasets={entry.series} chartType={chartType} viewMode="timeSeries" />
         </div>
       ))}
 
       {correlationTable.length > 0 && (
         <div className="panel-wide">
-          <h3 className="panel-title">Correlation Snapshot</h3>
-          <p className="text-xs text-slate-200/70 mb-4">
-            Pearson correlation between {indicatorLabel(correlationPair[0])} and
-            {" "}
-            {indicatorLabel(correlationPair[1])} on overlapping years.
+          <h3 className="panel-title">{t("comparison.correlationSnapshot")}</h3>
+          <p className="text-xs text-muted mb-4">
+            {t("comparison.correlationSubtitle", {
+              indicatorA: indicatorLabel(correlationPair[0]),
+              indicatorB: indicatorLabel(correlationPair[1]),
+            })}
           </p>
           <div className="grid md:grid-cols-2 gap-4">
             {correlationTable.map((row) => (
               <div
                 key={row.country}
-                className="rounded-2xl border border-slate-100/20 bg-slate-900/50 p-4"
+                className="surface p-4"
               >
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-300/70">
+                <p className="text-xs uppercase tracking-[0.2em] text-faint">
                   {row.country}
                 </p>
-                <p className="text-2xl font-semibold text-white mt-2">
-                  {row.correlation == null ? "n/a" : row.correlation.toFixed(2)}
+                <p className="text-2xl font-semibold mt-2">
+                  {row.correlation == null ? t("common.na") : row.correlation.toFixed(2)}
                 </p>
               </div>
             ))}

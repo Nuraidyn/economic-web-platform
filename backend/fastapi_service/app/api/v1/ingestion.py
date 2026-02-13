@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.deps import require_roles
+from app.deps import require_agreement, require_roles
 from app.schemas import IngestionRequest
 from app.services.ingestion import ingest_indicator
 
@@ -13,6 +13,7 @@ router = APIRouter(tags=["ingestion"])
 def ingest_world_bank(
     payload: IngestionRequest,
     db: Session = Depends(get_db),
+    __: dict = Depends(require_agreement),
     _: dict = Depends(require_roles("researcher", "admin")),
 ):
     try:

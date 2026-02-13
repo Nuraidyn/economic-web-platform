@@ -1,5 +1,9 @@
+import React, { useMemo, useRef } from "react";
 import { Line, Bar, Scatter } from "react-chartjs-2";
 import { Chart as ChartJS } from "chart.js/auto";
+
+import { useI18n } from "../context/I18nContext";
+import { useTheme } from "../context/ThemeContext";
 
 const palette = [
   { border: "#2563eb", bg: "rgba(37,99,235,0.3)" },
@@ -8,17 +12,44 @@ const palette = [
   { border: "#9333ea", bg: "rgba(147,51,234,0.3)" },
   { border: "#eab308", bg: "rgba(234,179,8,0.3)" },
 ];
-const axisColor = "rgba(226, 232, 240, 0.7)";
-const gridColor = "rgba(148, 163, 184, 0.2)";
+
+const getCssVar = (name, fallback) => {
+  if (typeof window === "undefined") return fallback;
+  const value = window.getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+};
 
 export default function ChartDisplay({ datasets, chartType, viewMode }) {
+  const { theme } = useTheme();
+  const { t } = useI18n();
+  const chartRef = useRef(null);
+  const axisColor = useMemo(() => getCssVar("--chart-axis", "rgba(226, 232, 240, 0.7)"), [theme]);
+  const gridColor = useMemo(() => getCssVar("--chart-grid", "rgba(148, 163, 184, 0.2)"), [theme]);
+
+  const downloadName = useMemo(() => {
+    if (!datasets?.length) return "chart";
+    const suffix = viewMode === "lorenz" ? "lorenz" : "series";
+    const countries = datasets.map((item) => item.country).filter(Boolean).slice(0, 3).join("-");
+    return `${suffix}_${countries || "data"}`;
+  }, [datasets, viewMode]);
+
+  const handleDownload = () => {
+    const chart = chartRef.current;
+    const url = chart?.toBase64Image?.();
+    if (!url) return;
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${downloadName}.png`;
+    link.click();
+  };
+
   if (!datasets || datasets.length === 0) {
-    return <p className="text-gray-500 text-center mt-4">Select filters and fetch data.</p>;
+    return <p className="text-muted text-center mt-4">{t("chart.selectFilters")}</p>;
   }
 
   if (viewMode === "lorenz") {
     const equalityDataset = {
-      label: "Line of equality",
+      label: t("chart.lineOfEquality"),
       data: [
         { x: 0, y: 0 },
         { x: 1, y: 1 },
@@ -59,7 +90,11 @@ export default function ChartDisplay({ datasets, chartType, viewMode }) {
           callbacks: {
             label: (context) => {
               const { x, y } = context.parsed;
-              return `${context.dataset.label}: ${(x * 100).toFixed(0)}% population, ${(y * 100).toFixed(1)}% income`;
+              return t("chart.tooltipLorenz", {
+                label: context.dataset.label,
+                population: `${(x * 100).toFixed(0)}%`,
+                income: `${(y * 100).toFixed(1)}%`,
+              });
             },
           },
         },
@@ -74,7 +109,7 @@ export default function ChartDisplay({ datasets, chartType, viewMode }) {
             callback: (value) => `${value * 100}%`,
             color: axisColor,
           },
-          title: { display: true, text: "Cumulative population share", color: axisColor },
+          title: { display: true, text: t("chart.populationShare"), color: axisColor },
           grid: { color: gridColor },
         },
         y: {
@@ -85,7 +120,7 @@ export default function ChartDisplay({ datasets, chartType, viewMode }) {
             callback: (value) => `${value * 100}%`,
             color: axisColor,
           },
-          title: { display: true, text: "Cumulative income share", color: axisColor },
+          title: { display: true, text: t("chart.incomeShare"), color: axisColor },
           grid: { color: gridColor },
         },
       },
@@ -93,7 +128,12 @@ export default function ChartDisplay({ datasets, chartType, viewMode }) {
 
     return (
       <div className="chart-card">
-        <Scatter data={lorenzData} options={lorenzOptions} />
+        <div className="flex items-center justify-end mb-2">
+          <button className="btn-secondary" type="button" onClick={handleDownload}>
+            {t("chart.downloadPng")}
+          </button>
+        </div>
+        <Scatter ref={chartRef} data={lorenzData} options={lorenzOptions} />
       </div>
     );
   }
@@ -145,16 +185,16 @@ export default function ChartDisplay({ datasets, chartType, viewMode }) {
     scales: isScatter
       ? {
           x: {
-            title: { display: true, text: "Year" },
+            title: { display: true, text: t("chart.year"), color: axisColor },
             type: "linear",
             ticks: { precision: 0, color: axisColor },
             grid: { color: gridColor },
           },
-          y: { title: { display: true, text: "Value", color: axisColor }, ticks: { color: axisColor }, grid: { color: gridColor } },
+          y: { title: { display: true, text: t("chart.value"), color: axisColor }, ticks: { color: axisColor }, grid: { color: gridColor } },
         }
       : {
-          x: { title: { display: true, text: "Year", color: axisColor }, ticks: { color: axisColor }, grid: { color: gridColor } },
-          y: { title: { display: true, text: "Value", color: axisColor }, ticks: { color: axisColor }, grid: { color: gridColor } },
+          x: { title: { display: true, text: t("chart.year"), color: axisColor }, ticks: { color: axisColor }, grid: { color: gridColor } },
+          y: { title: { display: true, text: t("chart.value"), color: axisColor }, ticks: { color: axisColor }, grid: { color: gridColor } },
         },
   };
 
@@ -162,7 +202,12 @@ export default function ChartDisplay({ datasets, chartType, viewMode }) {
 
   return (
     <div className="chart-card">
-      <ChartComponent data={chartData} options={options} />
+      <div className="flex items-center justify-end mb-2">
+        <button className="btn-secondary" type="button" onClick={handleDownload}>
+          {t("chart.downloadPng")}
+        </button>
+      </div>
+      <ChartComponent ref={chartRef} data={chartData} options={options} />
     </div>
   );
 }
