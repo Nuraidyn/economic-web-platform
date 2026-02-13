@@ -14,6 +14,10 @@ class ForecastResult:
     points: List[ForecastPoint]
 
 
+MAX_TRAINING_POINTS = 25
+MIN_TRAINING_POINTS = 8
+
+
 def prepare_series(db: Session, country_code: str, indicator_code: str):
     country = db.query(Country).filter(Country.code == country_code.upper()).first()
     indicator = db.query(Indicator).filter(Indicator.code == indicator_code).first()
@@ -27,6 +31,34 @@ def prepare_series(db: Session, country_code: str, indicator_code: str):
         .all()
     )
     return country, indicator, series
+
+
+def sanitize_training_series(years, values, max_points: int = MAX_TRAINING_POINTS):
+    """
+    Prepare model input for a stable trend:
+    - keep chronological order,
+    - use only recent points (last `max_points`),
+    - winsorize values on 5th/95th percentile to reduce outlier impact.
+    """
+    paired = sorted(
+        [(int(year), float(value)) for year, value in zip(years, values) if value is not None],
+        key=lambda item: item[0],
+    )
+    if len(paired) > max_points:
+        paired = paired[-max_points:]
+
+    if not paired:
+        return [], []
+
+    y = np.array([value for _, value in paired], dtype=float)
+    if len(y) >= MIN_TRAINING_POINTS:
+        lower = float(np.percentile(y, 5))
+        upper = float(np.percentile(y, 95))
+        if lower <= upper:
+            y = np.clip(y, lower, upper)
+
+    x = [year for year, _ in paired]
+    return x, [float(value) for value in y.tolist()]
 
 
 def linear_forecast(values, years, horizon):
@@ -78,11 +110,12 @@ def run_forecast(
     model_name: str = "linear_trend",
 ):
     country, indicator, series = prepare_series(db, country_code, indicator_code)
-    if not series or len(series) < 8:
+    if not series or len(series) < MIN_TRAINING_POINTS:
         return None
     values = [row.value for row in series if row.value is not None]
     years = [row.year for row in series if row.value is not None]
-    if len(values) < 8:
+    years, values = sanitize_training_series(years, values)
+    if len(values) < MIN_TRAINING_POINTS:
         return None
     future_years, predictions, std = linear_forecast(values, years, horizon)
     backtest = backtest_linear(values, years, test_points=5) or {}
@@ -94,7 +127,10 @@ def run_forecast(
         target_indicator_id=indicator.id,
         model_name=model_name,
         horizon_years=horizon,
-        assumptions="Linear trend on historical values; residual std used for intervals.",
+        assumptions=(
+            "Linear trend on recent historical values (up to last 25 years); "
+            "training values winsorized at 5th/95th percentile; residual std used for intervals."
+        ),
         metrics=metrics,
     )
     db.add(run)

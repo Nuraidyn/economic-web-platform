@@ -13,6 +13,8 @@ Full-stack учебный проект дипломной тематики «Dev
 - Inequality trend: загрузка временного ряда Gini (`SI.POV.GINI`) и сравнение трендов по странам (в ветке `feature/market-ready-platform`).
 - Экспорт: CSV для сравнений и прогнозов + “Download PNG” для графиков (в ветке `feature/market-ready-platform`).
 - Saved presets: сохранение/загрузка наборов фильтров (страны/индикаторы/годы/тип графика) в Django (в ветке `feature/market-ready-platform`).
+- AI Chart Agent: объяснение графиков по пользовательскому вопросу через FastAPI endpoint `/api/v1/analytics/chart/explain` (OpenAI/Gemini + локальный fallback).
+- Интерфейс поддерживает переключение языка: `RU / KZ / EN`; AI агент отвечает на языке, выбранном в UI.
 
 ## Быстрый запуск (1 команда)
 
@@ -64,6 +66,38 @@ npm install
 npm run dev
 ```
 
+## Автоматические тесты
+
+Проект сейчас покрыт интеграционными тестами для обоих backend-сервисов:
+
+- `backend/django_service/core/tests/test_auth_and_agreements.py`
+- `backend/django_service/core/tests/test_presets_and_admin.py`
+- `backend/fastapi_service/tests/test_api_endpoints.py`
+- `frontend/src/components/__tests__/CountryMultiSelect.test.jsx`
+- `frontend/src/components/__tests__/IndicatorMultiSelect.test.jsx`
+- `frontend/src/components/__tests__/ChartInsightAgent.test.jsx`
+- `frontend/src/context/__tests__/AnalysisContext.test.jsx`
+
+Запуск:
+
+**Django tests**
+```bash
+cd backend/django_service
+./.venv/bin/python manage.py test core.tests -v 2
+```
+
+**FastAPI tests**
+```bash
+cd backend/fastapi_service
+./.venv/bin/python -m unittest discover -s tests -p "test_*.py" -v
+```
+
+**Frontend tests**
+```bash
+cd frontend
+npm test
+```
+
 ## Конфигурация (.env)
 
 **Frontend**
@@ -91,6 +125,16 @@ npm run dev
 - `RATE_LIMIT_ENABLED` (по умолчанию `1`)
 - `RATE_LIMIT_RPS` (по умолчанию `5`)
 - `RATE_LIMIT_BURST` (по умолчанию `20`)
+- `CHART_EXPLAIN_PROVIDER` (по умолчанию `openai`; варианты: `openai`, `gemini`, `auto`)
+- `OPENAI_API_KEY` (для провайдера `openai`; если не задан, AI agent вернет локальное аналитическое summary)
+- `OPENAI_MODEL` (по умолчанию `gpt-4o-mini`)
+- `OPENAI_BASE_URL` (по умолчанию `https://api.openai.com/v1`)
+- `OPENAI_TIMEOUT_SECONDS` (по умолчанию `20`)
+- `GEMINI_API_KEY` (для провайдера `gemini`)
+- `GEMINI_MODEL` (по умолчанию `gemini-2.5-flash`)
+- `GEMINI_BASE_URL` (по умолчанию `https://generativelanguage.googleapis.com/v1beta`)
+- `CHART_EXPLAIN_MAX_COUNTRIES` (по умолчанию `4`)
+- `CHART_EXPLAIN_MAX_INDICATORS` (по умолчанию `4`)
 
 По умолчанию Django и FastAPI используют разные SQLite файлы. Если нужна общая БД, укажите одинаковый сервер/базу в Django и `DATABASE_URL` в FastAPI.
 
@@ -123,5 +167,3 @@ python scripts/ingest_baseline.py --token YOUR_JWT
 ```
 
 Список базовых стран и индикаторов: `backend/fastapi_service/app/data/baseline.py`.
-
-

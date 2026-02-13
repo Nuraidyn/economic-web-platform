@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import Query
+
+MIN_SAFE_YEAR = 1990
+MAX_SAFE_YEAR = datetime.now(timezone.utc).year
 
 CountryCodeParam = Annotated[
     str,
@@ -26,5 +30,5 @@ IndicatorCodeParam = Annotated[
     ),
 ]
 
-YearParam = Annotated[int, Query(..., ge=1960, le=2100)]
-OptionalYearParam = Annotated[int | None, Query(ge=1960, le=2100)]
+YearParam = Annotated[int, Query(..., ge=MIN_SAFE_YEAR, le=MAX_SAFE_YEAR)]
+OptionalYearParam = Annotated[int | None, Query(ge=MIN_SAFE_YEAR, le=MAX_SAFE_YEAR)]

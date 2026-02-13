@@ -54,3 +54,8 @@ export const fetchLatestForecast = async ({ country, indicator }) => {
   const res = await fastapiClient.get("/forecast/latest", { params: { country, indicator } });
   return res.data;
 };
+
+export const explainChart = async (payload) => {
+  const res = await fastapiClient.post("/analytics/chart/explain", payload);
+  return res.data;
+};

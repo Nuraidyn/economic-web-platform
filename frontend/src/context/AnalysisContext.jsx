@@ -4,9 +4,20 @@ import { listCountries, listIndicators } from "../api/analyticsApi";
 import { DEFAULT_COUNTRIES, DEFAULT_INDICATORS } from "../data/indicatorCatalog";
 
 const AnalysisContext = createContext(null);
+const MIN_ANALYSIS_YEAR = 1990;
 
 export function AnalysisProvider({ children }) {
   const currentYear = new Date().getFullYear();
+  const maxAnalysisYear = Math.max(MIN_ANALYSIS_YEAR, currentYear - 1);
+
+  const clampYear = useCallback((value) => {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) {
+      return MIN_ANALYSIS_YEAR;
+    }
+    const integer = Math.trunc(numeric);
+    return Math.min(maxAnalysisYear, Math.max(MIN_ANALYSIS_YEAR, integer));
+  }, [maxAnalysisYear]);
 
   const [countries, setCountries] = useState(DEFAULT_COUNTRIES);
   const [indicators, setIndicators] = useState(DEFAULT_INDICATORS);
@@ -15,8 +26,16 @@ export function AnalysisProvider({ children }) {
   const [selectedCountries, setSelectedCountries] = useState([]);
   const [selectedIndicators, setSelectedIndicators] = useState([]);
   const [chartType, setChartType] = useState("line");
-  const [startYear, setStartYear] = useState(Math.max(1990, currentYear - 20));
-  const [endYear, setEndYear] = useState(currentYear - 1);
+  const [startYear, setStartYearState] = useState(clampYear(Math.max(MIN_ANALYSIS_YEAR, currentYear - 20)));
+  const [endYear, setEndYearState] = useState(maxAnalysisYear);
+
+  const setStartYear = useCallback((value) => {
+    setStartYearState(clampYear(value));
+  }, [clampYear]);
+
+  const setEndYear = useCallback((value) => {
+    setEndYearState(clampYear(value));
+  }, [clampYear]);
 
   const loadCatalog = useCallback(async () => {
     setCatalogStatus({ loading: true, error: "" });
@@ -59,9 +78,16 @@ export function AnalysisProvider({ children }) {
     if (Array.isArray(payload.selectedCountries)) setSelectedCountries(payload.selectedCountries);
     if (Array.isArray(payload.selectedIndicators)) setSelectedIndicators(payload.selectedIndicators);
     if (typeof payload.chartType === "string") setChartType(payload.chartType);
-    if (typeof payload.startYear === "number") setStartYear(payload.startYear);
-    if (typeof payload.endYear === "number") setEndYear(payload.endYear);
-  }, []);
+    const nextStart = typeof payload.startYear === "number" ? clampYear(payload.startYear) : startYear;
+    const nextEnd = typeof payload.endYear === "number" ? clampYear(payload.endYear) : endYear;
+    if (nextStart <= nextEnd) {
+      setStartYear(nextStart);
+      setEndYear(nextEnd);
+      return;
+    }
+    setStartYear(nextEnd);
+    setEndYear(nextStart);
+  }, [clampYear, endYear, setEndYear, setStartYear, startYear]);
 
   const value = useMemo(
     () => ({
@@ -78,6 +104,8 @@ export function AnalysisProvider({ children }) {
       setStartYear,
       endYear,
       setEndYear,
+      minAnalysisYear: MIN_ANALYSIS_YEAR,
+      maxAnalysisYear,
       presetPayload,
       applyPresetPayload,
       reloadCatalog: loadCatalog,
@@ -91,6 +119,7 @@ export function AnalysisProvider({ children }) {
       chartType,
       startYear,
       endYear,
+      maxAnalysisYear,
       presetPayload,
       applyPresetPayload,
       loadCatalog,
@@ -109,4 +138,3 @@ export function useAnalysis() {
 }
 
 export default AnalysisContext;
-

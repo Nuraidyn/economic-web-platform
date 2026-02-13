@@ -1,11 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.v1.params import CountryCodeParam, IndicatorCodeParam, OptionalYearParam, YearParam
 from app.db import get_db
 from app.deps import require_agreement
-from app.schemas import CorrelationResponse, GiniResponse, LorenzResponse
+from app.schemas import (
+    ChartExplainRequest,
+    ChartExplainResponse,
+    CorrelationResponse,
+    GiniResponse,
+    LorenzResponse,
+)
 from app.services.analytics import get_lorenz_segments, get_or_create_lorenz_result
+from app.services.chart_explainer import explain_chart as explain_chart_service
 from app.services.correlation import correlation_for_country
 
 router = APIRouter(tags=["analytics"])
@@ -61,3 +68,11 @@ def correlation(
     if not result:
         raise HTTPException(status_code=404, detail="Correlation not available")
     return CorrelationResponse(**result)
+
+
+@router.post("/analytics/chart/explain", response_model=ChartExplainResponse)
+def explain_chart(payload: ChartExplainRequest):
+    try:
+        return explain_chart_service(payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc

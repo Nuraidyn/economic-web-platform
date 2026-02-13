@@ -1,9 +1,21 @@
 import React, { useContext, useState } from "react";
 
 import AuthContext from "../context/AuthContext";
+import { useI18n } from "../context/I18nContext";
 
-export default function AuthPanel() {
+const translateAuthError = (message, t) => {
+  if (!message) return "";
+  const map = {
+    "Agreement unavailable.": "auth.agreementUnavailable",
+    "Invalid credentials.": "auth.invalidCredentials",
+    "Session expired.": "auth.sessionExpired",
+  };
+  return map[message] ? t(map[message]) : message;
+};
+
+export default function AuthPanel({ onAuthSuccess }) {
   const { user, authStatus, login, register, logout, agreement } = useContext(AuthContext);
+  const { t } = useI18n();
   const [mode, setMode] = useState("login");
   const [formState, setFormState] = useState({
     username: "",
@@ -30,7 +42,9 @@ export default function AuthPanel() {
         password: formState.password,
       });
       if (!result.ok) {
-        setMessage("Login failed. Check credentials.");
+        setMessage(t("auth.loginFailed"));
+      } else {
+        onAuthSuccess?.();
       }
     } else {
       const result = await register({
@@ -40,9 +54,9 @@ export default function AuthPanel() {
         accept_agreement: formState.acceptAgreement,
       });
       if (!result.ok) {
-        setMessage("Registration failed. Review the form and try again.");
+        setMessage(t("auth.registrationFailed"));
       } else {
-        setMessage("Registration successful. You can log in now.");
+        setMessage(t("auth.registrationSuccess"));
         setMode("login");
       }
     }
@@ -51,14 +65,19 @@ export default function AuthPanel() {
   if (user) {
     return (
       <div className="panel">
-        <h3 className="panel-title">Session</h3>
+        <h3 className="panel-title">{t("auth.session")}</h3>
         <div className="space-y-2 text-sm text-muted">
-          <p>
-            Signed in as <span className="font-semibold">{user.username}</span>
-          </p>
+          <p>{t("auth.signedInAs", { username: user.username })}</p>
           <p className="uppercase tracking-[0.2em] text-xs text-faint">{user.role}</p>
-          <button className="btn-secondary" type="button" onClick={logout}>
-            Sign out
+          <button
+            className="btn-secondary"
+            type="button"
+            onClick={() => {
+              logout();
+              onAuthSuccess?.();
+            }}
+          >
+            {t("auth.signOut")}
           </button>
         </div>
       </div>
@@ -68,26 +87,26 @@ export default function AuthPanel() {
   return (
     <div className="panel">
       <div className="flex items-center justify-between">
-        <h3 className="panel-title">Access</h3>
+        <h3 className="panel-title">{t("auth.access")}</h3>
         <div className="flex gap-2 text-xs">
           <button
             type="button"
             onClick={() => setMode("login")}
             className={mode === "login" ? "tab-active" : "tab"}
           >
-            Login
+            {t("auth.login")}
           </button>
           <button
             type="button"
             onClick={() => setMode("register")}
             className={mode === "register" ? "tab-active" : "tab"}
           >
-            Register
+            {t("auth.register")}
           </button>
         </div>
       </div>
       <form onSubmit={handleSubmit} className="space-y-3 mt-4">
-        <label className="label">Username</label>
+        <label className="label">{t("auth.username")}</label>
         <input
           className="input"
           name="username"
@@ -97,7 +116,7 @@ export default function AuthPanel() {
         />
         {mode === "register" && (
           <>
-            <label className="label">Email</label>
+            <label className="label">{t("auth.email")}</label>
             <input
               className="input"
               type="email"
@@ -107,7 +126,7 @@ export default function AuthPanel() {
             />
           </>
         )}
-        <label className="label">Password</label>
+        <label className="label">{t("auth.password")}</label>
         <input
           className="input"
           type="password"
@@ -124,14 +143,14 @@ export default function AuthPanel() {
               checked={formState.acceptAgreement}
               onChange={handleChange}
             />
-            I agree to the {agreement.title}
+            {t("auth.agreeTo", { title: agreement.title })}
           </label>
         )}
         <button className="btn-primary" type="submit" disabled={authStatus.loading}>
-          {authStatus.loading ? "Processing..." : mode === "login" ? "Sign in" : "Create account"}
+          {authStatus.loading ? t("auth.processing") : mode === "login" ? t("auth.signIn") : t("auth.createAccount")}
         </button>
         {(authStatus.error || message) && (
-          <p className="text-xs text-rose-200/90">{authStatus.error || message}</p>
+          <p className="text-xs text-rose-200/90">{translateAuthError(authStatus.error, t) || message}</p>
         )}
       </form>
     </div>

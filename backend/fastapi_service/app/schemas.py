@@ -163,3 +163,33 @@ class GiniRankingRow(BaseModel):
     year: int
     value: float | None = None
 
+
+class ChartExplainPoint(BaseModel):
+    year: int
+    value: float | None = None
+
+
+class ChartExplainSeries(BaseModel):
+    country: str
+    data: list[ChartExplainPoint]
+
+
+class ChartExplainDataset(BaseModel):
+    indicator: str
+    indicator_label: str | None = None
+    series: list[ChartExplainSeries]
+
+
+class ChartExplainRequest(BaseModel):
+    question: str
+    datasets: list[ChartExplainDataset]
+    language: str | None = None
+    start_year: int | None = None
+    end_year: int | None = None
+
+
+class ChartExplainResponse(BaseModel):
+    answer: str
+    provider: str
+    model: str | None = None
+    warning: str | None = None

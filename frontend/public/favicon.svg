@@ -1,0 +1,72 @@
+<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg_main" x1="18" y1="14" x2="146" y2="148" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#020617" />
+      <stop offset="0.52" stop-color="#0F1E4D" />
+      <stop offset="1" stop-color="#0EA5E9" />
+    </linearGradient>
+    <radialGradient id="bg_glow_top" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(120 34) rotate(126.2) scale(78.6 92.2)">
+      <stop stop-color="#38BDF8" stop-opacity="0.42" />
+      <stop offset="1" stop-color="#38BDF8" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="bg_glow_bottom" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(35 126) rotate(24.11) scale(72.4 64.8)">
+      <stop stop-color="#F59E0B" stop-opacity="0.34" />
+      <stop offset="1" stop-color="#F59E0B" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="curve_grad" x1="34" y1="124" x2="124" y2="34" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7DD3FC" />
+      <stop offset="0.55" stop-color="#38BDF8" />
+      <stop offset="1" stop-color="#22D3EE" />
+    </linearGradient>
+    <linearGradient id="bar_grad" x1="27" y1="124" x2="78" y2="76" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F59E0B" />
+      <stop offset="1" stop-color="#FB7185" />
+    </linearGradient>
+    <filter id="card_shadow" x="0" y="2" width="160" height="160" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix" />
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+      <feOffset dy="4" />
+      <feGaussianBlur stdDeviation="3.5" />
+      <feComposite in2="hardAlpha" operator="out" />
+      <feColorMatrix type="matrix" values="0 0 0 0 0.01 0 0 0 0 0.06 0 0 0 0 0.18 0 0 0 0.35 0" />
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_1" />
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_1" result="shape" />
+    </filter>
+    <filter id="curve_glow" x="26" y="28" width="106" height="104" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix" />
+      <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
+      <feGaussianBlur stdDeviation="2.8" result="effect1_foregroundBlur_1_1" />
+    </filter>
+    <clipPath id="clip_card">
+      <rect x="8" y="8" width="144" height="144" rx="34" />
+    </clipPath>
+  </defs>
+
+  <g filter="url(#card_shadow)">
+    <g clip-path="url(#clip_card)">
+      <rect x="8" y="8" width="144" height="144" rx="34" fill="url(#bg_main)" />
+      <rect x="8" y="8" width="144" height="144" rx="34" fill="url(#bg_glow_top)" />
+      <rect x="8" y="8" width="144" height="144" rx="34" fill="url(#bg_glow_bottom)" />
+
+      <path d="M24 100H136M24 84H136M24 68H136M24 52H136" stroke="#E2E8F0" stroke-opacity="0.11" stroke-width="1.1" />
+      <path d="M38 124V32M54 124V32M70 124V32M86 124V32" stroke="#E2E8F0" stroke-opacity="0.08" stroke-width="1" />
+
+      <rect x="28" y="98" width="10" height="26" rx="3" fill="url(#bar_grad)" fill-opacity="0.95" />
+      <rect x="44" y="89" width="10" height="35" rx="3" fill="url(#bar_grad)" fill-opacity="0.8" />
+      <rect x="60" y="79" width="10" height="45" rx="3" fill="url(#bar_grad)" fill-opacity="0.64" />
+
+      <path d="M34 124L124 34" stroke="#DBEAFE" stroke-opacity="0.48" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="7 7" />
+
+      <g filter="url(#curve_glow)">
+        <path d="M34 124C49 116 63 103 78 87C94 70 109 51 124 34" stroke="url(#curve_grad)" stroke-width="8.5" stroke-linecap="round" />
+      </g>
+      <path d="M34 124C49 116 63 103 78 87C94 70 109 51 124 34" stroke="url(#curve_grad)" stroke-width="5.5" stroke-linecap="round" />
+
+      <circle cx="34" cy="124" r="4.8" fill="#F8FAFC" />
+      <circle cx="78" cy="87" r="4.4" fill="#BAE6FD" />
+      <circle cx="124" cy="34" r="5" fill="#22D3EE" />
+      <circle cx="124" cy="34" r="7.8" stroke="#67E8F9" stroke-opacity="0.45" />
+    </g>
+    <rect x="8.75" y="8.75" width="142.5" height="142.5" rx="33.25" stroke="#E2E8F0" stroke-opacity="0.24" stroke-width="1.5" />
+  </g>
+</svg>

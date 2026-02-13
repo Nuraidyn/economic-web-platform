@@ -7,7 +7,7 @@ from app.deps import require_agreement
 from app.models import Country, Indicator
 from app.models_forecast import ForecastPoint, ForecastRun
 from app.schemas import ForecastPointSchema, ForecastRequest, ForecastResponse, ForecastSeries
-from app.services.forecasting import backtest_linear, linear_forecast, run_forecast
+from app.services.forecasting import backtest_linear, linear_forecast, run_forecast, sanitize_training_series
 from app.services.world_bank import fetch_indicator_series
 
 router = APIRouter(tags=["forecast"])
@@ -32,6 +32,7 @@ def create_forecast(
 
     years = [row["year"] for row in series]
     values = [row["value"] for row in series]
+    years, values = sanitize_training_series(years, values)
     if len(values) < 8:
         raise HTTPException(status_code=400, detail="Not enough data to forecast")
 
@@ -55,7 +56,10 @@ def create_forecast(
         indicator=indicator,
         model_name="linear_trend",
         horizon_years=horizon_years,
-        assumptions="Linear trend on historical values; residual std used for intervals.",
+        assumptions=(
+            "Linear trend on recent historical values (up to last 25 years); "
+            "training values winsorized at 5th/95th percentile; residual std used for intervals."
+        ),
         metrics=metrics,
         points=points,
     )

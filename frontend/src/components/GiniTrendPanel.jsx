@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 
 import { fetchGiniTrend } from "../api/analyticsApi";
+import { useI18n } from "../context/I18nContext";
 import ChartDisplay from "./ChartDisplay";
 
 const lastNonNull = (points) => {
@@ -9,6 +10,7 @@ const lastNonNull = (points) => {
 };
 
 export default function GiniTrendPanel({ canAccess, countries, startYear, endYear, chartType }) {
+  const { t } = useI18n();
   const [datasets, setDatasets] = useState([]);
   const [status, setStatus] = useState({ loading: false, error: "" });
 
@@ -18,7 +20,7 @@ export default function GiniTrendPanel({ canAccess, countries, startYear, endYea
     if (!canRun) {
       setStatus({
         loading: false,
-        error: canAccess ? "Select at least one country to load Gini trends." : "Accept the agreement to unlock inequality analytics.",
+        error: canAccess ? t("gini.errorSelectCountry") : t("gini.errorNeedAgreement"),
       });
       return;
     }
@@ -34,7 +36,7 @@ export default function GiniTrendPanel({ canAccess, countries, startYear, endYea
       setDatasets(results);
       setStatus({ loading: false, error: "" });
     } catch (err) {
-      setStatus({ loading: false, error: "Failed to load Gini trend analytics. Ensure FastAPI is running and agreement is accepted." });
+      setStatus({ loading: false, error: t("gini.errorFailed") });
     }
   };
 
@@ -54,13 +56,13 @@ export default function GiniTrendPanel({ canAccess, countries, startYear, endYea
     <section className="panel-wide">
       <div className="flex items-start justify-between gap-6">
         <div>
-          <h3 className="panel-title">Inequality trend (Gini)</h3>
+          <h3 className="panel-title">{t("gini.title")}</h3>
           <p className="text-xs text-muted mt-2">
-            Trend line based on World Bank Gini indicator ({`SI.POV.GINI`}). Use it for cross-country trend context and YoY shifts.
+            {t("gini.subtitle")}
           </p>
         </div>
         <button className="btn-secondary" type="button" onClick={loadTrends} disabled={status.loading}>
-          {status.loading ? "Loading..." : "Load Gini trends"}
+          {status.loading ? t("gini.loading") : t("gini.load")}
         </button>
       </div>
 
@@ -81,7 +83,9 @@ export default function GiniTrendPanel({ canAccess, countries, startYear, endYea
                   {row.latestValue == null ? "n/a" : row.latestValue.toFixed(2)}
                 </p>
                 <p className="text-[11px] text-faint">
-                  {row.latestYear ? `Last year: ${row.latestYear}` : "No data"} · Source {row.source}
+                  {row.latestYear ? t("gini.lastYear", { year: row.latestYear }) : t("gini.noData")}
+                  {" · "}
+                  {t("gini.source", { source: row.source })}
                 </p>
               </div>
             ))}

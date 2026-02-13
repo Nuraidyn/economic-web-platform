@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 
 import ChartDisplay from "./ChartDisplay";
+import { useI18n } from "../context/I18nContext";
 
 const exportIndicatorCsv = (entry) => {
   const years = new Set();
@@ -57,6 +58,7 @@ const computeCorrelation = (seriesA, seriesB) => {
 };
 
 export default function ComparisonDashboard({ datasets, chartType, correlationPair, indicators }) {
+  const { t } = useI18n();
   const indicatorLabel = (code) =>
     indicators.find((item) => item.code === code)?.label || code;
 
@@ -88,7 +90,7 @@ export default function ComparisonDashboard({ datasets, chartType, correlationPa
     return (
       <section className="panel-wide">
         <p className="text-sm text-muted">
-          Select countries and indicators, then run the comparison to populate charts.
+          {t("comparison.empty")}
         </p>
       </section>
     );
@@ -102,11 +104,11 @@ export default function ComparisonDashboard({ datasets, chartType, correlationPa
             <div>
               <h3 className="panel-title">{indicatorLabel(entry.indicator)}</h3>
               <p className="text-xs text-muted mb-4">
-                Historical series by country. Missing values are left blank to preserve data integrity.
+                {t("comparison.historicalByCountry")}
               </p>
             </div>
             <button className="btn-secondary" type="button" onClick={() => exportIndicatorCsv(entry)}>
-              Export CSV
+              {t("comparison.exportCsv")}
             </button>
           </div>
           <ChartDisplay datasets={entry.series} chartType={chartType} viewMode="timeSeries" />
@@ -115,11 +117,12 @@ export default function ComparisonDashboard({ datasets, chartType, correlationPa
 
       {correlationTable.length > 0 && (
         <div className="panel-wide">
-          <h3 className="panel-title">Correlation Snapshot</h3>
+          <h3 className="panel-title">{t("comparison.correlationSnapshot")}</h3>
           <p className="text-xs text-muted mb-4">
-            Pearson correlation between {indicatorLabel(correlationPair[0])} and
-            {" "}
-            {indicatorLabel(correlationPair[1])} on overlapping years.
+            {t("comparison.correlationSubtitle", {
+              indicatorA: indicatorLabel(correlationPair[0]),
+              indicatorB: indicatorLabel(correlationPair[1]),
+            })}
           </p>
           <div className="grid md:grid-cols-2 gap-4">
             {correlationTable.map((row) => (
@@ -131,7 +134,7 @@ export default function ComparisonDashboard({ datasets, chartType, correlationPa
                   {row.country}
                 </p>
                 <p className="text-2xl font-semibold mt-2">
-                  {row.correlation == null ? "n/a" : row.correlation.toFixed(2)}
+                  {row.correlation == null ? t("common.na") : row.correlation.toFixed(2)}
                 </p>
               </div>
             ))}
