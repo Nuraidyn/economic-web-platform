@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16-alpine
@@ -14,8 +12,8 @@ services:
 
   django:
     build:
-      context: ./backend/django_service
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: django_service/Dockerfile
     environment:
       DJANGO_SECRET_KEY: dev-secret-key
       DJANGO_DEBUG: "1"
@@ -35,11 +33,11 @@ services:
 
   fastapi:
     build:
-      context: ./backend/fastapi_service
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: fastapi_service/Dockerfile
     environment:
       APP_ENV: docker
-      DATABASE_URL: postgresql+psycopg2://ewp:ewp@db:5432/ewp
+      DATABASE_URL: postgresql+psycopg://ewp:ewp@db:5432/ewp
       DJANGO_AUTH_URL: http://django:8000
       DJANGO_SECRET_KEY: dev-secret-key
       CORS_ALLOW_ORIGINS: "http://localhost:5173,http://127.0.0.1:5173"

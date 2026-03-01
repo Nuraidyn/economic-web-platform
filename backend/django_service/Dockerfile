@@ -4,10 +4,10 @@ WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
-COPY ../requirements-django.txt /app/requirements.txt
+COPY requirements-django.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
-COPY . /app
+COPY django_service /app
 
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 

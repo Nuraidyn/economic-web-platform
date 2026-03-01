@@ -6,7 +6,14 @@ from dotenv import load_dotenv
 # Load env files early so os.getenv values below can read them.
 _THIS_FILE = Path(__file__).resolve()
 _SERVICE_DIR = _THIS_FILE.parents[2]
-_PROJECT_ROOT = _THIS_FILE.parents[4]
+# Try to find project root, but if it doesn't exist (e.g., in Docker), just use service dir
+try:
+    _PROJECT_ROOT = _THIS_FILE.parents[4]
+    if not _PROJECT_ROOT.exists():
+        _PROJECT_ROOT = _SERVICE_DIR
+except IndexError:
+    _PROJECT_ROOT = _SERVICE_DIR
+
 load_dotenv(_PROJECT_ROOT / ".env", override=False)
 load_dotenv(_SERVICE_DIR / ".env", override=False)
 
