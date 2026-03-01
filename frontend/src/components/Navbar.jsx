@@ -39,30 +39,60 @@ export default function Navbar({ onOpenAuth, isAuthenticated }) {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-end">
-            <div className="flex items-center gap-1">
-              {supportedLanguages.map((code) => (
-                <button
-                  key={code}
-                  type="button"
-                  className={language === code ? "tab-active" : "tab"}
-                  onClick={() => setLanguage(code)}
-                >
-                  {t(`language.${code}`)}
-                </button>
-              ))}
-            </div>
+            <NavLink to="/" className={({ isActive }) => (isActive ? "tab-active" : "tab")}>
+              {t("layout.dashboard")}
+            </NavLink>
+            <NavLink to="/inequality" className={({ isActive }) => (isActive ? "tab-active" : "tab")}>
+              {t("layout.inequality")}
+            </NavLink>
+            <NavLink to="/forecast" className={({ isActive }) => (isActive ? "tab-active" : "tab")}>
+              {t("layout.forecast")}
+            </NavLink>
+            <NavLink to="/saved" className={({ isActive }) => (isActive ? "tab-active" : "tab")}>
+              {t("layout.saved")}
+            </NavLink>
+            <div className="profile-menu ml-2">
+              <div className="profile-menu-popover" role="menu" aria-label={t("navbar.account")}>
+                <div className="profile-menu-section">
+                  <button
+                    type="button"
+                    className="btn-secondary profile-menu-theme-toggle"
+                    onClick={onOpenAuth}
+                    aria-label={isAuthenticated ? t("navbar.openAccount") : t("navbar.openSignIn")}
+                    title={isAuthenticated ? t("navbar.openAccount") : t("navbar.openSignIn")}
+                  >
+                    {isAuthenticated ? t("navbar.account") : t("navbar.signIn")}
+                  </button>
+                </div>
+                <div className="profile-menu-section">
+                  <div className="profile-menu-languages">
+                    {supportedLanguages.map((code) => (
+                      <button
+                        key={code}
+                        type="button"
+                        className={language === code ? "tab-active" : "tab"}
+                        onClick={() => setLanguage(code)}
+                      >
+                        {t(`language.${code}`)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="profile-menu-section">
+                  <button
+                    type="button"
+                    className="btn-secondary profile-menu-theme-toggle"
+                    onClick={toggleTheme}
+                    aria-label={t("navbar.switchTo", { mode: targetMode })}
+                    title={t("navbar.switchTo", { mode: targetMode })}
+                  >
+                    {theme === "dark" ? t("navbar.themeLight") : t("navbar.themeDark")}
+                  </button>
+                </div>
+              </div>
             <button
               type="button"
-              className="btn-secondary"
-              onClick={toggleTheme}
-              aria-label={t("navbar.switchTo", { mode: targetMode })}
-              title={t("navbar.switchTo", { mode: targetMode })}
-            >
-              {theme === "dark" ? t("navbar.themeLight") : t("navbar.themeDark")}
-            </button>
-            <button
-              type="button"
-              className="btn-secondary inline-flex items-center gap-2"
+              className="btn-secondary inline-flex items-center justify-center profile-menu-trigger"
               onClick={onOpenAuth}
               aria-label={isAuthenticated ? t("navbar.openAccount") : t("navbar.openSignIn")}
               title={isAuthenticated ? t("navbar.openAccount") : t("navbar.openSignIn")}
@@ -71,23 +101,9 @@ export default function Navbar({ onOpenAuth, isAuthenticated }) {
                 <circle cx="12" cy="8" r="4" />
                 <path d="M4 20c1.8-3.4 4.6-5 8-5s6.2 1.6 8 5" />
               </svg>
-              <span>{isAuthenticated ? t("navbar.account") : t("navbar.signIn")}</span>
             </button>
+            </div>
           </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <NavLink to="/" className={({ isActive }) => (isActive ? "tab-active" : "tab")}>
-            {t("layout.dashboard")}
-          </NavLink>
-          <NavLink to="/inequality" className={({ isActive }) => (isActive ? "tab-active" : "tab")}>
-            {t("layout.inequality")}
-          </NavLink>
-          <NavLink to="/forecast" className={({ isActive }) => (isActive ? "tab-active" : "tab")}>
-            {t("layout.forecast")}
-          </NavLink>
-          <NavLink to="/saved" className={({ isActive }) => (isActive ? "tab-active" : "tab")}>
-            {t("layout.saved")}
-          </NavLink>
         </div>
       </nav>
     </header>

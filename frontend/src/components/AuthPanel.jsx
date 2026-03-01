@@ -21,6 +21,7 @@ export default function AuthPanel({ onAuthSuccess }) {
     username: "",
     email: "",
     password: "",
+    confirmPassword: "",
     acceptAgreement: false,
   });
   const [message, setMessage] = useState("");
@@ -47,6 +48,10 @@ export default function AuthPanel({ onAuthSuccess }) {
         onAuthSuccess?.();
       }
     } else {
+      if (formState.password !== formState.confirmPassword) {
+        setMessage(t("auth.passwordsDoNotMatch"));
+        return;
+      }
       const result = await register({
         username: formState.username,
         email: formState.email,
@@ -135,6 +140,19 @@ export default function AuthPanel({ onAuthSuccess }) {
           onChange={handleChange}
           required
         />
+        {mode === "register" && (
+          <>
+            <label className="label">{t("auth.confirmPassword")}</label>
+            <input
+              className="input"
+              type="password"
+              name="confirmPassword"
+              value={formState.confirmPassword}
+              onChange={handleChange}
+              required
+            />
+          </>
+        )}
         {mode === "register" && agreement && (
           <label className="flex items-center gap-2 text-xs text-muted">
             <input
