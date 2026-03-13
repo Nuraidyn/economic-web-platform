@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: ewp
       POSTGRES_DB: ewp
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
 
@@ -41,6 +41,9 @@ services:
       DJANGO_AUTH_URL: http://django:8000
       DJANGO_SECRET_KEY: dev-secret-key
       CORS_ALLOW_ORIGINS: "http://localhost:5173,http://127.0.0.1:5173"
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+
+      CHART_EXPLAIN_PROVIDER: gemini
     depends_on:
       - db
       - django

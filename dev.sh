@@ -8,7 +8,11 @@ FRONTEND_DIR="$ROOT_DIR/frontend"
 
 is_port_in_use() {
   local port="$1"
-  lsof -n -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1
+  if command -v lsof >/dev/null 2>&1; then
+    lsof -n -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1
+  else
+    netstat -an 2>/dev/null | grep -q "[:.]${port}[[:space:]].*LISTEN"
+  fi
 }
 
 pick_free_port() {
@@ -44,7 +48,8 @@ echo "Using ports: frontend=${FRONTEND_PORT} django=${DJANGO_PORT} fastapi=${FAS
 
 (
   cd "$DJANGO_DIR"
-  source .venv/bin/activate
+  # Support both Linux (.venv/bin) and Windows (.venv/Scripts) venv layouts
+  if [[ -f ".venv/Scripts/activate" ]]; then source .venv/Scripts/activate; else source .venv/bin/activate; fi
   export DJANGO_CORS_ALLOWED_ORIGINS="$FRONTEND_ORIGINS"
   python manage.py migrate
   python manage.py runserver "127.0.0.1:${DJANGO_PORT}"
@@ -53,7 +58,7 @@ DJANGO_PID=$!
 
 (
   cd "$FASTAPI_DIR"
-  source .venv/bin/activate
+  if [[ -f ".venv/Scripts/activate" ]]; then source .venv/Scripts/activate; else source .venv/bin/activate; fi
   export DJANGO_AUTH_URL="http://127.0.0.1:${DJANGO_PORT}"
   export CORS_ALLOW_ORIGINS="$FRONTEND_ORIGINS"
   uvicorn app.main:app --reload --port "${FASTAPI_PORT}"
