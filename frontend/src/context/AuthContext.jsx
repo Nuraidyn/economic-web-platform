@@ -55,7 +55,7 @@ export function AuthProvider({ children }) {
     loadUser();
   }, [loadAgreement, loadUser]);
 
-  const login = async (credentials) => {
+  const login = useCallback(async (credentials) => {
     setAuthStatus({ loading: true, error: "" });
     try {
       const data = await loginUser(credentials);
@@ -69,9 +69,9 @@ export function AuthProvider({ children }) {
       setAuthStatus({ loading: false, error: "Invalid credentials." });
       return { ok: false };
     }
-  };
+  }, []);
 
-  const register = async (payload) => {
+  const register = useCallback(async (payload) => {
     setAuthStatus({ loading: true, error: "" });
     try {
       await registerUser(payload);
@@ -81,15 +81,15 @@ export function AuthProvider({ children }) {
       setAuthStatus({ loading: false, error: "Registration failed." });
       return { ok: false };
     }
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     setAuthToken(null);
     setUser(null);
-  };
+  }, []);
 
-  const acceptActiveAgreement = async () => {
+  const acceptActiveAgreement = useCallback(async () => {
     try {
       await acceptAgreement();
       const profile = await fetchMe();
@@ -98,7 +98,7 @@ export function AuthProvider({ children }) {
     } catch (error) {
       return { ok: false };
     }
-  };
+  }, []);
 
   const value = useMemo(
     () => ({

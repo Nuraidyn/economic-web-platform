@@ -9,6 +9,7 @@ from app.core.config import (
     GEMINI_API_KEY,
     GEMINI_BASE_URL,
     GEMINI_MODEL,
+    GEMINI_TIMEOUT_SECONDS,
     OPENAI_API_KEY,
     OPENAI_BASE_URL,
     OPENAI_MODEL,
@@ -256,7 +257,7 @@ def _openai_answer(payload: ChartExplainRequest, summary: str, language: str) ->
 def _gemini_answer(payload: ChartExplainRequest, summary: str, language: str) -> str:
     base_url = GEMINI_BASE_URL.rstrip("/")
     prompt = f"{_build_system_prompt(language)}\n\n{_prompt_text(payload, summary, language)}"
-    with httpx.Client(timeout=OPENAI_TIMEOUT_SECONDS) as client:
+    with httpx.Client(timeout=GEMINI_TIMEOUT_SECONDS) as client:
         response = client.post(
             f"{base_url}/models/{GEMINI_MODEL}:generateContent",
             headers={

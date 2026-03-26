@@ -35,9 +35,8 @@ const computeCorrelation = (seriesA, seriesB) => {
     .map((row) => [mapA.get(row.year), row.value])
     .filter(([a, b]) => typeof a === "number" && typeof b === "number");
 
-  if (paired.length < 3) {
-    return null;
-  }
+  if (paired.length < 3) return null;
+
   const meanA = paired.reduce((sum, [a]) => sum + a, 0) / paired.length;
   const meanB = paired.reduce((sum, [, b]) => sum + b, 0) / paired.length;
   let numerator = 0;
@@ -51,27 +50,43 @@ const computeCorrelation = (seriesA, seriesB) => {
     denomB += diffB * diffB;
   });
   const denominator = Math.sqrt(denomA * denomB);
-  if (denominator === 0) {
-    return null;
-  }
+  if (denominator === 0) return null;
   return numerator / denominator;
 };
 
-export default function ComparisonDashboard({ datasets, chartType, correlationPair, indicators }) {
+/* ── Skeleton placeholder shown while data is loading ── */
+function SkeletonDashboard() {
+  return (
+    <section className="space-y-8" aria-busy="true" aria-label="Loading charts">
+      {[0, 1].map((i) => (
+        <div className="panel-wide space-y-4" key={i}>
+          {/* Header row */}
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-2 flex-1">
+              <div className="skeleton skeleton-title w-48" />
+              <div className="skeleton skeleton-text w-64 opacity-70" />
+            </div>
+            <div className="skeleton skeleton-text w-24 h-8 rounded-full opacity-60" />
+          </div>
+          {/* Chart area */}
+          <div className="skeleton skeleton-block w-full" style={{ height: "clamp(22rem, 46vh, 38rem)" }} />
+        </div>
+      ))}
+    </section>
+  );
+}
+
+export default function ComparisonDashboard({ datasets, chartType, correlationPair, indicators, isLoading }) {
   const { t } = useI18n();
   const indicatorLabel = (code) =>
     indicators.find((item) => item.code === code)?.label || code;
 
   const correlationTable = useMemo(() => {
-    if (!correlationPair?.length || correlationPair.length < 2) {
-      return [];
-    }
+    if (!correlationPair?.length || correlationPair.length < 2) return [];
     const [primary, secondary] = correlationPair;
     const primaryData = datasets.find((entry) => entry.indicator === primary);
     const secondaryData = datasets.find((entry) => entry.indicator === secondary);
-    if (!primaryData || !secondaryData) {
-      return [];
-    }
+    if (!primaryData || !secondaryData) return [];
     return primaryData.series.map((series) => {
       const secondarySeries = secondaryData.series.find(
         (candidate) => candidate.country === series.country
@@ -79,19 +94,18 @@ export default function ComparisonDashboard({ datasets, chartType, correlationPa
       const correlation = secondarySeries
         ? computeCorrelation(series.data, secondarySeries.data)
         : null;
-      return {
-        country: series.country,
-        correlation,
-      };
+      return { country: series.country, correlation };
     });
   }, [datasets, correlationPair]);
+
+  if (isLoading) {
+    return <SkeletonDashboard />;
+  }
 
   if (!datasets.length) {
     return (
       <section className="panel-wide">
-        <p className="text-sm text-muted">
-          {t("comparison.empty")}
-        </p>
+        <p className="text-sm text-muted">{t("comparison.empty")}</p>
       </section>
     );
   }
@@ -103,15 +117,23 @@ export default function ComparisonDashboard({ datasets, chartType, correlationPa
           <div className="flex items-start justify-between gap-4">
             <div>
               <h3 className="panel-title">{indicatorLabel(entry.indicator)}</h3>
-              <p className="text-xs text-muted mb-4">
-                {t("comparison.historicalByCountry")}
-              </p>
+              <p className="text-xs text-muted mb-4">{t("comparison.historicalByCountry")}</p>
             </div>
-            <button className="btn-secondary" type="button" onClick={() => exportIndicatorCsv(entry)}>
+            <button
+              className="btn-secondary shrink-0"
+              type="button"
+              onClick={() => exportIndicatorCsv(entry)}
+            >
               {t("comparison.exportCsv")}
             </button>
           </div>
-          <ChartDisplay datasets={entry.series} chartType={chartType} viewMode="timeSeries" />
+          <ChartDisplay
+            datasets={entry.series}
+            chartType={chartType}
+            viewMode="timeSeries"
+            appear
+            indicatorLabel={indicatorLabel(entry.indicator)}
+          />
         </div>
       ))}
 
@@ -126,13 +148,8 @@ export default function ComparisonDashboard({ datasets, chartType, correlationPa
           </p>
           <div className="grid md:grid-cols-2 gap-4">
             {correlationTable.map((row) => (
-              <div
-                key={row.country}
-                className="surface p-4"
-              >
-                <p className="text-xs uppercase tracking-[0.2em] text-faint">
-                  {row.country}
-                </p>
+              <div key={row.country} className="surface p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-faint">{row.country}</p>
                 <p className="text-2xl font-semibold mt-2">
                   {row.correlation == null ? t("common.na") : row.correlation.toFixed(2)}
                 </p>

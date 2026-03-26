@@ -71,7 +71,7 @@ def correlation(
 
 
 @router.post("/analytics/chart/explain", response_model=ChartExplainResponse)
-def explain_chart(payload: ChartExplainRequest):
+def explain_chart(payload: ChartExplainRequest, _: dict = Depends(require_agreement)):
     try:
         return explain_chart_service(payload)
     except ValueError as exc:

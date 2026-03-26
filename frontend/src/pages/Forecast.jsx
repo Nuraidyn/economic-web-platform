@@ -12,6 +12,7 @@ export default function ForecastPage() {
 
   return (
     <>
+      {/* ── Context ── */}
       <section className="hero">
         <div>
           <p className="hero-kicker">{t("forecastPage.heroKicker")}</p>
@@ -28,6 +29,9 @@ export default function ForecastPage() {
         </div>
       </section>
 
+      <div className="section-divider" aria-hidden="true" />
+
+      {/* ── Charts ── */}
       <ForecastPanel
         canAccess={Boolean(user?.agreement_accepted)}
         countries={countries}

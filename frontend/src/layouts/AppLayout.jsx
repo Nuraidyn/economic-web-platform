@@ -1,23 +1,21 @@
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 import { Outlet } from "react-router-dom";
 
 import AgreementPanel from "../components/AgreementPanel";
 import AuthModal from "../components/AuthModal";
 import Navbar from "../components/Navbar";
-import SavedPresetsPanel from "../components/SavedPresetsPanel";
 import AuthContext from "../context/AuthContext";
-import { useAnalysis } from "../context/AnalysisContext";
 import { useI18n } from "../context/I18nContext";
+import { useUI } from "../context/UIContext";
 
 export default function AppLayout() {
   const { user } = useContext(AuthContext);
-  const { presetPayload, applyPresetPayload } = useAnalysis();
   const { t } = useI18n();
-  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const { authModalOpen, openAuthModal, closeAuthModal } = useUI();
 
   return (
     <div className="min-h-screen bg-canvas">
-      <Navbar onOpenAuth={() => setAuthModalOpen(true)} isAuthenticated={Boolean(user)} />
+      <Navbar onOpenAuth={openAuthModal} isAuthenticated={Boolean(user)} />
       <main className="page !max-w-[1480px]">
         <div className="space-y-6 min-w-0">
           <Outlet />
@@ -46,12 +44,11 @@ export default function AppLayout() {
             </a>
           </div>
         </section>
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div>
           <AgreementPanel />
-          <SavedPresetsPanel user={user} currentPayload={presetPayload} onLoad={applyPresetPayload} />
         </div>
       </footer>
-      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
+      <AuthModal isOpen={authModalOpen} onClose={closeAuthModal} />
     </div>
   );
 }

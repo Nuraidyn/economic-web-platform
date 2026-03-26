@@ -10,12 +10,31 @@ vi.mock("../../api/analyticsApi", () => ({
 import { explainChart } from "../../api/analyticsApi";
 import ChartInsightAgent from "../ChartInsightAgent";
 import { I18nProvider } from "../../context/I18nContext";
+import AuthContext from "../../context/AuthContext";
+
+vi.mock("../../context/UIContext", () => ({
+  useUI: () => ({ openAuthModal: vi.fn(), closeAuthModal: vi.fn(), authModalOpen: false }),
+}));
+
+/* Provide a logged-in user with agreement accepted so the AI form is visible */
+const mockAuthValue = {
+  user: { id: 1, username: "testuser", agreement_accepted: true },
+  authStatus: { loading: false, error: "" },
+  login: vi.fn(),
+  logout: vi.fn(),
+  register: vi.fn(),
+  acceptActiveAgreement: vi.fn(),
+  agreement: null,
+  agreementStatus: { loading: false, error: "" },
+};
 
 function renderAgent(props) {
   return render(
-    <I18nProvider>
-      <ChartInsightAgent {...props} />
-    </I18nProvider>
+    <AuthContext.Provider value={mockAuthValue}>
+      <I18nProvider>
+        <ChartInsightAgent {...props} />
+      </I18nProvider>
+    </AuthContext.Provider>
   );
 }
 

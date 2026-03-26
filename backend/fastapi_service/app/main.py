@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.analytics import router as analytics_router
+from app.api.v1.news import router as news_router
 from app.api.v1.catalog import router as catalog_router
 from app.api.v1.forecast import router as forecast_router
 from app.api.v1.health import router as health_router
@@ -45,6 +46,7 @@ app.include_router(observations_router, prefix="/api/v1")
 app.include_router(analytics_router, prefix="/api/v1")
 app.include_router(inequality_router, prefix="/api/v1")
 app.include_router(forecast_router, prefix="/api/v1")
+app.include_router(news_router, prefix="/api/v1")
 
 
 @app.on_event("startup")

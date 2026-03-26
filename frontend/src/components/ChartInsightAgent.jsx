@@ -1,7 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 
 import { explainChart } from "../api/analyticsApi";
+import AuthContext from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
+import { useUI } from "../context/UIContext";
 
 export default function ChartInsightAgent({
   datasets,
@@ -10,6 +12,8 @@ export default function ChartInsightAgent({
   endYear,
 }) {
   const { language, t } = useI18n();
+  const { user } = useContext(AuthContext);
+  const { openAuthModal } = useUI();
   const defaultPromptRef = useRef(t("ai.defaultPrompt"));
   const [question, setQuestion] = useState(defaultPromptRef.current);
   const [answer, setAnswer] = useState("");
@@ -30,10 +34,7 @@ export default function ChartInsightAgent({
 
   const askAgent = async () => {
     if (!canAsk) {
-      setStatus({
-        loading: false,
-        error: t("ai.errorNoData"),
-      });
+      setStatus({ loading: false, error: t("ai.errorNoData") });
       return;
     }
     setStatus({ loading: true, error: "" });
@@ -63,13 +64,50 @@ export default function ChartInsightAgent({
         warning: response.warning || "",
       });
       setStatus({ loading: false, error: "" });
-    } catch (error) {
-      setStatus({
-        loading: false,
-        error: t("ai.errorFailed"),
-      });
+    } catch {
+      setStatus({ loading: false, error: t("ai.errorFailed") });
     }
   };
+
+  /* ── Auth gate ── */
+  if (!user) {
+    return (
+      <section className="panel-wide space-y-4">
+        <div>
+          <h3 className="panel-title">{t("ai.title")}</h3>
+          <p className="text-xs text-muted mt-2">{t("ai.subtitle")}</p>
+        </div>
+        <div className="surface p-5 flex flex-col items-center gap-3 text-center">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-faint" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          <p className="text-sm font-medium">{t("ai.requiresAuth")}</p>
+          <button type="button" className="btn-primary" onClick={openAuthModal}>
+            {t("navbar.signIn")}
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  /* ── Agreement gate ── */
+  if (!user.agreement_accepted) {
+    return (
+      <section className="panel-wide space-y-4">
+        <div>
+          <h3 className="panel-title">{t("ai.title")}</h3>
+          <p className="text-xs text-muted mt-2">{t("ai.subtitle")}</p>
+        </div>
+        <div className="surface p-5 flex flex-col items-center gap-3 text-center">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-faint" aria-hidden="true">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+          <p className="text-sm font-medium">{t("ai.requiresAgreement")}</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="panel-wide space-y-4">
@@ -96,11 +134,22 @@ export default function ChartInsightAgent({
             {t("ai.rangeIndicators", { start: startYear, end: endYear, count: datasets.length })}
           </p>
         </div>
-        {status.error && <p className="text-xs text-rose-200/90">{status.error}</p>}
+        {status.error && <p className="text-xs text-rose-200/90" role="alert">{status.error}</p>}
       </div>
 
-      {answer && (
-        <div className="surface p-4 space-y-2">
+      {/* Loading skeleton while AI is processing */}
+      {status.loading && (
+        <div className="surface p-4 space-y-3" aria-busy="true" aria-label="Analyzing">
+          <div className="skeleton skeleton-text w-32" />
+          <div className="skeleton skeleton-text w-full" />
+          <div className="skeleton skeleton-text w-5/6 opacity-70" />
+          <div className="skeleton skeleton-text w-4/6 opacity-50" />
+        </div>
+      )}
+
+      {/* Answer panel with soft entrance */}
+      {answer && !status.loading && (
+        <div className="surface p-4 space-y-2 ai-answer-enter">
           <p className="text-xs uppercase tracking-[0.2em] text-faint">{t("ai.explanationTitle")}</p>
           <p className="text-sm whitespace-pre-wrap">{answer}</p>
           {(meta.provider || meta.model || meta.warning) && (

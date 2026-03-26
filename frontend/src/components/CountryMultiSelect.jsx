@@ -51,7 +51,7 @@ export default function CountryMultiSelect({
           return (
             <label
               key={country.code}
-              className="flex items-center gap-3 rounded-lg px-2 py-1.5 cursor-pointer hover:bg-slate-900/5 dark:hover:bg-slate-100/5"
+              className="flex items-center gap-3 rounded-lg px-2 py-1.5 cursor-pointer transition-colors duration-150 hover:bg-slate-900/5 dark:hover:bg-slate-100/5"
             >
               <input
                 type="checkbox"
