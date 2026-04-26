@@ -1,33 +1,58 @@
 """
-News feed endpoint — fetches economic & geopolitical RSS feeds.
+News feed endpoint — fetches economic & geopolitical RSS feeds concurrently.
 Results are cached in-memory for CACHE_TTL_SECONDS to avoid hammering sources.
+
+Design:
+- httpx.AsyncClient + asyncio.gather → all feeds fetched in parallel
+- asyncio.Semaphore caps concurrent outbound connections
+- asyncio.Lock prevents cache stampede on expiry
+- Graceful degradation: one failed feed never blocks others
+- sources_status in response shows per-source latency / error (additive, backward-compat)
 """
+import asyncio
+import logging
+import re
 import time
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
-from typing import Optional
 
 import httpx
 from fastapi import APIRouter
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(tags=["news"])
 
-CACHE_TTL_SECONDS = 900  # 15 minutes
+CACHE_TTL_SECONDS = 900       # 15 minutes
+FETCH_TIMEOUT_SECONDS = 8.0   # per-feed wall-clock timeout
+CONNECT_TIMEOUT_SECONDS = 5.0 # TCP connect timeout
+MAX_CONCURRENT_FETCHES = 4    # semaphore cap (scales with feed count)
+MAX_ARTICLES_PER_FEED = 8
+MAX_TOTAL_ARTICLES = 40
 
 RSS_FEEDS = [
-    {"url": "https://feeds.bbci.co.uk/news/business/rss.xml",      "source": "BBC Business"},
-    {"url": "https://feeds.bbci.co.uk/news/world/rss.xml",         "source": "BBC World"},
+    {"url": "https://feeds.bbci.co.uk/news/business/rss.xml",           "source": "BBC Business"},
+    {"url": "https://feeds.bbci.co.uk/news/world/rss.xml",              "source": "BBC World"},
     {"url": "https://rss.nytimes.com/services/xml/rss/nyt/Economy.xml", "source": "NYT Economy"},
-    {"url": "https://feeds.skynews.com/feeds/rss/business.xml",    "source": "Sky News Business"},
+    {"url": "https://feeds.skynews.com/feeds/rss/business.xml",         "source": "Sky News Business"},
 ]
+
+_HTML_TAG_RE = re.compile(r"<[^>]+>")
+
 
 @dataclass
 class _Cache:
     articles: list = field(default_factory=list)
     expires_at: float = 0.0
 
-_cache = _Cache()
 
+_cache = _Cache()
+_cache_lock = asyncio.Lock()
+
+
+# ---------------------------------------------------------------------------
+# Parsing (pure, synchronous — no I/O)
+# ---------------------------------------------------------------------------
 
 def _parse_feed(xml_text: str, source: str) -> list[dict]:
     try:
@@ -35,22 +60,17 @@ def _parse_feed(xml_text: str, source: str) -> list[dict]:
     except ET.ParseError:
         return []
 
-    ns = {}
-    items = root.findall(".//item")
     results = []
-    for item in items[:8]:
+    for item in root.findall(".//item")[:MAX_ARTICLES_PER_FEED]:
         title = (item.findtext("title") or "").strip()
         link  = (item.findtext("link")  or "").strip()
         desc  = (item.findtext("description") or "").strip()
         pub   = (item.findtext("pubDate") or "").strip()
 
-        # Strip HTML tags from description
-        import re
-        desc = re.sub(r"<[^>]+>", "", desc).strip()
+        desc = _HTML_TAG_RE.sub("", desc).strip()
         if len(desc) > 220:
             desc = desc[:217] + "…"
 
-        # Extract image URL: try enclosure first, then media:thumbnail / media:content
         image_url = ""
         enclosure = item.find("enclosure")
         if enclosure is not None and "image" in (enclosure.get("type") or ""):
@@ -84,29 +104,97 @@ def _parse_feed(xml_text: str, source: str) -> list[dict]:
     return results
 
 
-def _fetch_all() -> list[dict]:
-    articles = []
-    with httpx.Client(timeout=8, follow_redirects=True) as client:
-        for feed in RSS_FEEDS:
-            try:
-                resp = client.get(feed["url"], headers={"User-Agent": "EVision/1.0 RSS Reader"})
-                resp.raise_for_status()
-                articles.extend(_parse_feed(resp.text, feed["source"]))
-            except Exception:
-                continue
-    # Sort by published date descending (best-effort string sort is fine for RFC-822)
-    articles.sort(key=lambda a: a["published"], reverse=True)
-    return articles[:40]
+# ---------------------------------------------------------------------------
+# Async fetch helpers
+# ---------------------------------------------------------------------------
 
+async def _fetch_feed(
+    client: httpx.AsyncClient,
+    feed: dict,
+    semaphore: asyncio.Semaphore,
+) -> tuple[list[dict], dict]:
+    """Fetch and parse one RSS feed. Never raises — returns empty list on any error."""
+    source = feed["source"]
+    t0 = time.monotonic()
+
+    async with semaphore:
+        try:
+            resp = await client.get(
+                feed["url"],
+                headers={"User-Agent": "EVision/1.0 RSS Reader"},
+            )
+            resp.raise_for_status()
+            articles = _parse_feed(resp.text, source)
+            latency_ms = int((time.monotonic() - t0) * 1000)
+            logger.info(
+                "news_feed_ok source=%s articles=%d latency_ms=%d",
+                source, len(articles), latency_ms,
+            )
+            return articles, {"source": source, "status": "ok", "latency_ms": latency_ms}
+
+        except httpx.TimeoutException as exc:
+            latency_ms = int((time.monotonic() - t0) * 1000)
+            logger.warning(
+                "news_feed_timeout source=%s latency_ms=%d error=%s",
+                source, latency_ms, exc,
+            )
+            return [], {"source": source, "status": "timeout", "latency_ms": latency_ms, "error": "timeout"}
+
+        except Exception as exc:
+            latency_ms = int((time.monotonic() - t0) * 1000)
+            logger.warning(
+                "news_feed_error source=%s latency_ms=%d error=%s",
+                source, latency_ms, exc,
+            )
+            return [], {"source": source, "status": "error", "latency_ms": latency_ms, "error": str(exc)}
+
+
+async def _fetch_all() -> tuple[list[dict], list[dict]]:
+    """Fetch all RSS feeds concurrently. Returns (articles, sources_status)."""
+    semaphore = asyncio.Semaphore(MAX_CONCURRENT_FETCHES)
+    timeout = httpx.Timeout(FETCH_TIMEOUT_SECONDS, connect=CONNECT_TIMEOUT_SECONDS)
+
+    async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+        results = await asyncio.gather(
+            *[_fetch_feed(client, feed, semaphore) for feed in RSS_FEEDS],
+        )
+
+    all_articles: list[dict] = []
+    sources_status: list[dict] = []
+    for articles, status in results:
+        all_articles.extend(articles)
+        sources_status.append(status)
+
+    all_articles.sort(key=lambda a: a["published"], reverse=True)
+    return all_articles[:MAX_TOTAL_ARTICLES], sources_status
+
+
+# ---------------------------------------------------------------------------
+# Route
+# ---------------------------------------------------------------------------
 
 @router.get("/news")
-def get_news():
-    """Return latest economic & geopolitical news from RSS feeds (cached 15 min)."""
+async def get_news():
+    """Return latest economic & geopolitical news from RSS feeds (cached 15 min).
+
+    Response fields:
+    - articles: list of news items (backward-compatible)
+    - cached: bool — True when served from cache
+    - sources_status: per-feed fetch result with latency_ms (only on cache miss)
+    """
     now = time.time()
+    # Fast path: serve from cache without acquiring the lock
     if now < _cache.expires_at and _cache.articles:
         return {"articles": _cache.articles, "cached": True}
 
-    articles = _fetch_all()
-    _cache.articles = articles
-    _cache.expires_at = now + CACHE_TTL_SECONDS
-    return {"articles": articles, "cached": False}
+    async with _cache_lock:
+        # Re-check after acquiring lock to prevent cache stampede
+        now = time.time()
+        if now < _cache.expires_at and _cache.articles:
+            return {"articles": _cache.articles, "cached": True}
+
+        articles, sources_status = await _fetch_all()
+        _cache.articles = articles
+        _cache.expires_at = now + CACHE_TTL_SECONDS
+
+    return {"articles": articles, "cached": False, "sources_status": sources_status}

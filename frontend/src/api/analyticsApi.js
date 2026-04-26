@@ -61,3 +61,8 @@ export const explainChart = async (payload, signal) => {
   const res = await fastapiClient.post("/analytics/chart/explain", payload, { signal, timeout: 30000 });
   return res.data;
 };
+
+export const fetchIncomeInsights = async (payload, signal) => {
+  const res = await fastapiClient.post("/income/insights", payload, { signal, timeout: 30000 });
+  return res.data;
+};

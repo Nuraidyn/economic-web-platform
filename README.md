@@ -180,7 +180,7 @@ economic-web-platform/
 ├── docker-compose.yml
 ├── dev.sh                           # Локальный запуск всех сервисов с авто-определением портов
 ├── .env.example                     # Шаблон переменных окружения
-└── CLAUDE.md                        # Инструкции для Claude Code
+                     
 ```
 
 ---
@@ -434,6 +434,28 @@ python scripts/ingest_baseline.py --token YOUR_JWT
 ```
 
 Данные загружаются из World Bank API и кешируются в базе FastAPI. Повторные запросы к `/observations` используют кеш.
+
+---
+
+## Политика секретов (Secrets Policy)
+
+> **Если ключ мог утечь — считай, что утёк. Ротируй немедленно.**
+
+### Правила
+
+1. **`.env` никогда не коммитится.** Файл находится в `.gitignore`. `.env.example` содержит только плейсхолдеры.
+2. **`DJANGO_SECRET_KEY` уникален для каждого окружения** (dev/staging/prod). Дефолт `dev-secret-key` запрещён в production — приложение откажется стартовать.
+3. **API-ключи не хранятся в коде и `docker-compose.yml`.** В compose используется подстановка `${VAR}` — значение берётся из `.env`.
+4. **Ротация при инциденте:**
+   - Groq API Key: [console.groq.com](https://console.groq.com) → API Keys → Revoke
+   - Gemini API Key: [aistudio.google.com](https://aistudio.google.com) → API Keys
+   - OpenAI API Key: [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+   - Google OAuth Client: Google Cloud Console → Credentials → Regenerate secret
+   - Django Secret Key: сменить в `.env`, перезапустить — все сессии будут инвалидированы
+5. **Генерация нового Django secret key:**
+   ```bash
+   python -c "import secrets; print(secrets.token_hex(32))"
+   ```
 
 ---
 

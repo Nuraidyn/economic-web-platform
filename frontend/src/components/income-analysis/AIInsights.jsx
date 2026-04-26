@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useI18n } from "../../context/I18nContext";
-import {
-  calcSavingsRate,
-  getTopCountriesForProfession,
-  getIncomeTips,
-  getExpenseTips,
-  getActionPlan,
-} from "../../utils/incomeAnalysis";
+import { fetchIncomeInsights } from "../../api/analyticsApi";
+
+const PROVIDER_LABELS = {
+  openai:   "OpenAI",
+  gemini:   "Gemini",
+  groq:     "Groq",
+  fallback: "Offline",
+};
 
 function TipList({ items }) {
   return (
@@ -21,14 +22,29 @@ function TipList({ items }) {
   );
 }
 
-function CountryPill({ name }) {
+function ProviderBadge({ provider }) {
+  const isFallback = provider === "fallback";
   return (
-    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
-      bg-[color-mix(in_srgb,var(--accent)_14%,transparent)]
-      text-[color-mix(in_srgb,var(--accent)_90%,var(--text))]
-      border border-[color-mix(in_srgb,var(--accent)_28%,transparent)]">
-      {name}
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold
+        ${isFallback
+          ? "bg-[color-mix(in_srgb,var(--text-faint)_12%,transparent)] text-faint border border-[color-mix(in_srgb,var(--text-faint)_20%,transparent)]"
+          : "bg-[color-mix(in_srgb,var(--accent)_14%,transparent)] text-[color-mix(in_srgb,var(--accent)_90%,var(--text))] border border-[color-mix(in_srgb,var(--accent)_28%,transparent)]"
+        }`}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full ${isFallback ? "bg-current opacity-40" : "bg-[var(--accent)]"}`} />
+      {PROVIDER_LABELS[provider] ?? provider}
     </span>
+  );
+}
+
+function CountryCard({ country, reason, estimated_income_range }) {
+  return (
+    <div className="panel space-y-1.5">
+      <p className="text-sm font-semibold">{country}</p>
+      <p className="text-xs text-muted leading-relaxed">{reason}</p>
+      <p className="text-xs text-faint italic">{estimated_income_range}</p>
+    </div>
   );
 }
 
@@ -36,20 +52,42 @@ export default function AIInsights({ formData }) {
   const { t } = useI18n();
   const [insights, setInsights] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const abortRef = useRef(null);
 
-  function generate() {
+  async function generate() {
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setLoading(true);
-    // Simulate async generation with a short delay
-    setTimeout(() => {
-      const { profession, monthlyIncome, monthlyExpenses, experienceYears } = formData;
-      const savingsRate = calcSavingsRate(monthlyIncome, monthlyExpenses);
-      const topCountries = getTopCountriesForProfession(profession);
-      const incomeTips = getIncomeTips(savingsRate);
-      const expenseTips = getExpenseTips(savingsRate);
-      const actionPlan = getActionPlan(monthlyIncome, monthlyExpenses, savingsRate, experienceYears);
-      setInsights({ topCountries, incomeTips, expenseTips, actionPlan });
+    setError(null);
+    setInsights(null);
+
+    try {
+      const payload = {
+        age: formData.age,
+        country: formData.country,
+        profession: formData.profession,
+        experience_years: formData.experienceYears,
+        monthly_income: formData.monthlyIncome,
+        monthly_expenses: formData.monthlyExpenses,
+        yearly_growth_percent: formData.growthPct ?? 0,
+        currency: formData.currency ?? "USD",
+      };
+      const data = await fetchIncomeInsights(payload, controller.signal);
+      setInsights(data);
+    } catch (err) {
+      if (err.name === "CanceledError" || err.name === "AbortError") return;
+      const status = err.response?.status;
+      if (status === 401 || status === 403) {
+        setError(t("incomeAnalysis.errorAuth"));
+      } else {
+        setError(t("incomeAnalysis.errorFetch"));
+      }
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   }
 
   return (
@@ -59,12 +97,8 @@ export default function AIInsights({ formData }) {
         <p className="text-xs text-muted mt-1">{t("incomeAnalysis.aiSubtitle")}</p>
       </div>
 
-      {!insights && !loading && (
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={generate}
-        >
+      {!insights && !loading && !error && (
+        <button type="button" className="btn-primary" onClick={generate}>
           {t("incomeAnalysis.generateInsights")}
         </button>
       )}
@@ -76,48 +110,79 @@ export default function AIInsights({ formData }) {
         </div>
       )}
 
-      {insights && (
+      {error && !loading && (
+        <div className="space-y-3">
+          <p className="text-sm text-rose-400" role="alert">{error}</p>
+          <button type="button" className="btn-secondary text-xs py-1.5 px-4" onClick={generate}>
+            {t("incomeAnalysis.retry")}
+          </button>
+        </div>
+      )}
+
+      {insights && !loading && (
         <div className="space-y-6">
-          {/* Top Countries */}
+          {/* Provider badge */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-faint">{t("incomeAnalysis.poweredBy")}</span>
+            <ProviderBadge provider={insights.provider} />
+          </div>
+
+          {/* Summary */}
           <div>
-            <p className="label mb-2">{t("incomeAnalysis.topCountries")}</p>
-            <div className="flex flex-wrap gap-2">
-              {insights.topCountries.map((c) => <CountryPill key={c} name={c} />)}
-            </div>
+            <p className="label mb-1.5">{t("incomeAnalysis.summary")}</p>
+            <p className="text-sm text-muted leading-relaxed">{insights.summary}</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Income Tips */}
+          {/* Income Benchmarks */}
+          {insights.income_benchmark?.length > 0 && (
             <div>
-              <p className="label">{t("incomeAnalysis.incomeTips")}</p>
-              <TipList items={insights.incomeTips.map((k) => t(k))} />
+              <p className="label">{t("incomeAnalysis.benchmark")}</p>
+              <TipList items={insights.income_benchmark} />
             </div>
-
-            {/* Expense Tips */}
-            <div>
-              <p className="label">{t("incomeAnalysis.expenseTips")}</p>
-              <TipList items={insights.expenseTips.map((k) => t(k))} />
-            </div>
-          </div>
+          )}
 
           {/* Action Plan */}
           <div>
             <p className="label mb-3">{t("incomeAnalysis.actionPlan")}</p>
             <div className="grid md:grid-cols-3 gap-4">
               {[
-                { key: "month3", label: t("incomeAnalysis.month3"), goal: insights.actionPlan.month3 },
-                { key: "month6", label: t("incomeAnalysis.month6"), goal: insights.actionPlan.month6 },
-                { key: "month12", label: t("incomeAnalysis.month12"), goal: insights.actionPlan.month12 },
-              ].map(({ key, label, goal }) => (
+                { key: "next_3_months",  label: t("incomeAnalysis.month3") },
+                { key: "next_6_months",  label: t("incomeAnalysis.month6") },
+                { key: "next_12_months", label: t("incomeAnalysis.month12") },
+              ].map(({ key, label }) => (
                 <div key={key} className="panel space-y-2">
                   <p className="text-xs uppercase tracking-widest text-faint font-semibold">{label}</p>
-                  <p className="text-sm text-muted leading-relaxed">{t(goal.key, goal.vars)}</p>
+                  <ul className="space-y-1">
+                    {(insights.action_plan?.[key] ?? []).map((item, i) => (
+                      <li key={i} className="text-sm text-muted leading-relaxed flex items-start gap-1.5">
+                        <span className="text-[var(--accent)] shrink-0">›</span>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Regenerate button */}
+          {/* Potential Countries */}
+          {insights.potential_countries?.length > 0 && (
+            <div>
+              <p className="label mb-3">{t("incomeAnalysis.topCountries")}</p>
+              <div className="grid md:grid-cols-3 gap-4">
+                {insights.potential_countries.map((c) => (
+                  <CountryCard key={c.country} {...c} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Disclaimer */}
+          <p className="text-xs text-faint italic border-t border-[var(--border)] pt-4">
+            {insights.disclaimer}
+          </p>
+
+          {/* Regenerate */}
           <button
             type="button"
             className="btn-secondary text-xs py-1.5 px-4"

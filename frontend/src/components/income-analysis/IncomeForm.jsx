@@ -1,14 +1,7 @@
 import React, { useState } from "react";
 import { useI18n } from "../../context/I18nContext";
 
-const COUNTRIES = [
-  "Australia", "Brazil", "Canada", "China", "France",
-  "Germany", "India", "Italy", "Japan", "Kazakhstan",
-  "Mexico", "Netherlands", "Poland", "Russia", "Singapore",
-  "South Korea", "Spain", "Switzerland", "United Kingdom", "United States",
-];
-
-const CURRENCIES = ["USD", "EUR", "KZT", "RUB", "GBP", "CNY", "JPY"];
+const CURRENCIES = ["USD", "EUR", "KZT", "RUB", "GBP", "CNY", "JPY", "AUD", "CAD", "CHF", "SGD", "AED", "TRY", "BRL", "INR"];
 
 function validate(fields, t) {
   const errors = {};
@@ -26,7 +19,7 @@ function validate(fields, t) {
   return errors;
 }
 
-export default function IncomeForm({ onSubmit }) {
+export default function IncomeForm({ onSubmit, countries = [] }) {
   const { t } = useI18n();
 
   const [fields, setFields] = useState({
@@ -101,8 +94,8 @@ export default function IncomeForm({ onSubmit }) {
             onChange={handleChange}
           >
             <option value="">{t("incomeAnalysis.selectCountry")}</option>
-            {COUNTRIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
+            {countries.map((c) => (
+              <option key={c.code} value={c.name}>{c.name}</option>
             ))}
           </select>
           {errors.country && (

@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Column, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from app.db import Base
@@ -41,4 +41,13 @@ class Observation(Base):
     country = relationship("Country", back_populates="observations")
     indicator = relationship("Indicator", back_populates="observations")
 
-    __table_args__ = (UniqueConstraint("country_id", "indicator_id", "year", name="uq_obs"),)
+    __table_args__ = (
+        # Composite unique constraint — also serves as index for the hot path:
+        #   WHERE country_id=? AND indicator_id=? [AND year op ?] ORDER BY year
+        UniqueConstraint("country_id", "indicator_id", "year", name="uq_obs"),
+        # Standalone indexes for queries that filter on a single column:
+        #   idx_obs_indicator_id — inequality ranking loops over countries per indicator
+        Index("idx_obs_indicator_id", "indicator_id"),
+        #   idx_obs_year — year-range scans across all countries / indicators
+        Index("idx_obs_year", "year"),
+    )

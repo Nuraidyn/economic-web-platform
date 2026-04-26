@@ -193,3 +193,34 @@ class ChartExplainResponse(BaseModel):
     provider: str
     model: str | None = None
     warning: str | None = None
+
+
+# ── Income Insights ───────────────────────────────────────────────────────────
+
+class IncomeInsightsRequest(BaseModel):
+    age: int = Field(..., ge=16, le=100)
+    country: str = Field(..., min_length=1, max_length=100)
+    profession: str = Field(..., min_length=1, max_length=200)
+    experience_years: int = Field(..., ge=0, le=60)
+    monthly_income: float = Field(..., ge=0)
+    monthly_expenses: float = Field(..., ge=0)
+    yearly_growth_percent: float = Field(default=0.0, ge=0, le=100)
+    currency: str = Field(default="USD", min_length=1, max_length=10)
+    comparison_countries: list[str] = Field(default_factory=list, max_length=10)
+    period_years: int = Field(default=1, ge=1, le=5)
+    inflation_adjusted: bool = Field(default=False)
+
+
+class PotentialCountry(BaseModel):
+    country: str
+    reason: str
+    estimated_income_range: str
+
+
+class IncomeInsightsResponse(BaseModel):
+    summary: str
+    income_benchmark: list[str]
+    action_plan: dict[str, list[str]]
+    potential_countries: list[PotentialCountry]
+    disclaimer: str
+    provider: str

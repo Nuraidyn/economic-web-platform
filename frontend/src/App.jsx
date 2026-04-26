@@ -11,6 +11,9 @@ import Home from "./pages/Home";
 import IncomeAnalysisPage from "./pages/IncomeAnalysisPage";
 import ForecastPage from "./pages/Forecast";
 import SavedPage from "./pages/Saved";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 export default function App() {
   return (
@@ -27,6 +30,9 @@ export default function App() {
                     <Route path="/income-analysis" element={<IncomeAnalysisPage />} />
                     <Route path="/forecast" element={<ForecastPage />} />
                     <Route path="/saved" element={<SavedPage />} />
+                    <Route path="/verify-email" element={<VerifyEmailPage />} />
+                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                    <Route path="/reset-password" element={<ResetPasswordPage />} />
                   </Route>
                 </Routes>
               </BrowserRouter>

@@ -9,7 +9,7 @@ User = get_user_model()
 
 class RegisterSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=150)
-    email = serializers.EmailField(required=False, allow_blank=True)
+    email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True, min_length=8)
     accept_agreement = serializers.BooleanField()
 
@@ -52,6 +52,29 @@ class AgreementAcceptanceSerializer(serializers.ModelSerializer):
         model = AgreementAcceptance
         fields = ("id", "agreement", "accepted_at")
         read_only_fields = ("id", "accepted_at")
+
+
+class ResendVerificationSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=False, allow_blank=True, default="")
+    username = serializers.CharField(required=False, allow_blank=True, default="")
+
+    def validate(self, attrs):
+        if not attrs.get("email") and not attrs.get("username"):
+            raise serializers.ValidationError("Either email or username is required.")
+        return attrs
+
+
+class GoogleAuthSerializer(serializers.Serializer):
+    credential = serializers.CharField()
+
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    token = serializers.CharField()
+    new_password = serializers.CharField(write_only=True, min_length=8)
 
 
 class AnalysisPresetSerializer(serializers.ModelSerializer):

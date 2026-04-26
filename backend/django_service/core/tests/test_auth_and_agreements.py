@@ -66,8 +66,7 @@ class AuthAndAgreementApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["username"], "bob")
-        self.assertEqual(response.data["role"], UserProfile.ROLE_USER)
-        self.assertTrue(response.data["agreement_accepted"])
+        self.assertTrue(response.data["verification_required"])
 
         user = User.objects.get(username="bob")
         self.assertTrue(hasattr(user, "profile"))
@@ -125,6 +124,8 @@ class AuthAndAgreementApiTests(APITestCase):
             email="eric@example.com",
             password="verystrongpass",
         )
+        user.profile.is_email_verified = True
+        user.profile.save(update_fields=["is_email_verified"])
 
         token_response = self.client.post(
             self.token_url,

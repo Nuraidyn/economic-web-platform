@@ -162,8 +162,16 @@ export default function Navbar({ onOpenAuth, isAuthenticated }) {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-900/10 dark:border-white/10 bg-white/75 dark:bg-slate-950/75 backdrop-blur-md">
-      <nav className="max-w-[1480px] mx-auto px-4 md:px-6 h-14 flex items-center justify-between gap-3">
+    <header
+      className="sticky top-0 z-50"
+      style={{
+        borderBottom: "1px solid var(--panel-border)",
+        background: "color-mix(in srgb, var(--panel) 88%, transparent)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+      }}
+    >
+      <nav className="max-w-[1480px] mx-auto px-4 md:px-6 flex items-center justify-between gap-3" style={{ height: "var(--navbar-h)" }}>
 
         {/* ── Brand ── */}
         <Link

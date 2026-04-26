@@ -1,16 +1,30 @@
+import logging
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from app.api.v1.params import CountryCodeParam, IndicatorCodeParam, LimitParam, OffsetParam, OptionalYearParam
-from app.db import get_db
+from app.db import SessionLocal, get_db
 from app.deps import require_agreement
 from app.models import Country, Indicator, Observation
 from app.schemas import ObservationRead
 from app.services.world_bank import async_fetch_indicator_series
 
+logger = logging.getLogger(__name__)
 router = APIRouter(tags=["observations"])
+
+
+def _bg_persist(country_code: str, indicator_code: str, series: list) -> None:
+    """Background task: persist a live-fetched series to DB (write-through cache)."""
+    from app.services.ingestion import persist_observations
+    db = SessionLocal()
+    try:
+        persist_observations(db, country_code, indicator_code, series)
+    except Exception as exc:
+        logger.warning("bg_persist failed %s/%s: %s", country_code, indicator_code, exc)
+    finally:
+        db.close()
 
 
 @router.get("/observations", response_model=list[ObservationRead])
@@ -18,6 +32,7 @@ async def list_observations(
     country: CountryCodeParam,
     indicator: IndicatorCodeParam,
     response: Response,
+    background_tasks: BackgroundTasks,
     start_year: OptionalYearParam = None,
     end_year: OptionalYearParam = None,
     limit: LimitParam = 100,
@@ -64,6 +79,10 @@ async def list_observations(
         series = await async_fetch_indicator_series(country_code, indicator_code)
     except Exception as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    # Persist to DB in background so future requests are served from cache
+    if series:
+        background_tasks.add_task(_bg_persist, country_code, indicator_code, series)
 
     if start_year is not None:
         series = [row for row in series if row["year"] >= start_year]

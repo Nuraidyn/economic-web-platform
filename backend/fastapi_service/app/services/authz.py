@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-import time
+import threading
 from dataclasses import dataclass
 from typing import Optional
 
 import httpx
+from cachetools import TTLCache
 
 from app.core.config import (
+    AUTHZ_CACHE_MAXSIZE,
     AUTHZ_CACHE_TTL_SECONDS,
     AUTHZ_INTROSPECT_PATH,
     AUTHZ_INTROSPECT_TIMEOUT_SECONDS,
@@ -29,27 +31,82 @@ class AuthzInvalidToken(RuntimeError):
     """Token is invalid/expired according to Django."""
 
 
-_CACHE: dict[str, tuple[float, AuthzContext]] = {}
+# ---------------------------------------------------------------------------
+# Bounded TTL cache
+#
+# cachetools.TTLCache auto-evicts entries:
+#   - on TTL expiry (lazy, on next access of expired key)
+#   - when maxsize is exceeded (LRU eviction of oldest entry)
+#
+# Not thread-safe by itself — all access goes through _CACHE_LOCK.
+# ---------------------------------------------------------------------------
 
+_ttl = max(AUTHZ_CACHE_TTL_SECONDS, 1)  # TTLCache requires ttl > 0
+_CACHE: TTLCache[str, AuthzContext] = TTLCache(maxsize=AUTHZ_CACHE_MAXSIZE, ttl=_ttl)
+_CACHE_LOCK = threading.Lock()
+
+_hits = 0
+_misses = 0
+
+
+# ---------------------------------------------------------------------------
+# Diagnostics
+# ---------------------------------------------------------------------------
+
+def get_cache_stats() -> dict:
+    """Return a snapshot of cache diagnostics (safe to call at any time)."""
+    with _CACHE_LOCK:
+        return {
+            "size": len(_CACHE),
+            "maxsize": _CACHE.maxsize,
+            "ttl_seconds": _CACHE.ttl,
+            "hits": _hits,
+            "misses": _misses,
+        }
+
+
+def clear_cache() -> None:
+    """Evict all entries (useful in tests and admin tooling)."""
+    global _hits, _misses
+    with _CACHE_LOCK:
+        _CACHE.clear()
+        _hits = 0
+        _misses = 0
+
+
+# ---------------------------------------------------------------------------
+# Internal cache helpers
+# ---------------------------------------------------------------------------
 
 def _cache_get(token: str) -> Optional[AuthzContext]:
-    item = _CACHE.get(token)
-    if not item:
+    global _hits, _misses
+    with _CACHE_LOCK:
+        value = _CACHE.get(token)  # returns None for missing or expired keys
+        if value is not None:
+            _hits += 1
+            return value
+        _misses += 1
         return None
-    expires_at, value = item
-    if expires_at <= time.time():
-        _CACHE.pop(token, None)
-        return None
-    return value
 
 
 def _cache_set(token: str, value: AuthzContext) -> None:
-    _CACHE[token] = (time.time() + max(AUTHZ_CACHE_TTL_SECONDS, 0), value)
+    with _CACHE_LOCK:
+        _CACHE[token] = value
 
+
+# ---------------------------------------------------------------------------
+# Public API — contract unchanged
+# ---------------------------------------------------------------------------
 
 def introspect_with_django(token: str) -> AuthzContext:
+    """Validate token via Django introspection endpoint; caches successful results.
+
+    Raises:
+        AuthzInvalidToken  — token rejected by Django (401/403)
+        AuthzUnavailable   — network error or unexpected Django response
+    """
     cached = _cache_get(token)
-    if cached:
+    if cached is not None:
         return cached
 
     base = DJANGO_AUTH_URL.rstrip("/")
@@ -64,6 +121,7 @@ def introspect_with_django(token: str) -> AuthzContext:
         raise AuthzUnavailable(str(exc)) from exc
 
     if resp.status_code in (401, 403):
+        # Invalid/expired tokens are NOT cached — each request re-checks Django.
         raise AuthzInvalidToken("Invalid token")
 
     if resp.status_code >= 500:
@@ -84,4 +142,3 @@ def introspect_with_django(token: str) -> AuthzContext:
     ctx = AuthzContext(user_id=user_id, role=role, agreement_accepted=agreement_accepted)
     _cache_set(token, ctx)
     return ctx
-

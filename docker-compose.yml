@@ -1,4 +1,12 @@
 services:
+  redis:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
   db:
     image: postgres:16-alpine
     environment:
@@ -9,13 +17,18 @@ services:
       - "5433:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ewp -d ewp"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   django:
     build:
       context: ./backend
       dockerfile: django_service/Dockerfile
     environment:
-      DJANGO_SECRET_KEY: dev-secret-key
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
       DJANGO_DEBUG: "1"
       DJANGO_DB_ENGINE: django.db.backends.postgresql
       DJANGO_DB_NAME: ewp
@@ -24,6 +37,8 @@ services:
       DJANGO_DB_HOST: db
       DJANGO_DB_PORT: "5432"
       DJANGO_CORS_ALLOWED_ORIGINS: "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174"
+    volumes:
+      - ./backend/django_service:/app
     depends_on:
       - db
     ports:
@@ -39,14 +54,26 @@ services:
       APP_ENV: docker
       DATABASE_URL: postgresql+psycopg://ewp:ewp@db:5432/ewp
       DJANGO_AUTH_URL: http://django:8000
-      DJANGO_SECRET_KEY: dev-secret-key
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
       CORS_ALLOW_ORIGINS: "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174"
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
       CHART_EXPLAIN_PROVIDER: ${CHART_EXPLAIN_PROVIDER:-auto}
+      REDIS_URL: redis://redis:6379/0
+      RATE_LIMIT_ENABLED: "1"
+      RATE_LIMIT_RPS: "5"
+      RATE_LIMIT_BURST: "20"
+      RATE_LIMIT_REDIS_FAIL_OPEN: "0"
+      AUTHZ_INTROSPECT_STRICT: "0"
+    volumes:
+      - ./backend/fastapi_service:/app
     depends_on:
-      - db
-      - django
+      db:
+        condition: service_healthy
+      django:
+        condition: service_started
+      redis:
+        condition: service_started
     ports:
       - "8001:8001"
     command: >
@@ -54,4 +81,5 @@ services:
 
 volumes:
   db_data:
+  redis_data:
 

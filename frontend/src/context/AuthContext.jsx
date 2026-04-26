@@ -4,14 +4,16 @@ import {
   acceptAgreement,
   fetchActiveAgreement,
   fetchMe,
+  googleAuth,
+  logoutUser,
   loginUser,
   registerUser,
+  silentRefresh,
 } from "../api/auth";
 import { setAuthToken } from "../api/client";
+import { parseAuthError } from "../utils/parseAuthError";
 
 const AuthContext = createContext(null);
-
-const TOKEN_KEY = "ewp_token";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -32,26 +34,17 @@ export function AuthProvider({ children }) {
   }, []);
 
   const loadUser = useCallback(async () => {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) {
-      setAuthStatus({ loading: false, error: "" });
-      return;
-    }
-    setAuthToken(token);
+    setAuthStatus({ loading: true, error: "" });
     try {
-      const data = await fetchMe();
-      setUser(data);
+      // Restore session via the httpOnly refresh cookie (no localStorage needed).
+      const refreshData = await silentRefresh();
+      setAuthToken(refreshData.access);
+      const profile = await fetchMe();
+      setUser(profile);
       setAuthStatus({ loading: false, error: "" });
-    } catch (error) {
-      setAuthToken(null);
-      localStorage.removeItem(TOKEN_KEY);
-      setUser(null);
-      // Save current URL so we can redirect back after re-login
-      const currentPath = window.location.pathname + window.location.search;
-      if (currentPath && currentPath !== "/") {
-        sessionStorage.setItem("ewp_redirect", currentPath);
-      }
-      setAuthStatus({ loading: false, error: "Session expired.", expired: true });
+    } catch {
+      // No valid cookie → user is simply not logged in. Not an error.
+      setAuthStatus({ loading: false, error: "" });
     }
   }, []);
 
@@ -64,32 +57,53 @@ export function AuthProvider({ children }) {
     setAuthStatus({ loading: true, error: "" });
     try {
       const data = await loginUser(credentials);
-      localStorage.setItem(TOKEN_KEY, data.access);
+      // Refresh token is now in httpOnly cookie set by the server.
+      // Access token is in-memory only — never touches localStorage.
       setAuthToken(data.access);
       const profile = await fetchMe();
       setUser(profile);
       setAuthStatus({ loading: false, error: "" });
       return { ok: true };
     } catch (error) {
-      setAuthStatus({ loading: false, error: "Invalid credentials." });
-      return { ok: false };
+      setAuthStatus({ loading: false, error: "" });
+      return { ok: false, error: parseAuthError(error) };
     }
   }, []);
 
   const register = useCallback(async (payload) => {
     setAuthStatus({ loading: true, error: "" });
     try {
-      await registerUser(payload);
+      const data = await registerUser(payload);
+      setAuthStatus({ loading: false, error: "" });
+      return {
+        ok: true,
+        verificationRequired: data?.verification_required === true,
+        email: data?.email || "",
+      };
+    } catch (error) {
+      setAuthStatus({ loading: false, error: "" });
+      return { ok: false, error: parseAuthError(error) };
+    }
+  }, []);
+
+  const loginWithGoogle = useCallback(async (credential) => {
+    setAuthStatus({ loading: true, error: "" });
+    try {
+      const data = await googleAuth(credential);
+      setAuthToken(data.access);
+      const profile = await fetchMe();
+      setUser(profile);
       setAuthStatus({ loading: false, error: "" });
       return { ok: true };
     } catch (error) {
-      setAuthStatus({ loading: false, error: "Registration failed." });
-      return { ok: false };
+      setAuthStatus({ loading: false, error: "" });
+      return { ok: false, error: parseAuthError(error) };
     }
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
+    // Fire-and-forget: blacklist the refresh cookie on the server.
+    logoutUser().catch(() => {});
     setAuthToken(null);
     setUser(null);
   }, []);
@@ -112,11 +126,12 @@ export function AuthProvider({ children }) {
       agreementStatus,
       authStatus,
       login,
+      loginWithGoogle,
       register,
       logout,
       acceptActiveAgreement,
     }),
-    [user, agreement, agreementStatus, authStatus, login, register, logout, acceptActiveAgreement]
+    [user, agreement, agreementStatus, authStatus, login, loginWithGoogle, register, logout, acceptActiveAgreement]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
