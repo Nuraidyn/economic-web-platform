@@ -240,8 +240,8 @@ export default function ForecastPanel({
   }, [history, forecast, t]);
 
   const coverage = useMemo(() => computeCoverage(history), [history]);
-  const axisColor = useMemo(() => getCssVar("--chart-axis", "#e2e8f0"), [theme]);
-  const gridColor = useMemo(() => getCssVar("--chart-grid", "rgba(148,163,184,0.2)"), [theme]);
+  const axisColor = theme === "dark" ? "rgba(226,232,240,0.7)"  : "rgba(15,23,42,0.66)";
+  const gridColor = theme === "dark" ? "rgba(148,163,184,0.2)" : "rgba(15,23,42,0.12)";
 
   const summary = useMemo(() => {
     if (!forecast) {

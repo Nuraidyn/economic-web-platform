@@ -16,17 +16,29 @@ import { useI18n } from "../context/I18nContext";
 import { useTheme } from "../context/ThemeContext";
 
 /* ─────────────────────────────────────────────
-   Color palette — EVision brand, accessible at
-   1–6 series. Series 5-6 use dashes to stay
-   distinguishable without relying on hue alone.
+   Color palettes — theme-adaptive, accessible.
+   Dark: vivid hues on near-black backgrounds.
+   Light: deep tones with WCAG-level contrast
+   on near-white backgrounds.
+   Series 5–6 add dash patterns for color-blind
+   safety (distinguishable without hue alone).
 ───────────────────────────────────────────── */
-const PALETTE = [
-  { border: "#38BDF8", bg: "rgba(56,189,248,0.12)",  dash: [],     width: 2.2 },
-  { border: "#F59E0B", bg: "rgba(245,158,11,0.12)",  dash: [],     width: 2.2 },
-  { border: "#34D399", bg: "rgba(52,211,153,0.12)",  dash: [],     width: 2.2 },
-  { border: "#A78BFA", bg: "rgba(167,139,250,0.12)", dash: [],     width: 2.2 },
-  { border: "#FB7185", bg: "rgba(251,113,133,0.10)", dash: [6, 3], width: 1.8 },
-  { border: "#22D3EE", bg: "rgba(34,211,238,0.10)",  dash: [6, 3], width: 1.8 },
+const PALETTE_DARK = [
+  { border: "#38BDF8", bg: "rgba(56,189,248,0.65)",  dash: [],     width: 2.5 },
+  { border: "#FB923C", bg: "rgba(251,146,60,0.65)",  dash: [],     width: 2.5 },
+  { border: "#4ADE80", bg: "rgba(74,222,128,0.65)",  dash: [],     width: 2.5 },
+  { border: "#E879F9", bg: "rgba(232,121,249,0.65)", dash: [],     width: 2.5 },
+  { border: "#FBBF24", bg: "rgba(251,191,36,0.65)",  dash: [6, 3], width: 2.5 },
+  { border: "#F87171", bg: "rgba(248,113,113,0.65)", dash: [6, 3], width: 2.5 },
+];
+
+const PALETTE_LIGHT = [
+  { border: "#1D6FD8", bg: "rgba(29,111,216,0.70)",  dash: [],     width: 2.5 },
+  { border: "#B45309", bg: "rgba(180,83,9,0.70)",    dash: [],     width: 2.5 },
+  { border: "#047857", bg: "rgba(4,120,87,0.70)",    dash: [],     width: 2.5 },
+  { border: "#7C3AED", bg: "rgba(124,58,237,0.70)",  dash: [],     width: 2.5 },
+  { border: "#B91C1C", bg: "rgba(185,28,28,0.70)",   dash: [6, 3], width: 2.5 },
+  { border: "#0E7490", bg: "rgba(14,116,144,0.70)",  dash: [6, 3], width: 2.5 },
 ];
 
 const TIMEFRAMES = [
@@ -107,7 +119,7 @@ const crosshairPlugin = {
     ctx.moveTo(xPos, chartArea.top);
     ctx.lineTo(xPos, chartArea.bottom);
     ctx.lineWidth = 1;
-    ctx.strokeStyle = "rgba(148,163,184,0.4)";
+    ctx.strokeStyle = getCssVar("--chart-grid", "rgba(148,163,184,0.4)");
     ctx.setLineDash([4, 4]);
     ctx.stroke();
     ctx.restore();
@@ -209,6 +221,7 @@ const ANIMATION = {
 ═══════════════════════════════════════════ */
 export default function ChartDisplay({ datasets, chartType, viewMode, appear, indicatorLabel }) {
   const { theme } = useTheme();
+  const palette = theme === "dark" ? PALETTE_DARK : PALETTE_LIGHT;
   const { t, language } = useI18n();
   const chartRef = useRef(null);
   const fmtCompact = useMemo(() => makeFmtCompact(language), [language]);
@@ -220,9 +233,12 @@ export default function ChartDisplay({ datasets, chartType, viewMode, appear, in
   /* Timeframe filter */
   const [timeframe, setTimeframe] = useState("All");
 
-  /* CSS vars — re-read on theme change */
-  const axisColor = useMemo(() => getCssVar("--chart-axis", "rgba(148,163,184,0.8)"), [theme]);
-  const gridColor = useMemo(() => getCssVar("--chart-grid",  "rgba(148,163,184,0.15)"), [theme]);
+  /* Axis/grid colors derived directly from theme state — NOT from getCssVar.
+     getCssVar reads the DOM at render time, but ThemeContext applies html.dark
+     in a useEffect (after render), so getCssVar always reads the previous
+     theme's values. Computing from theme state is always synchronous and correct. */
+  const axisColor = theme === "dark" ? "rgba(226,232,240,0.7)"  : "rgba(15,23,42,0.66)";
+  const gridColor = theme === "dark" ? "rgba(148,163,184,0.2)" : "rgba(15,23,42,0.12)";
 
   /* Filtered datasets */
   const filteredDatasets = useMemo(() => {
@@ -272,21 +288,21 @@ export default function ChartDisplay({ datasets, chartType, viewMode, appear, in
     const equalitySet = {
       label: t("chart.lineOfEquality"),
       data: [{ x: 0, y: 0 }, { x: 1, y: 1 }],
-      borderColor: "rgba(148,163,184,0.5)",
+      borderColor: theme === "dark" ? "rgba(148,163,184,0.55)" : "rgba(71,85,105,0.5)",
       backgroundColor: "transparent",
       borderDash: [6, 4],
       showLine: true,
       pointRadius: 0,
       tension: 0,
       order: 0,
-      borderWidth: 1.2,
+      borderWidth: 1.5,
     };
 
     const lorenzData = {
       datasets: [
         equalitySet,
         ...datasets.map((dset, i) => {
-          const pal = PALETTE[i % PALETTE.length];
+          const pal = palette[i % palette.length];
           return {
             label: `${dset.country.toUpperCase()} (${dset.year ?? "n/a"})`,
             data: dset.data,
@@ -380,7 +396,7 @@ export default function ChartDisplay({ datasets, chartType, viewMode, appear, in
   const chartData = {
     ...(isScatter ? {} : { labels: sortedYears }),
     datasets: filteredDatasets.map((dset, i) => {
-      const pal = PALETTE[i % PALETTE.length];
+      const pal = palette[i % palette.length];
 
       if (isScatter) {
         const pts = [...(dset.data ?? [])].sort((a, b) => a.year - b.year);
@@ -400,7 +416,7 @@ export default function ChartDisplay({ datasets, chartType, viewMode, appear, in
         label: dset.country.toUpperCase(),
         data: sortedYears.map((year) => valueMap[year] ?? null),
         borderColor: pal.border,
-        backgroundColor: localType === "bar" ? pal.bg : pal.bg,
+        backgroundColor: pal.bg,
         fill: false,
         tension: 0.28,
         borderWidth: pal.width,
