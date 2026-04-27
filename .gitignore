@@ -154,6 +154,5 @@ env/
 # local npm cache
 frontend/.npm-cache/
 
-# Claude Code
 CLAUDE.md
 .claude/settings.local.json
