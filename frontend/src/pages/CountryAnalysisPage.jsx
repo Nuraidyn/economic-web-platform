@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from "react";
 
 import { fetchObservationsWithMeta } from "../api/analyticsApi";
 import ChartInsightAgent from "../components/ChartInsightAgent";
+import ChoroplethMap from "../components/ChoroplethMap";
 import ComparisonDashboard from "../components/ComparisonDashboard";
 import CountryMultiSelect from "../components/CountryMultiSelect";
 import IndicatorMultiSelect from "../components/IndicatorMultiSelect";
@@ -233,6 +234,10 @@ export default function CountryAnalysisPage() {
           isLoading={isLoading}
         />
       </AnalyticsPreview>
+
+      <div className="section-divider" aria-hidden="true" />
+
+      <ChoroplethMap />
 
       <div className="section-divider" aria-hidden="true" />
 
