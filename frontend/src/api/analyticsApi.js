@@ -66,3 +66,10 @@ export const fetchIncomeInsights = async (payload, signal) => {
   const res = await fastapiClient.post("/income/insights", payload, { signal, timeout: 30000 });
   return res.data;
 };
+
+export const fetchWorldSnapshot = async ({ indicator, year } = {}, signal) => {
+  const params = { indicator };
+  if (year != null) params.year = year;
+  const res = await fastapiClient.get("/observations/world", { params, signal });
+  return res.data; // { year: number, data: { "US": 12345.6, ... } }
+};

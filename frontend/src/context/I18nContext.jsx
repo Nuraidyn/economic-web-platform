@@ -446,6 +446,20 @@ const DICTIONARY = {
     "comparison.above": "above average",
     "comparison.below": "below average",
     "comparison.yourSalary": "My Salary",
+    "map.kicker": "World View",
+    "map.title": "Global Map",
+    "map.subtitle": "Country values by indicator from the cached dataset.",
+    "map.year": "Year",
+    "map.noValue": "No data",
+    "map.countries": "countries with data",
+    "map.noCache": "No cached data yet. Run comparisons to populate the map.",
+    "map.ind.gdpCap": "GDP per capita",
+    "map.ind.gdpTotal": "GDP total",
+    "map.ind.inflation": "Inflation",
+    "map.ind.unemploy": "Unemployment",
+    "map.ind.gini": "Gini index",
+    "map.ind.gdpGrowth": "GDP growth",
+    "map.ind.poverty": "Poverty rate",
   },
   ru: {
     "language.ru": "RU",
@@ -889,6 +903,20 @@ const DICTIONARY = {
     "comparison.above": "выше среднего",
     "comparison.below": "ниже среднего",
     "comparison.yourSalary": "Моя зарплата",
+    "map.kicker": "Мировой обзор",
+    "map.title": "Глобальная карта",
+    "map.subtitle": "Значения по странам из кэша. Данные накапливаются по мере использования платформы.",
+    "map.year": "Год",
+    "map.noValue": "Нет данных",
+    "map.countries": "стран с данными",
+    "map.noCache": "Данных пока нет. Запустите сравнение стран, чтобы наполнить карту.",
+    "map.ind.gdpCap": "ВВП на душу",
+    "map.ind.gdpTotal": "ВВП (всего)",
+    "map.ind.inflation": "Инфляция",
+    "map.ind.unemploy": "Безработица",
+    "map.ind.gini": "Индекс Джини",
+    "map.ind.gdpGrowth": "Рост ВВП",
+    "map.ind.poverty": "Уровень бедности",
   },
   kz: {
     "language.ru": "RU",
@@ -1332,6 +1360,20 @@ const DICTIONARY = {
     "comparison.above": "орташадан жоғары",
     "comparison.below": "орташадан төмен",
     "comparison.yourSalary": "Менің жалақым",
+    "map.kicker": "Әлемдік шолу",
+    "map.title": "Жаһандық карта",
+    "map.subtitle": "Кэштелген деректер бойынша елдердің индикатор мәндері.",
+    "map.year": "Жыл",
+    "map.noValue": "Мәлімет жоқ",
+    "map.countries": "елдің деректері бар",
+    "map.noCache": "Кэш бос. Елдерді салыстырыңыз.",
+    "map.ind.gdpCap": "ЖІӨ жан басына",
+    "map.ind.gdpTotal": "ЖІӨ (барлығы)",
+    "map.ind.inflation": "Инфляция",
+    "map.ind.unemploy": "Жұмыссыздық",
+    "map.ind.gini": "Джини индексі",
+    "map.ind.gdpGrowth": "ЖІӨ өсімі",
+    "map.ind.poverty": "Кедейлік деңгейі",
   },
 
   /* ── German (partial — falls back to EN for missing keys) ── */
@@ -1372,6 +1414,7 @@ const DICTIONARY = {
     "landing.step3Title": "Interpretieren",
     "landing.step3Desc": "KI-Agent befragen, Prognosen erstellen oder Ergebnisse als CSV exportieren.",
     "common.na": "k.A.", "common.close": "Schließen",
+    "map.kicker": "Weltüberblick", "map.title": "Weltkarte", "map.subtitle": "Länderwerte nach Indikator aus dem Cache.", "map.year": "Jahr", "map.noValue": "Keine Daten", "map.countries": "Länder mit Daten", "map.noCache": "Noch keine Daten. Vergleiche ausführen.", "map.ind.gdpCap": "BIP/Kopf", "map.ind.gdpTotal": "BIP gesamt", "map.ind.inflation": "Inflation", "map.ind.unemploy": "Arbeitslosigkeit", "map.ind.gini": "Gini-Index", "map.ind.gdpGrowth": "BIP-Wachstum", "map.ind.poverty": "Armutsrate",
   },
 
   /* ── French (partial — falls back to EN for missing keys) ── */
@@ -1412,6 +1455,7 @@ const DICTIONARY = {
     "landing.step3Title": "Interpréter",
     "landing.step3Desc": "Interrogez l'agent IA, générez des prévisions ou exportez les résultats en CSV.",
     "common.na": "n/d", "common.close": "Fermer",
+    "map.kicker": "Vue mondiale", "map.title": "Carte mondiale", "map.subtitle": "Valeurs par pays selon l'indicateur depuis le cache.", "map.year": "Année", "map.noValue": "Aucune donnée", "map.countries": "pays avec données", "map.noCache": "Aucune donnée en cache. Lancez des comparaisons.", "map.ind.gdpCap": "PIB/hab.", "map.ind.gdpTotal": "PIB total", "map.ind.inflation": "Inflation", "map.ind.unemploy": "Chômage", "map.ind.gini": "Indice Gini", "map.ind.gdpGrowth": "Croissance PIB", "map.ind.poverty": "Pauvreté",
   },
 
   /* ── Chinese Simplified (partial — falls back to EN for missing keys) ── */
@@ -1452,6 +1496,7 @@ const DICTIONARY = {
     "landing.step3Title": "解读",
     "landing.step3Desc": "向AI助手提问，生成预测，或将结果导出为CSV。",
     "common.na": "暂无", "common.close": "关闭",
+    "map.kicker": "全球视图", "map.title": "全球地图", "map.subtitle": "来自缓存数据集的各国指标值。", "map.year": "年份", "map.noValue": "无数据", "map.countries": "个国家有数据", "map.noCache": "暂无缓存数据，请运行比较。", "map.ind.gdpCap": "人均GDP", "map.ind.gdpTotal": "GDP总量", "map.ind.inflation": "通货膨胀", "map.ind.unemploy": "失业率", "map.ind.gini": "基尼系数", "map.ind.gdpGrowth": "GDP增长", "map.ind.poverty": "贫困率",
   },
 
   /* ── Spanish (partial — falls back to EN for missing keys) ── */
@@ -1492,6 +1537,7 @@ const DICTIONARY = {
     "landing.step3Title": "Interpretar",
     "landing.step3Desc": "Consulta al agente de IA, genera pronósticos o exporta resultados como CSV.",
     "common.na": "n/d", "common.close": "Cerrar",
+    "map.kicker": "Vista mundial", "map.title": "Mapa mundial", "map.subtitle": "Valores por país según el indicador desde la caché.", "map.year": "Año", "map.noValue": "Sin datos", "map.countries": "países con datos", "map.noCache": "Sin datos en caché. Ejecute comparaciones.", "map.ind.gdpCap": "PIB per cápita", "map.ind.gdpTotal": "PIB total", "map.ind.inflation": "Inflación", "map.ind.unemploy": "Desempleo", "map.ind.gini": "Índice Gini", "map.ind.gdpGrowth": "Crec. PIB", "map.ind.poverty": "Pobreza",
   },
 };
 
