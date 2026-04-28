@@ -8,6 +8,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { UIProvider } from "./context/UIContext";
 import AppLayout from "./layouts/AppLayout";
 import Home from "./pages/Home";
+import CountryAnalysisPage from "./pages/CountryAnalysisPage";
 import IncomeAnalysisPage from "./pages/IncomeAnalysisPage";
 import ForecastPage from "./pages/Forecast";
 import SavedPage from "./pages/Saved";
@@ -26,6 +27,7 @@ export default function App() {
                 <Routes>
                   <Route element={<AppLayout />}>
                     <Route path="/" element={<Home />} />
+                    <Route path="/compare" element={<CountryAnalysisPage />} />
                     <Route path="/analysis" element={<Navigate to="/income-analysis" replace />} />
                     <Route path="/income-analysis" element={<IncomeAnalysisPage />} />
                     <Route path="/forecast" element={<ForecastPage />} />
