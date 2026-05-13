@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useContext, useMemo, useState } from "react";
 
 import { fetchObservationsWithMeta } from "../api/analyticsApi";
 import ChartInsightAgent from "../components/ChartInsightAgent";
@@ -11,11 +11,15 @@ import WorkspaceActionBar from "../components/WorkspaceActionBar";
 import AIInsightPreview from "../components/landing/AIInsightPreview";
 import AnalyticsPreview from "../components/landing/AnalyticsPreview";
 import { useAnalysis } from "../context/AnalysisContext";
+import AuthContext from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
+import { useUI } from "../context/UIContext";
 import { MAX_COUNTRIES, MAX_INDICATORS } from "../constants";
 
 export default function CountryAnalysisPage() {
   const { t } = useI18n();
+  const { user } = useContext(AuthContext);
+  const { openAuthModal } = useUI();
   const {
     countries,
     indicators,
@@ -65,6 +69,10 @@ export default function CountryAnalysisPage() {
   }, [minAnalysisYear, maxAnalysisYear]);
 
   const runComparison = useCallback(async () => {
+    if (!user) {
+      openAuthModal();
+      return;
+    }
     if (!selectedCountries.length || !selectedIndicators.length) {
       setError(t("home.errorSelectMin"));
       return;
@@ -106,12 +114,17 @@ export default function CountryAnalysisPage() {
       if (hasEmpty) {
         setSelectionWarning(t("home.warningNoData"));
       }
-    } catch {
-      setError(t("home.errorLoad"));
+    } catch (err) {
+      const status = err?.response?.status;
+      if (status === 401 || status === 403) {
+        openAuthModal();
+      } else {
+        setError(t("home.errorLoad"));
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [selectedCountries, selectedIndicators, startYear, endYear, minAnalysisYear, maxAnalysisYear, t]);
+  }, [user, openAuthModal, selectedCountries, selectedIndicators, startYear, endYear, minAnalysisYear, maxAnalysisYear, t]);
 
   return (
     <>
@@ -214,6 +227,18 @@ export default function CountryAnalysisPage() {
               })}
             </div>
           </div>
+          {!user && (
+            <p className="text-xs text-muted mt-3">
+              {t("compare.loginRequired")}{" "}
+              <button
+                type="button"
+                className="underline hover:text-accent transition-colors"
+                onClick={openAuthModal}
+              >
+                {t("auth.signIn")}
+              </button>
+            </p>
+          )}
           {(catalogStatus.error || error) && (
             <p className="text-xs text-rose-200/90 mt-3" role="alert">
               {catalogStatus.error || error}

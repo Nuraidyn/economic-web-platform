@@ -131,7 +131,6 @@ export default function ComparisonDashboard({ datasets, chartType, correlationPa
             datasets={entry.series}
             chartType={chartType}
             viewMode="timeSeries"
-            appear
             indicatorLabel={indicatorLabel(entry.indicator)}
           />
         </div>
