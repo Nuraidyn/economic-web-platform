@@ -5,15 +5,17 @@ import { useI18n } from "../context/I18nContext";
 
 const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
-// Predefined indicators available on the world map
+// Predefined indicators available on the world map.
+// reverse: true  → high value is BAD (red), low value is GOOD (blue)
+// reverse: false → high value is GOOD (blue), low value is BAD (red)
 const MAP_INDICATORS = [
-  { code: "NY.GDP.PCAP.CD",    labelKey: "map.ind.gdpCap"    },
-  { code: "NY.GDP.MKTP.CD",    labelKey: "map.ind.gdpTotal"  },
-  { code: "FP.CPI.TOTL.ZG",   labelKey: "map.ind.inflation" },
-  { code: "SL.UEM.TOTL.ZS",   labelKey: "map.ind.unemploy"  },
-  { code: "SI.POV.GINI",       labelKey: "map.ind.gini"      },
-  { code: "NY.GDP.PCAP.KD.ZG", labelKey: "map.ind.gdpGrowth" },
-  { code: "SI.POV.DDAY",       labelKey: "map.ind.poverty"   },
+  { code: "NY.GDP.PCAP.CD",    labelKey: "map.ind.gdpCap",    reverse: false },
+  { code: "NY.GDP.MKTP.CD",    labelKey: "map.ind.gdpTotal",  reverse: false },
+  { code: "FP.CPI.TOTL.ZG",   labelKey: "map.ind.inflation", reverse: true  },
+  { code: "SL.UEM.TOTL.ZS",   labelKey: "map.ind.unemploy",  reverse: true  },
+  { code: "SI.POV.GINI",       labelKey: "map.ind.gini",      reverse: true  },
+  { code: "NY.GDP.PCAP.KD.ZG", labelKey: "map.ind.gdpGrowth", reverse: false },
+  { code: "SI.POV.DDAY",       labelKey: "map.ind.poverty",   reverse: true  },
 ];
 
 // ISO alpha-2 (World Bank) → ISO numeric (world-atlas geo.id)
@@ -79,16 +81,27 @@ function formatValue(v) {
   return v.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
+const MAX_RETRIES = 3;
+
 export default function ChoroplethMap() {
   const { t } = useI18n();
 
   const [activeCode, setActiveCode]   = useState(MAP_INDICATORS[0].code);
   const [year, setYear]               = useState(null);
-  const [yearRange, setYearRange]     = useState([2000, 2023]);
+  const [yearRange, setYearRange]     = useState([1990, new Date().getFullYear()]);
   const [valueMap, setValueMap]       = useState({});  // ISO2 → float
+  const [rankMap, setRankMap]         = useState({});  // ISO2 → 0..1 percentile rank
   const [minVal, setMinVal]           = useState(0);
   const [maxVal, setMaxVal]           = useState(1);
   const [isLoading, setIsLoading]     = useState(false);
+  const [fetchKey, setFetchKey]       = useState(0);  // increment to force re-fetch
+
+  // Derived from activeCode — high value is bad for reversed indicators
+  const reversed = (MAP_INDICATORS.find((i) => i.code === activeCode) ?? MAP_INDICATORS[0]).reverse;
+
+  // Retry counter resets when indicator changes
+  const retryCountRef = useRef(0);
+  useEffect(() => { retryCountRef.current = 0; }, [activeCode]);
 
   // DOM refs for tooltip (avoids re-renders on every mouse move)
   const containerRef = useRef(null);
@@ -113,6 +126,26 @@ export default function ChoroplethMap() {
         setMinVal(vals.length ? Math.min(...vals) : 0);
         setMaxVal(vals.length ? Math.max(...vals) : 1);
 
+        // Percentile rank with tie handling: countries with identical values
+        // get the same color. reversed indicators map high→red, low→blue.
+        const sorted = Object.entries(data)
+          .filter(([, v]) => v != null)
+          .sort((a, b) => a[1] - b[1]);
+        const n = sorted.length;
+        const rm = {};
+        let i = 0;
+        while (i < sorted.length) {
+          const val = sorted[i][1];
+          let j = i;
+          while (j < sorted.length && sorted[j][1] === val) j++;
+          // Average rank for the tied group, normalised to [0, 1]
+          const avgRank = n > 1 ? ((i + j - 1) / 2) / (n - 1) : 0.5;
+          const t = reversed ? 1 - avgRank : avgRank;
+          for (let k = i; k < j; k++) rm[sorted[k][0]] = t;
+          i = j;
+        }
+        setRankMap(rm);
+
         const resolvedYear = res.year;
         if (resolvedYear && resolvedYear > 0) {
           setYear(resolvedYear);
@@ -123,16 +156,27 @@ export default function ChoroplethMap() {
       .finally(() => setIsLoading(false));
 
     return () => ctrl.abort();
-  }, [activeCode, year]);
+  }, [activeCode, year, fetchKey]);
+
+  // Auto-retry when cache is empty (baseline seed may still be running on first start)
+  const countryCount = Object.keys(valueMap).length;
+  useEffect(() => {
+    if (countryCount > 0 || isLoading || retryCountRef.current >= MAX_RETRIES) return;
+    const delay = 10_000 * (retryCountRef.current + 1); // 10s, 20s, 30s
+    const timer = setTimeout(() => {
+      retryCountRef.current += 1;
+      setFetchKey((k) => k + 1);
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [countryCount, isLoading]);
 
   const getCountryFill = useCallback(
     (iso2) => {
-      const v = valueMap[iso2];
-      if (v == null) return null;
-      const t = maxVal === minVal ? 0.5 : (v - minVal) / (maxVal - minVal);
+      const t = rankMap[iso2];
+      if (t == null) return null;
       return mapColor(t);
     },
-    [valueMap, minVal, maxVal]
+    [rankMap]
   );
 
   // Tooltip DOM manipulation
@@ -157,7 +201,6 @@ export default function ChoroplethMap() {
     tooltipRef.current.style.top  = `${Math.max(y - th - 10, 4)}px`;
   }, []);
 
-  const countryCount = Object.keys(valueMap).length;
 
   return (
     <section aria-labelledby="choropleth-heading">
@@ -231,16 +274,20 @@ export default function ChoroplethMap() {
             </div>
           )}
 
+          {/* Map container — 16:9 aspect ratio matches ComposableMap viewBox so SVG fills exactly */}
           <div
             className="rounded-xl overflow-hidden"
             style={{
               background: isDark ? "#06070f" : "#eef0f8",
-              height: "clamp(320px, 50vw, 540px)",
+              aspectRatio: "16 / 9",
+              width: "100%",
             }}
           >
             <ComposableMap
-              projectionConfig={{ rotate: [-10, 0, 0], scale: 155 }}
-              style={{ width: "100%", height: "100%" }}
+              width={800}
+              height={450}
+              projectionConfig={{ rotate: [-10, 0, 0], scale: 147 }}
+              style={{ width: "100%", height: "100%", display: "block" }}
             >
               <Geographies geography={GEO_URL}>
                 {({ geographies }) =>
@@ -297,9 +344,12 @@ export default function ChoroplethMap() {
 
         {/* ── Legend + stats ── */}
         <div className="flex flex-wrap items-center gap-4">
-          {/* Gradient legend */}
+          {/* Gradient legend: red = bad, blue = good.
+              For reversed indicators high is bad, so labels swap. */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <span className="text-xs text-muted tabular-nums shrink-0">{formatValue(minVal)}</span>
+            <span className="text-xs text-muted tabular-nums shrink-0">
+              {formatValue(reversed ? maxVal : minVal)}
+            </span>
             <div
               className="flex-1 h-2 rounded-full"
               style={{
@@ -308,7 +358,9 @@ export default function ChoroplethMap() {
                 minWidth: "80px",
               }}
             />
-            <span className="text-xs text-muted tabular-nums shrink-0">{formatValue(maxVal)}</span>
+            <span className="text-xs text-muted tabular-nums shrink-0">
+              {formatValue(reversed ? minVal : maxVal)}
+            </span>
           </div>
 
           {/* Country count badge */}
