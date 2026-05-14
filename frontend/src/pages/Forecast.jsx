@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
 
 import ForecastPanel from "../components/ForecastPanel";
+import MathAnalysisPanel from "../components/MathAnalysisPanel";
 import AuthContext from "../context/AuthContext";
 import { useAnalysis } from "../context/AnalysisContext";
 import { useI18n } from "../context/I18nContext";
@@ -61,6 +62,10 @@ export default function ForecastPage() {
         defaultCountry={selectedCountries[0] || ""}
         defaultIndicator={selectedIndicators[0] || ""}
       />
+
+      <div className="section-divider" aria-hidden="true" />
+
+      <MathAnalysisPanel canAccess={Boolean(user?.agreement_accepted)} />
     </>
   );
 }
