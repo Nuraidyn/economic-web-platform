@@ -1,6 +1,6 @@
-from typing import Optional
+from typing import List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class CountryCreate(BaseModel):
@@ -118,9 +118,11 @@ class ForecastResponse(BaseModel):
     assumptions: str | None = None
     metrics: str | None = None
     points: list[ForecastPointSchema]
+    # Monte Carlo only: sample simulation paths for fan-chart rendering
+    simulation_paths: list[list[float]] | None = None
 
     @classmethod
-    def from_run(cls, run, points, country, indicator):
+    def from_run(cls, run, points, country, indicator, simulation_paths=None):
         return cls(
             country=country,
             indicator=indicator,
@@ -137,7 +139,54 @@ class ForecastResponse(BaseModel):
                 )
                 for item in points
             ],
+            simulation_paths=simulation_paths,
         )
+
+
+# ── Mathematical Analysis ──────────────────────────────────────────────────────
+
+class AnalysisSeriesRequest(BaseModel):
+    """Generic time-series input for analysis endpoints."""
+    years: List[int] = Field(..., min_length=2, description="Sorted year values")
+    values: List[float] = Field(..., min_length=2, description="Corresponding observations")
+
+    @model_validator(mode="after")
+    def check_lengths_match(self) -> "AnalysisSeriesRequest":
+        if len(self.years) != len(self.values):
+            raise ValueError("'years' and 'values' must have the same length.")
+        return self
+
+
+class DerivativeResponse(BaseModel):
+    years: List[int]
+    derivative: List[float]
+    stats: dict | None = None
+
+
+class IntegralResponse(BaseModel):
+    years: List[int]
+    cumulative: List[float]
+    total: float
+
+
+class RawCorrelationRequest(BaseModel):
+    """Raw value arrays for correlation — no DB lookup required."""
+    years: List[int] = Field(..., min_length=2)
+    values_a: List[float] = Field(..., min_length=2)
+    values_b: List[float] = Field(..., min_length=2)
+
+    @model_validator(mode="after")
+    def check_lengths(self) -> "RawCorrelationRequest":
+        if not (len(self.years) == len(self.values_a) == len(self.values_b)):
+            raise ValueError("'years', 'values_a', and 'values_b' must all have the same length.")
+        return self
+
+
+class RawCorrelationResponse(BaseModel):
+    correlation: float
+    p_value: float
+    points: int
+    interpretation: str
 
 
 class GiniTrendPoint(BaseModel):
