@@ -44,26 +44,11 @@ export const fetchGiniRanking = async ({ year, countries }) => {
   return res.data;
 };
 
-export const createForecast = async ({ country, indicator, horizon_years, model = "linear" }, signal) => {
+export const createForecast = async ({ country, indicator, horizon_years }, signal) => {
   const res = await fastapiClient.post("/forecast", null, {
-    params: { country, indicator, horizon_years, model },
+    params: { country, indicator, horizon_years },
     signal,
   });
-  return res.data;
-};
-
-export const fetchDerivative = async (payload, signal) => {
-  const res = await fastapiClient.post("/analysis/derivative", payload, { signal });
-  return res.data;
-};
-
-export const fetchIntegral = async (payload, signal) => {
-  const res = await fastapiClient.post("/analysis/integral", payload, { signal });
-  return res.data;
-};
-
-export const fetchRawCorrelation = async (payload, signal) => {
-  const res = await fastapiClient.post("/analysis/correlation", payload, { signal });
   return res.data;
 };
 
