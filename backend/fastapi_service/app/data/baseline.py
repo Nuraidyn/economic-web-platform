@@ -45,6 +45,7 @@ BASELINE_COUNTRIES = [
     "MY", "PH", "KH", "LA", "TL", "SG", "BN",
 
     # East Asia & Pacific
+    "HK", "TW",
     "NZ", "FJ", "PG", "SB", "VU", "WS", "TO", "KI", "MH", "FM", "PW",
 
     # Americas — North & Central
