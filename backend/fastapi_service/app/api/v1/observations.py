@@ -167,12 +167,22 @@ def get_world_snapshot(
         background_tasks.add_task(_seed_indicator_bg, indicator)
         return {"year": year or 0, "data": {}}
 
+    # Poverty indicators: WB stores exactly 0.0 when a country drops below the
+    # measurement threshold — indistinguishable from "no data" in practice.
+    # Fall back to the most recent year with a measurable positive value instead.
+    _POVERTY_INDICATORS = {"SI.POV.DDAY", "SI.POV.LMIC", "SI.POV.UMIC"}
+    value_ok = (
+        and_(Observation.value.isnot(None), Observation.value > 0)
+        if indicator in _POVERTY_INDICATORS
+        else Observation.value.isnot(None)
+    )
+
     if year is None:
         latest = (
             db.query(func.max(Observation.year))
             .filter(
                 Observation.indicator_id == indicator_row.id,
-                Observation.value.isnot(None),
+                value_ok,
             )
             .scalar()
         )
@@ -192,7 +202,7 @@ def get_world_snapshot(
         .filter(
             Observation.indicator_id == indicator_row.id,
             Observation.year <= year,
-            Observation.value.isnot(None),
+            value_ok,
         )
         .group_by(Observation.country_id)
         .subquery()
@@ -210,7 +220,7 @@ def get_world_snapshot(
         )
         .filter(
             Observation.indicator_id == indicator_row.id,
-            Observation.value.isnot(None),
+            value_ok,
         )
         .all()
     )
