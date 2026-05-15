@@ -1,135 +1,100 @@
-## Upgrade plan: market-ready Economic Web Platform
+## Upgrade history: EVision — Macroeconomic Intelligence Platform
 
-### Current architecture (as-is)
+### Status: All original upgrade steps completed ✓
 
-The repository is a split-backend full-stack app:
+---
 
-- **Frontend**: React + Vite + Tailwind + Chart.js (`frontend/`)
-- **Django API**: auth, roles, user agreement, admin (`backend/django_service/`)
-- **FastAPI API**: data catalog, observations, analytics, ingestion, forecast (`backend/fastapi_service/`)
+### Original issues (all resolved)
 
-Data flow today:
+| Issue | Status |
+|---|---|
+| Forecast endpoint unprotected | ✓ JWT + agreement required |
+| Agreement not enforced server-side | ✓ FastAPI introspects Django |
+| JWT claim freshness for agreement | ✓ Live introspection, no stale JWT state |
+| Rate limiting absent | ✓ Redis token-bucket, 5 RPS / burst 20 |
+| Input validation light | ✓ Annotated Query params with regex + bounds |
+| CORS config scattered | ✓ Env-var `CORS_ALLOW_ORIGINS` in FastAPI, settings in Django |
+| No saved presets | ✓ Django model + CRUD + frontend drawer |
+| Correlation frontend-only | ✓ Server-side Pearson in `/correlation` |
+| No Docker Compose | ✓ Full stack: Redis + Postgres + Django + FastAPI |
+| No tests | ✓ pytest for FastAPI analytics, Django auth/presets, Vitest frontend |
+| Docs mismatch | ✓ Updated docs |
 
-1) Frontend authenticates via Django, receives JWT (SimpleJWT).
-2) Frontend calls FastAPI with the same JWT for protected endpoints.
-3) FastAPI reads from its own DB. If data is missing, `/observations` falls back to World Bank API “live”.
+---
 
-### Repository audit (issues list)
+### Completed upgrade steps
 
-#### Security / correctness
-- **Forecast endpoint is not protected**: `POST /api/v1/forecast` does not require JWT.
-- **Agreement acceptance is not enforced server-side** for forecast (only UI-side).
-- **JWT claim freshness**: `agreement_accepted` is embedded in access token at issuance time; after accepting the agreement, the frontend does not refresh the token. If FastAPI checks `agreement_accepted` only from JWT, it will incorrectly deny until re-login.
-- **Rate limiting отсутствует**: both Django and FastAPI allow unlimited requests; `/observations` passthrough can abuse upstream APIs.
-- **Input validation is light**: country/indicator queries accept arbitrary strings; error messages are inconsistent.
-- **CORS config is scattered**: Django uses a custom middleware; FastAPI has hardcoded origins.
+#### Step 1 — Audit + migration plan ✓
+Delivered `docs/upgrade_plan.md` with issues list, target architecture, and step plan.
 
-#### Product / UX
-- No “Saved sessions / presets” (required feature) and no server-side storage for analysis presets.
-- Correlation is computed in frontend; server-side correlation exists but isn’t used by UI and is only for a single country at a time.
-- “Transparency panel” exists partially in UI copy, but there is no consistent server-provided metadata (source, last updated, missing coverage).
+#### Step 2 — Security/auth unification ✓
+- FastAPI `require_agreement()` and `require_roles()` via Django introspection
+- Non-strict fallback (JWT claims) when introspection unavailable
+- Redis token-bucket rate limiter in FastAPI middleware
+- DRF throttles on Django auth endpoints
+- Validated `CountryCodeParam`, `IndicatorCodeParam`, `YearParam` with Annotated + Query
 
-#### Engineering quality
-- No Docker Compose stack; no Postgres setup; unclear “prod-like” run instructions.
-- No automated tests (FastAPI analytics + JWT, Django auth/agreement + saved presets, minimal frontend checks).
-- Docs mismatch: architecture doc suggests a shared DB; README mentions separate SQLite by default.
+#### Step 3 — Core product features ✓
+- Saved analysis presets (Django model + API + frontend drawer)
+- Lorenz curve + Gini trend + Gini ranking endpoints
+- Pearson correlation server-side endpoint
+- CSV export (per indicator, per comparison)
+- Chart PNG download
+- Multi-indicator comparison dashboard
 
-### Target product architecture (incremental, realistic)
+#### Step 4 — Forecast improvements ✓
+- Rolling-origin backtest with MAE/RMSE
+- Metrics returned in forecast API response
+- Model limitations and academic disclaimers in UI
 
-#### Databases
-- **Postgres** via Docker Compose (single instance), with **two schemas**:
-  - `django` schema for Django (users, agreements, saved sessions)
-  - `analytics` schema for FastAPI (observations cache, analytics results, forecast runs)
-- Keep SQLite as **non-docker fallback** for <10 min setup.
+#### Step 5 — UI/UX redesign ✓
+- Full redesign with landing page, scroll-reveal animations
+- Compare page with multi-selector, chart toolbar, timeframe chips
+- Consistent panel/card components, dark/light theme, skeleton loaders
+- Responsive layout (mobile-first)
 
-#### Auth strategy (consistent)
-- **JWT is issued by Django** (SimpleJWT).
-- **FastAPI validates JWT** locally (shared secret by default). Optionally supports RS256 later.
-- **FastAPI fetches live authorization state** (role + agreement acceptance) from Django introspection endpoint:
-  - Use `/api/auth/introspect` with the same bearer token.
-  - Cache introspection result briefly (e.g., 60s) to reduce load.
-  - This solves the “agreement accepted after token issuance” problem without forcing token refresh.
+#### Step 6 — Docker + tests + docs ✓
+- Docker Compose: redis + db + django + fastapi
+- `.env` configuration for all services
+- Unit tests: FastAPI (analytics, auth), Django (auth, agreements, presets), Frontend (Vitest)
+- Architecture, product spec, UI spec, design system documented
 
-Protected resources:
-- Advanced analytics: `/lorenz`, `/gini`, `/correlation`, `/forecast`, `/ingest/*`
-- Public: `/health`, `/countries`, `/indicators`, `/observations` (keep public but rate-limit)
+---
 
-Agreement enforcement:
-- Require agreement acceptance for `/forecast` and advanced analytics.
-- Ingestion additionally requires role `researcher` or `admin`.
+### Post-upgrade additions
 
-#### Rate limiting (simple + student-friendly)
-- FastAPI: in-memory token bucket per IP + route group (dev-friendly), configurable via env.
-- Django: DRF throttling for auth endpoints (login/register) and any new “saved sessions” endpoints.
+These features were added after the initial upgrade plan was completed:
 
-#### Product features (incremental deliverables)
-- Inequality trend: server endpoint to return Gini time series (from World Bank + cached), YoY changes, ranking snapshot.
-- Comparison dashboard upgrades: difference/ratio views computed server-side and exported.
-- Export: CSV for any time-series, and chart as PNG on frontend.
-- Saved sessions: Django model + CRUD endpoints; frontend “Saved” page to load presets.
-- Transparency panel: server metadata on source, coverage, missing years, and last updated.
+#### World map (ChoroplethMap)
+- Choropleth visualization of 180+ countries for 7 economic indicators
+- Powered by `/api/v1/observations/world` — DB cache snapshot with auto background seed
+- Year slider, hover tooltips, color-gradient legend
+- Auto-retries on first load while baseline seed runs
 
-#### Forecasting upgrade (defensible)
-- Keep linear trend as baseline.
-- Add an alternative simple model (ETS or ARIMA) only if dependency impact is acceptable; otherwise keep regression but add:
-  - backtesting (rolling-origin) and MAE/RMSE metrics
-  - clear “limitations” text + disclaimer (UI + server response)
+#### AI Chart Insight Agent
+- Natural language explanation of comparison charts
+- Provider-agnostic: Gemini or Groq depending on `CHART_EXPLAIN_PROVIDER` env
+- Streamed markdown response
 
-### Implementation steps (mapped to required phases)
+#### Income Analysis page
+- Personal salary benchmarking vs country averages
+- Inflation-adjusted comparisons (1Y / 3Y / 5Y periods)
+- AI-generated career insights (Gemini / Groq)
 
-#### Step 1 — Audit + migration plan (this doc)
-Deliverables:
-- This `docs/upgrade_plan.md` with:
-  - issues list
-  - target architecture
-  - step-by-step plan
+#### Multi-language support
+7 languages: EN, RU, KZ, DE, FR, ZH, ES. Full translation of all UI strings.
 
-Acceptance criteria:
-- Clear and actionable checklist for 3 students.
+#### News section
+Live economic headlines, cached server-side.
 
-#### Step 2 — Security/auth unification
-Work items:
-- Protect `POST /forecast` + `GET /forecast/latest` with JWT + agreement enforcement.
-- Add a shared `AuthContext` dependency in FastAPI:
-  - `get_current_user()` verifies JWT
-  - `get_authz()` calls Django `/api/auth/introspect` (cached)
-  - `require_roles()` checks role consistently
-  - `require_agreement()` checks agreement consistently
-- Add minimal rate limit middleware in FastAPI + DRF throttles in Django.
-- Tighten validation (country codes, indicator codes, year bounds).
-- Update README with env vars and security model.
+---
 
-Acceptance criteria:
-- Calling protected endpoints without JWT returns **401**.
-- Calling forecast/advanced analytics without accepted agreement returns **403**.
-- Ingestion endpoints require `researcher/admin`.
+### Outstanding / future work
 
-#### Step 3 — Core product feature upgrades
-Work items:
-- Saved sessions (Django model + API + frontend page).
-- Trend analytics endpoints (Gini over time, rankings).
-- Export improvements (CSV everywhere, chart PNG).
-- Comparison enhancements (difference/ratio views; multi-indicator correlation exploration).
-
-#### Step 4 — Forecast improvements + evaluation
-Work items:
-- Add backtesting with MAE/RMSE.
-- Return evaluation metrics in forecast response.
-- Add “model limitations” section in UI.
-
-#### Step 5 — UI/UX redesign
-Work items:
-- Navigation layout: Dashboard, Inequality, Indicators, Forecast, Saved.
-- Consistent components, empty/loading/error states.
-- Responsive chart layout improvements.
-
-#### Step 6 — Docker + tests + documentation
-Work items:
-- Docker Compose: frontend + Django + FastAPI + Postgres.
-- `.env.example` for all services.
-- Tests:
-  - FastAPI unit tests (Lorenz/Gini, JWT validation)
-  - Django tests (auth, agreement, saved sessions)
-  - Frontend: lint + minimal smoke test
-- Polished README and product spec in `docs/product_spec.md`.
-
+- [ ] Wire income comparison to live World Bank data (currently uses static `countryIncomeData.js`)
+- [ ] Add exchange-rate conversion for income comparison (USD base)
+- [ ] Consider ARIMA/ETS forecast model as alternative to linear trend
+- [ ] Add CSV export for income comparison table
+- [ ] Lazy-load `IncomeComparisonSection` (Chart.js ~200 kB gzipped)
+- [ ] Add CI/CD pipeline
+- [ ] Production deployment guide (nginx, SSL, env secrets)

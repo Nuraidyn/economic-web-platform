@@ -155,3 +155,4 @@ env/
 frontend/.npm-cache/
 
 CLAUDE.md
+.claude/

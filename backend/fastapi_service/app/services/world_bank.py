@@ -62,7 +62,7 @@ def fetch_indicator_series(country: str, indicator: str, per_page: int = 200) ->
     url = build_url(country, indicator)
     retries = 3
     delay_seconds = 0.4
-    with httpx.Client(timeout=20, follow_redirects=True) as client:
+    with httpx.Client(timeout=40, follow_redirects=True) as client:
         for attempt in range(retries + 1):
             resp = client.get(url, params=params)
             if resp.status_code in {429, 502, 503, 504} and attempt < retries:
@@ -89,7 +89,7 @@ async def async_fetch_indicator_series(country: str, indicator: str, per_page: i
     url = build_url(country, indicator)
     retries = 3
     delay_seconds = 0.4
-    async with httpx.AsyncClient(timeout=20, follow_redirects=True) as client:
+    async with httpx.AsyncClient(timeout=40, follow_redirects=True) as client:
         for attempt in range(retries + 1):
             resp = await client.get(url, params=params)
             if resp.status_code in {429, 502, 503, 504} and attempt < retries:

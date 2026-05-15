@@ -1,6 +1,7 @@
 import logging
 import time
 
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 
@@ -14,23 +15,23 @@ WORLD_BANK_SOURCE = "world_bank"
 
 
 def get_or_create_country(db: Session, code: str):
-    country = db.query(Country).filter(Country.code == code.upper()).first()
-    if country:
-        return country
-    country = Country(code=code.upper(), name=code.upper())
-    db.add(country)
+    code = code.upper()
+    # Use INSERT ON CONFLICT DO NOTHING to handle concurrent seed threads safely.
+    stmt = pg_insert(Country).values(code=code, name=code).on_conflict_do_nothing()
+    db.execute(stmt)
     db.flush()
-    return country
+    return db.query(Country).filter(Country.code == code).first()
 
 
 def get_or_create_indicator(db: Session, code: str):
-    indicator = db.query(Indicator).filter(Indicator.code == code).first()
-    if indicator:
-        return indicator
-    indicator = Indicator(code=code, name=code, source=WORLD_BANK_SOURCE)
-    db.add(indicator)
+    stmt = (
+        pg_insert(Indicator)
+        .values(code=code, name=code, source=WORLD_BANK_SOURCE)
+        .on_conflict_do_nothing()
+    )
+    db.execute(stmt)
     db.flush()
-    return indicator
+    return db.query(Indicator).filter(Indicator.code == code).first()
 
 
 def calculate_expected(series):
