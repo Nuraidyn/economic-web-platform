@@ -112,7 +112,7 @@ async def _run_baseline_seed():
     from app.data.baseline import BASELINE_COUNTRIES, BASELINE_INDICATORS
     loop = asyncio.get_event_loop()
     # Semaphore limits concurrent World Bank API calls to avoid rate-limiting
-    sem = asyncio.Semaphore(4)
+    sem = asyncio.Semaphore(2)
 
     async def _seed_one(country: str, indicator: str):
         async with sem:
