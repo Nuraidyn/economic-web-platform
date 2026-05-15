@@ -155,4 +155,8 @@ env/
 frontend/.npm-cache/
 
 CLAUDE.md
+<<<<<<< HEAD
+.claude/
+=======
 .claude/settings.local.json
+>>>>>>> main
