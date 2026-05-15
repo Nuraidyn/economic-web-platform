@@ -292,7 +292,9 @@ export default function ChoroplethMap() {
               <Geographies geography={GEO_URL}>
                 {({ geographies }) =>
                   geographies.map((geo) => {
-                    const iso2    = NUM_TO_ISO2[String(geo.id ?? "")];
+                    // world-atlas stores IDs as zero-padded strings ("036" for AU).
+                    // Our mapping uses numeric strings ("36"), so strip leading zeros.
+                    const iso2    = NUM_TO_ISO2[String(parseInt(String(geo.id ?? ""), 10))];
                     const fill    = iso2 ? (getCountryFill(iso2) ?? noDataFill) : noDataFill;
                     const hasData = iso2 && valueMap[iso2] != null;
 
