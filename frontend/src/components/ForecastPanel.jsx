@@ -14,12 +14,6 @@ const getCssVar = (name, fallback) => {
   return value || fallback;
 };
 
-const MODEL_OPTIONS = [
-  { value: "linear", labelKey: "forecast.modelLinear" },
-  { value: "arima", labelKey: "forecast.modelArima" },
-  { value: "monte_carlo", labelKey: "forecast.modelMonteCarlo" },
-];
-
 const buildForecastChart = (history, forecast, labels) => {
   const sortByYear = (left, right) => left.x - right.x;
   const historyPoints = history
@@ -39,60 +33,41 @@ const buildForecastChart = (history, forecast, labels) => {
     .map((row) => ({ x: row.year, y: row.upper }))
     .sort(sortByYear);
 
-  const futureYears = forecast.points.map((p) => p.year).sort((a, b) => a - b);
-
-  const datasets = [
-    {
-      label: labels.historical,
-      data: historyPoints,
-      borderColor: "#38bdf8",
-      backgroundColor: "rgba(56,189,248,0.2)",
-      tension: 0.2,
-    },
-    {
-      label: labels.forecast,
-      data: forecastPoints,
-      borderColor: "#fbbf24",
-      backgroundColor: "rgba(251,191,36,0.2)",
-      borderDash: [6, 6],
-      tension: 0.2,
-    },
-    {
-      label: labels.lowerBound,
-      data: lowerPoints,
-      borderColor: "rgba(248,113,113,0.6)",
-      backgroundColor: "rgba(248,113,113,0.15)",
-      borderDash: [2, 4],
-      pointRadius: 0,
-    },
-    {
-      label: labels.upperBound,
-      data: upperPoints,
-      borderColor: "rgba(34,211,238,0.6)",
-      backgroundColor: "rgba(34,211,238,0.15)",
-      borderDash: [2, 4],
-      pointRadius: 0,
-    },
-  ];
-
-  // Monte Carlo: overlay faint simulation paths for fan-chart effect
-  if (Array.isArray(forecast.simulation_paths) && forecast.simulation_paths.length > 0) {
-    forecast.simulation_paths.forEach((path, idx) => {
-      const pathPoints = futureYears.map((yr, i) => ({ x: yr, y: path[i] }));
-      datasets.push({
-        label: idx === 0 ? labels.simulationPaths : null,
-        data: pathPoints,
-        borderColor: "rgba(251,191,36,0.15)",
-        backgroundColor: "transparent",
-        borderWidth: 1,
-        pointRadius: 0,
+  return {
+    datasets: [
+      {
+        label: labels.historical,
+        data: historyPoints,
+        borderColor: "#38bdf8",
+        backgroundColor: "rgba(56,189,248,0.2)",
         tension: 0.2,
-        showLine: true,
-      });
-    });
-  }
-
-  return { datasets };
+      },
+      {
+        label: labels.forecast,
+        data: forecastPoints,
+        borderColor: "#fbbf24",
+        backgroundColor: "rgba(251,191,36,0.2)",
+        borderDash: [6, 6],
+        tension: 0.2,
+      },
+      {
+        label: labels.lowerBound,
+        data: lowerPoints,
+        borderColor: "rgba(248,113,113,0.6)",
+        backgroundColor: "rgba(248,113,113,0.15)",
+        borderDash: [2, 4],
+        pointRadius: 0,
+      },
+      {
+        label: labels.upperBound,
+        data: upperPoints,
+        borderColor: "rgba(34,211,238,0.6)",
+        backgroundColor: "rgba(34,211,238,0.15)",
+        borderDash: [2, 4],
+        pointRadius: 0,
+      },
+    ],
+  };
 };
 
 const lastValidValue = (series) => {
@@ -167,7 +142,6 @@ export default function ForecastPanel({
   const [country, setCountry] = useState(defaultCountry || "");
   const [indicator, setIndicator] = useState(defaultIndicator || "");
   const [horizon, setHorizon] = useState(5);
-  const [model, setModel] = useState("linear");
   const [forecast, setForecast] = useState(null);
   const [history, setHistory] = useState([]);
   const [historyMeta, setHistoryMeta] = useState(null);
@@ -198,7 +172,7 @@ export default function ForecastPanel({
           start_year: historyStartYear,
           end_year: historyEndYear,
         }, signal),
-        createForecast({ country, indicator, horizon_years: horizon, model }, signal),
+        createForecast({ country, indicator, horizon_years: horizon }, signal),
       ]);
       if (signal.aborted) return;
       setHistory(historyData.data);
@@ -262,7 +236,6 @@ export default function ForecastPanel({
       forecast: t("forecast.chartForecast"),
       lowerBound: t("forecast.chartLower"),
       upperBound: t("forecast.chartUpper"),
-      simulationPaths: t("forecast.simulationPaths"),
     });
   }, [history, forecast, t]);
 
@@ -354,43 +327,24 @@ export default function ForecastPanel({
                 onChange={(event) => setHorizon(Number(event.target.value))}
               />
             </div>
-            <div>
-              <label className="label">{t("forecast.modelLabel")}</label>
-              <select
-                className="input"
-                value={model}
-                onChange={(event) => setModel(event.target.value)}
+            <div className="flex items-end gap-3">
+              <button
+                className="btn-primary"
+                type="button"
+                onClick={handleForecast}
+                disabled={!canAccess}
               >
-                {MODEL_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {t(opt.labelKey)}
-                  </option>
-                ))}
-              </select>
+                {status.loading ? t("forecast.running") : t("forecast.generate")}
+              </button>
+              <button
+                className="btn-secondary"
+                type="button"
+                onClick={handleLatest}
+                disabled={!canAccess}
+              >
+                {t("forecast.latestRun")}
+              </button>
             </div>
-          </div>
-          {model && (
-            <p className="text-xs text-muted">
-              {t(`forecast.modelDescription.${model}`)}
-            </p>
-          )}
-          <div className="flex items-center gap-3">
-            <button
-              className="btn-primary"
-              type="button"
-              onClick={handleForecast}
-              disabled={!canAccess}
-            >
-              {status.loading ? t("forecast.running") : t("forecast.generate")}
-            </button>
-            <button
-              className="btn-secondary"
-              type="button"
-              onClick={handleLatest}
-              disabled={!canAccess}
-            >
-              {t("forecast.latestRun")}
-            </button>
           </div>
           {status.error && <p className="text-xs text-rose-200/90">{status.error}</p>}
           {!canAccess && (
