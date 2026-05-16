@@ -1,0 +1,17 @@
+{
+  "language.ru": "RU",
+  "language.kz": "KZ",
+  "language.en": "EN",
+  "language.de": "DE",
+  "language.fr": "FR",
+  "language.zh": "ZH",
+  "language.es": "ES",
+  "layout.navigation": "Навигация",
+  "layout.dashboard": "Дашборд",
+  "layout.forecast": "Болжам",
+  "layout.saved": "Сақталған",
+  "common.na": "жоқ",
+  "common.close": "Жабу",
+  "footer.referencesTitle": "Референстер",
+  "footer.referencesSubtitle": "Дереккөздер мен жоба сілтемелері футерге орналастырылды."
+}
