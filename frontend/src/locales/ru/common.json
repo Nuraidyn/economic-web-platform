@@ -1,0 +1,17 @@
+{
+  "common.na": "н/д",
+  "common.close": "Закрыть",
+  "language.ru": "RU",
+  "language.kz": "KZ",
+  "language.en": "EN",
+  "language.de": "DE",
+  "language.fr": "FR",
+  "language.zh": "ZH",
+  "language.es": "ES",
+  "layout.navigation": "Навигация",
+  "layout.dashboard": "Дашборд",
+  "layout.forecast": "Прогноз",
+  "layout.saved": "Сохранённые",
+  "footer.referencesTitle": "Референсы",
+  "footer.referencesSubtitle": "Источники данных и проектные ссылки перенесены в футер."
+}
