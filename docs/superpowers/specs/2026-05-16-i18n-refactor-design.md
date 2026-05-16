@@ -27,13 +27,11 @@ frontend/src/locales/
     chart.json        ← keys: chart.*, ai.*
   ru/   (same 9 files)
   kz/   (same 9 files)
-  de/   (same 9 files, partial translations)
-  fr/   (same 9 files, partial translations)
-  zh/   (same 9 files, partial translations)
-  es/   (same 9 files, partial translations)
 ```
 
-Total: 7 languages × 9 namespaces = 63 JSON files.
+Total: 3 languages × 9 namespaces = 27 JSON files.
+
+The partial translations (de, fr, zh, es) remain inside `I18nContext.jsx` as a small inline object until they are fully translated.
 
 ## I18nContext.jsx After Refactor
 
@@ -48,7 +46,8 @@ const DICTIONARY = {
   en: { ...en_common, ...en_navbar, ...en_auth, ...en_home,
         ...en_forecast, ...en_inequality, ...en_news, ...en_saved, ...en_chart },
   ru: { ...ru_common, ...ru_navbar, ... },
-  // ...
+  kz: { ...kz_common, ...kz_navbar, ... },
+  // de, fr, zh, es stay inline (partial translations, ~40 keys each)
 };
 ```
 
