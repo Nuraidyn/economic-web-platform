@@ -31,7 +31,7 @@ frontend/src/locales/
 
 Total: 3 languages × 9 namespaces = 27 JSON files.
 
-The partial translations (de, fr, zh, es) remain inside `I18nContext.jsx` as a small inline object until they are fully translated.
+Languages `de`, `fr`, `zh`, `es` are removed entirely — from `SUPPORTED_LANGUAGES`, `DICTIONARY`, and all translation keys.
 
 ## I18nContext.jsx After Refactor
 
@@ -47,7 +47,6 @@ const DICTIONARY = {
         ...en_forecast, ...en_inequality, ...en_news, ...en_saved, ...en_chart },
   ru: { ...ru_common, ...ru_navbar, ... },
   kz: { ...kz_common, ...kz_navbar, ... },
-  // de, fr, zh, es stay inline (partial translations, ~40 keys each)
 };
 ```
 
