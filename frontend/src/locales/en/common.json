@@ -1,0 +1,17 @@
+{
+  "common.na": "n/a",
+  "common.close": "Close",
+  "language.ru": "RU",
+  "language.kz": "KZ",
+  "language.en": "EN",
+  "language.de": "DE",
+  "language.fr": "FR",
+  "language.zh": "ZH",
+  "language.es": "ES",
+  "layout.navigation": "Navigation",
+  "layout.dashboard": "Dashboard",
+  "layout.forecast": "Forecast",
+  "layout.saved": "Saved",
+  "footer.referencesTitle": "References",
+  "footer.referencesSubtitle": "Data sources and project links are placed in the footer."
+}

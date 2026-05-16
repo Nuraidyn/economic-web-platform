@@ -1,0 +1,9 @@
+{
+  "news.kicker": "Live Feed",
+  "news.title": "Economic & Geopolitical News",
+  "news.subtitle": "Latest headlines from BBC Business, BBC World, NYT Economy and more. Updated every 15 minutes.",
+  "news.refresh": "Refresh",
+  "news.error": "Could not load news. Check your connection or try again later.",
+  "news.showMore": "Show more",
+  "news.showLess": "Show less"
+}
