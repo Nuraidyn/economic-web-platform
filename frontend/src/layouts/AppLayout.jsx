@@ -23,7 +23,7 @@ export default function AppLayout() {
   }, [authStatus.expired, authModalOpen, openAuthModal]);
 
   return (
-    <div className="min-h-screen bg-canvas">
+    <div className="min-h-screen bg-canvas overflow-x-hidden">
       <Navbar onOpenAuth={openAuthModal} isAuthenticated={Boolean(user)} />
       <main className="page !max-w-[1480px]">
         <div className="space-y-6 min-w-0">

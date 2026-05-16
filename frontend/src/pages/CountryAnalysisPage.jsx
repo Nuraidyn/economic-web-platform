@@ -116,8 +116,10 @@ export default function CountryAnalysisPage() {
       }
     } catch (err) {
       const status = err?.response?.status;
-      if (status === 401 || status === 403) {
+      if (status === 401) {
         openAuthModal();
+      } else if (status === 403) {
+        setError(t("compare.agreementRequired"));
       } else {
         setError(t("home.errorLoad"));
       }

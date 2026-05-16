@@ -2,7 +2,6 @@ import React from "react";
 import { useI18n } from "../../context/I18nContext";
 import { useTheme } from "../../context/ThemeContext";
 import logoDark from "../../assets/logo-dark-transparent.png";
-import logoLight from "../../assets/logo-light-transparent.png";
 import { useReveal } from "../../hooks/useReveal";
 
 /**
@@ -19,21 +18,26 @@ export default function HeroSection({ onScrollToAnalysis, onOpenAuth }) {
   return (
     <section
       ref={ref}
-      className="relative overflow-hidden"
+      className="relative hero-breakout"
       aria-label={t("landing.heroKicker")}
+      style={{
+        background: theme === "dark"
+          ? `
+            radial-gradient(ellipse 140% 90% at 50% 0%,   rgba(99,102,241,0.45) 0%, transparent 60%),
+            radial-gradient(ellipse 100% 70% at 90% 100%, rgba(56,189,248,0.25) 0%, transparent 65%),
+            radial-gradient(ellipse 80%  60% at 0%  90%,  rgba(129,140,248,0.20) 0%, transparent 60%)
+          `
+          : `
+            radial-gradient(ellipse 140% 90% at 50% 0%,   rgba(91,95,199,0.22) 0%, transparent 60%),
+            radial-gradient(ellipse 100% 70% at 90% 100%, rgba(91,95,199,0.12) 0%, transparent 65%),
+            radial-gradient(ellipse 80%  60% at 0%  90%,  rgba(91,95,199,0.10) 0%, transparent 60%)
+          `,
+        borderBottom: "3px solid var(--panel-border-strong)",
+      }}
     >
-      {/* ── Animated background system ── */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        {/* Drifting accent blobs — pure CSS, compositor-only transforms */}
-        <div className="hero-bg-blob hero-bg-blob-1" />
-        <div className="hero-bg-blob hero-bg-blob-2" />
-        <div className="hero-bg-blob hero-bg-blob-3" />
-        {/* Subtle data-grid overlay */}
+      {/* Subtle grid overlay */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
         <div className="hero-bg-grid" />
-        {/* Central readability vignette — ensures text contrast in both themes */}
-        <div className="hero-bg-vignette" />
-        {/* Bottom edge fade to page canvas */}
-        <div className="hero-bg-bottom-fade" />
       </div>
 
       <div
@@ -44,7 +48,7 @@ export default function HeroSection({ onScrollToAnalysis, onOpenAuth }) {
       >
         {/* Logo mark badge */}
         <img
-          src={theme === "dark" ? logoDark : logoLight}
+          src={logoDark}
           alt="logo"
           className="mb-2 h-20 w-auto evision-logo-animate"
           aria-hidden="true"

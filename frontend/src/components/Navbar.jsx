@@ -2,7 +2,6 @@ import React from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
 import logoDark from "../assets/logo-dark-transparent.png";
-import logoLight from "../assets/logo-light-transparent.png";
 import { useI18n } from "../context/I18nContext";
 import { useTheme } from "../context/ThemeContext";
 
@@ -176,10 +175,9 @@ export default function Navbar({ onOpenAuth, isAuthenticated }) {
     <header
       className="sticky top-0 z-50"
       style={{
-        borderBottom: "1px solid var(--panel-border)",
-        background: "color-mix(in srgb, var(--panel) 88%, transparent)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
+        borderBottom: "2px solid var(--panel-border-strong)",
+        background: "var(--panel)",
+        boxShadow: "0 4px 20px rgba(15, 18, 46, 0.12)",
       }}
     >
       <nav className="max-w-[1480px] mx-auto px-4 md:px-6 flex items-center justify-between gap-3" style={{ height: "var(--navbar-h)" }}>
@@ -191,7 +189,7 @@ export default function Navbar({ onOpenAuth, isAuthenticated }) {
           className="shrink-0"
         >
           <img
-            src={theme === "dark" ? logoDark : logoLight}
+            src={logoDark}
             alt={t("navbar.title")}
             className="h-14 w-auto"
           />

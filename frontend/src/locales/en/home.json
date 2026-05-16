@@ -24,6 +24,7 @@
   "home.errorLoad": "Failed to load analytics. Check that FastAPI service is running.",
   "home.warningNoData": "Some country/indicator combinations returned no data from World Bank. The chart may be partially empty.",
   "compare.loginRequired": "Sign in to compare countries and indicators.",
+  "compare.agreementRequired": "Accept the user agreement to run comparisons. Scroll to the footer to accept.",
   "selector.countries": "Countries",
   "selector.searchCountry": "Search country...",
   "selector.noCountries": "No countries found.",
