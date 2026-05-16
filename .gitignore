@@ -150,6 +150,7 @@ env/
 *.sqlite3
 *.db
 .DS_Store
+.idea/
 
 # local npm cache
 frontend/.npm-cache/
