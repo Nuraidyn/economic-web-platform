@@ -15,7 +15,7 @@ export default function ChartInsightAgent({
   endYear,
 }) {
   const { language, t } = useI18n();
-  const { user, agreement } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const { openAuthModal } = useUI();
   const defaultPromptRef = useRef(t("ai.defaultPrompt"));
   const [question, setQuestion] = useState(defaultPromptRef.current);
@@ -132,7 +132,7 @@ export default function ChartInsightAgent({
   }
 
   /* ── Agreement gate ── */
-  if (!agreement?.accepted) {
+  if (!user?.agreement_accepted) {
     return (
       <section className="panel-wide space-y-4">
         <div>

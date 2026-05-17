@@ -19,7 +19,7 @@ import { useUI } from "../context/UIContext";
 
 export default function AIMentorPage() {
   const { t, lang } = useI18n();
-  const { user, agreement } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const { openAuthModal } = useUI();
 
   const [conversations, setConversations] = useState([]);
@@ -44,7 +44,7 @@ export default function AIMentorPage() {
   const abortRef = useRef(null);
 
   const isAuthed = !!user;
-  const hasAgreement = agreement?.accepted;
+  const hasAgreement = user?.agreement_accepted;
   const canUse = isAuthed && hasAgreement;
 
   useEffect(() => {
