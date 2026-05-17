@@ -65,8 +65,11 @@ services:
       RATE_LIMIT_BURST: "20"
       RATE_LIMIT_REDIS_FAIL_OPEN: "0"
       AUTHZ_INTROSPECT_STRICT: "0"
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      KNOWLEDGE_BASE_DIR: /app/knowledge_base
     volumes:
       - ./backend/fastapi_service:/app
+      - ./knowledge_base:/app/knowledge_base:ro
     depends_on:
       db:
         condition: service_healthy
