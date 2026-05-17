@@ -13,3 +13,4 @@ statsmodels>=0.14.0
 cachetools>=5.0.0
 redis>=5.0.0
 fakeredis>=2.20.0
+sentence-transformers>=3.0.0
