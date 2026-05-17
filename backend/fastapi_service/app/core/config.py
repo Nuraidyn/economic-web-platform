@@ -68,10 +68,23 @@ GROQ_TIMEOUT_SECONDS = float(os.getenv("GROQ_TIMEOUT_SECONDS", "20"))
 CHART_EXPLAIN_MAX_COUNTRIES = int(os.getenv("CHART_EXPLAIN_MAX_COUNTRIES", "4"))
 CHART_EXPLAIN_MAX_INDICATORS = int(os.getenv("CHART_EXPLAIN_MAX_INDICATORS", "4"))
 
-# AI Mentor — OpenRouter
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
-OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct:free")
-OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+# AI Mentor — OpenRouter or Groq (auto-detected)
+_openrouter_key = os.getenv("OPENROUTER_API_KEY", "")
+_groq_key = os.getenv("GROQ_API_KEY", "")
+
+if _openrouter_key:
+    OPENROUTER_API_KEY = _openrouter_key
+    OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+    OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct:free")
+elif _groq_key:
+    OPENROUTER_API_KEY = _groq_key
+    OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://api.groq.com/openai/v1")
+    OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "llama-3.3-70b-versatile")
+else:
+    OPENROUTER_API_KEY = ""
+    OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+    OPENROUTER_MODEL = "meta-llama/llama-3.3-70b-instruct:free"
+
 OPENROUTER_TIMEOUT_SECONDS = float(os.getenv("OPENROUTER_TIMEOUT_SECONDS", "30"))
 OPENROUTER_MAX_TOKENS = int(os.getenv("OPENROUTER_MAX_TOKENS", "1000"))
 
