@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.v1.ai import router as ai_router
 from app.api.v1.analytics import router as analytics_router
 from app.api.v1.news import router as news_router
 from app.api.v1.catalog import router as catalog_router
@@ -23,6 +24,7 @@ from app.core.config import (
 from app.db import Base, engine
 from app.middleware.rate_limit import RateLimitMiddleware
 from app.migrations import ensure_indexes
+import app.models  # noqa: F401  — ensures AIConversation/AIMessage tables are created
 import app.models_analytics  # noqa: F401
 import app.models_forecast  # noqa: F401
 import app.models_ingestion  # noqa: F401
@@ -60,6 +62,7 @@ app.include_router(observations_router, prefix="/api/v1")
 app.include_router(analytics_router, prefix="/api/v1")
 app.include_router(inequality_router, prefix="/api/v1")
 app.include_router(forecast_router, prefix="/api/v1")
+app.include_router(ai_router, prefix="/api/v1")
 app.include_router(news_router, prefix="/api/v1")
 
 
@@ -67,6 +70,16 @@ app.include_router(news_router, prefix="/api/v1")
 def create_tables():
     Base.metadata.create_all(bind=engine)
     ensure_indexes(engine)
+
+
+@app.on_event("startup")
+def build_rag_index():
+    from app.core.config import KNOWLEDGE_BASE_DIR
+    from app.services.rag import build_index
+    try:
+        build_index(KNOWLEDGE_BASE_DIR)
+    except Exception as exc:
+        logger.warning("RAG index build failed at startup: %s", exc)
 
 
 @app.on_event("startup")
