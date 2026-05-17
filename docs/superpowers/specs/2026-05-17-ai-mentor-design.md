@@ -294,6 +294,7 @@ backend/fastapi_service/app/api/v1/ai.py
 backend/fastapi_service/app/models.py          (+ AIConversation, AIMessage)
 backend/fastapi_service/app/core/config.py     (+ OpenRouter config)
 backend/fastapi_service/app/main.py            (+ mount ai router, lifespan index build)
+backend/fastapi_service/app/deps.py            (+ require_staff dependency)
 backend/fastapi_service/requirements.txt       (+ sentence-transformers, numpy)
 ```
 
