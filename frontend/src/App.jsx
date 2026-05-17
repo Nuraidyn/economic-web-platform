@@ -12,6 +12,7 @@ import CountryAnalysisPage from "./pages/CountryAnalysisPage";
 import IncomeAnalysisPage from "./pages/IncomeAnalysisPage";
 import ForecastPage from "./pages/Forecast";
 import SavedPage from "./pages/Saved";
+import AIMentorPage from "./pages/AIMentorPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
@@ -32,6 +33,7 @@ export default function App() {
                     <Route path="/income-analysis" element={<IncomeAnalysisPage />} />
                     <Route path="/forecast" element={<ForecastPage />} />
                     <Route path="/saved" element={<SavedPage />} />
+                    <Route path="/ai-mentor" element={<AIMentorPage />} />
                     <Route path="/verify-email" element={<VerifyEmailPage />} />
                     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                     <Route path="/reset-password" element={<ResetPasswordPage />} />

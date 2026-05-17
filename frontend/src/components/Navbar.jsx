@@ -111,6 +111,19 @@ const PRODUCTS = [
     ),
   },
   {
+    labelKey: "navbar.productAIMentor",
+    descKey:  "navbar.productAIMentorDesc",
+    to: "/ai-mentor",
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M12 2a10 10 0 1 0 10 10" />
+        <path d="M12 8v4l3 3" />
+        <circle cx="19" cy="5" r="3" />
+      </svg>
+    ),
+  },
+  {
     labelKey:  "navbar.productNews",
     descKey:   "navbar.productNewsDesc",
     to:        "/",
