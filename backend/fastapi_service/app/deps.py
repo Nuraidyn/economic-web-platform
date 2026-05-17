@@ -84,3 +84,7 @@ def require_agreement(ctx: AuthzContext = Depends(get_authz_context)):
             detail="User agreement required",
         )
     return ctx
+
+
+# Shorthand: staff or admin role required
+require_staff = require_roles("staff", "admin")
