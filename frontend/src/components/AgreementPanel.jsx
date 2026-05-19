@@ -1,4 +1,5 @@
 import React, { useContext, useState } from "react";
+import { Link } from "react-router-dom";
 
 import AuthContext from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
@@ -41,10 +42,19 @@ export default function AgreementPanel() {
         <p className="leading-relaxed max-h-28 overflow-y-auto pr-2">
           {agreement.content}
         </p>
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] text-faint">
-            {t("agreement.required")}
-          </span>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] text-faint">
+              {t("agreement.required")}
+            </span>
+            <Link
+              to="/terms"
+              className="text-[11px] underline"
+              style={{ color: "var(--accent)" }}
+            >
+              {t("agreement.readFull")} →
+            </Link>
+          </div>
           <button
             className="btn-secondary"
             type="button"

@@ -212,7 +212,7 @@ export default function Navbar({ onOpenAuth, isAuthenticated }) {
 
         {/* ── Brand ── */}
         <Link to="/" aria-label={t("navbar.title")} className="shrink-0">
-          <img src={logoDark} alt={t("navbar.title")} className="h-10 sm:h-14 w-auto" />
+          <img src={logoDark} alt={t("navbar.title")} className="h-12 sm:h-16 w-auto" />
         </Link>
 
         {/* ── Center: Products + Community (desktop) ── */}
