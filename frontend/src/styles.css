@@ -1,15 +1,14 @@
 /*
  * ═══════════════════════════════════════════════════════════════════
- *  EVision  ·  Data Intelligence Studio  ·  Design System v2
+ *  EVision AI  ·  Data Intelligence Studio  ·  Design System v3
  * ═══════════════════════════════════════════════════════════════════
  *
- *  Premium font stack — language-adaptive:
- *   EN / DE / FR / ES  →  Fraunces (display) + Space Grotesk (body)
- *   RU (Cyrillic)       →  Playfair Display  + Golos Text
- *   KZ (Kazakh Cyrillic)→  Noto Serif        + Noto Sans
- *   ZH (Chinese)        →  Noto Serif SC     + Noto Sans SC
+ *  Universal font stack (all languages):
+ *   Display  →  Cormorant Garamond  (elegant serif, full Cyrillic)
+ *   Body     →  Inter               (clean professional sans, full Cyrillic)
+ *   Mono     →  JetBrains Mono
  */
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700&family=Space+Grotesk:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700&family=Golos+Text:wght@400;500;600;700&family=Noto+Serif:ital,wght@0,500;0,700&family=Noto+Sans:wght@400;500;700&family=Noto+Serif+SC:wght@500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -19,21 +18,9 @@
    TYPOGRAPHY  —  font stacks per language
 ══════════════════════════════════════════════════════ */
 :root {
-  --font-body:    "Space Grotesk",    "Helvetica Neue", system-ui, sans-serif;
-  --font-display: "Fraunces",         "Times New Roman", serif;
-  --font-mono:    "JetBrains Mono",   "Fira Code", ui-monospace, monospace;
-}
-html[lang="ru"] {
-  --font-body:    "Golos Text",       "Helvetica Neue", sans-serif;
-  --font-display: "Playfair Display", "Georgia", serif;
-}
-html[lang="kz"] {
-  --font-body:    "Noto Sans",        "Helvetica Neue", sans-serif;
-  --font-display: "Noto Serif",       "Georgia", serif;
-}
-html[lang="zh"] {
-  --font-body:    "Noto Sans SC",     "PingFang SC", "Microsoft YaHei", sans-serif;
-  --font-display: "Noto Serif SC",    "STSong", serif;
+  --font-body:    "Inter",              "Helvetica Neue", system-ui, sans-serif;
+  --font-display: "Cormorant Garamond", "Georgia", serif;
+  --font-mono:    "JetBrains Mono",     "Fira Code", ui-monospace, monospace;
 }
 
 /* ══════════════════════════════════════════════════════
@@ -249,11 +236,12 @@ body {
 
 h1, h2, h3 {
   font-family: var(--font-display);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
+  font-weight: 600;
 }
 
 h4, h5, h6 {
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
 }
 
 /* ══════════════════════════════════════════════════════
