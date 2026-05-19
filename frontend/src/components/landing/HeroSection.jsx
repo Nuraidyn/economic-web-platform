@@ -18,26 +18,51 @@ export default function HeroSection({ onScrollToAnalysis, onOpenAuth }) {
   return (
     <section
       ref={ref}
-      className="relative hero-breakout"
+      className="relative hero-breakout overflow-hidden"
       aria-label={t("landing.heroKicker")}
       style={{
-        background: theme === "dark"
-          ? `
-            radial-gradient(ellipse 140% 90% at 50% 0%,   rgba(99,102,241,0.45) 0%, transparent 60%),
-            radial-gradient(ellipse 100% 70% at 90% 100%, rgba(56,189,248,0.25) 0%, transparent 65%),
-            radial-gradient(ellipse 80%  60% at 0%  90%,  rgba(129,140,248,0.20) 0%, transparent 60%)
-          `
-          : `
-            radial-gradient(ellipse 140% 90% at 50% 0%,   rgba(91,95,199,0.22) 0%, transparent 60%),
-            radial-gradient(ellipse 100% 70% at 90% 100%, rgba(91,95,199,0.12) 0%, transparent 65%),
-            radial-gradient(ellipse 80%  60% at 0%  90%,  rgba(91,95,199,0.10) 0%, transparent 60%)
-          `,
-        borderBottom: "3px solid var(--panel-border-strong)",
+        background: "var(--panel)",
+        borderBottom: "2px solid var(--panel-border-strong)",
       }}
     >
-      {/* Subtle grid overlay */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
-        <div className="hero-bg-grid" />
+      {/* ── Background layers (same system as CTAFinal) ── */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+        {/* Bottom radial glow */}
+        <div style={{
+          position: "absolute", inset: 0,
+          background: theme === "dark"
+            ? "radial-gradient(ellipse 80% 65% at 50% 115%, color-mix(in srgb, var(--accent) 36%, transparent), transparent 72%)"
+            : "radial-gradient(ellipse 80% 65% at 50% 115%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 72%)",
+        }} />
+        {/* Top-center glow */}
+        <div style={{
+          position: "absolute", inset: 0,
+          background: theme === "dark"
+            ? "radial-gradient(ellipse 70% 55% at 50% -10%, color-mix(in srgb, var(--accent) 32%, transparent), transparent 70%)"
+            : "radial-gradient(ellipse 70% 55% at 50% -10%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 70%)",
+        }} />
+        {/* Right corner accent */}
+        <div style={{
+          position: "absolute", top: 0, left: 0, right: 0, height: "60%",
+          background: theme === "dark"
+            ? "radial-gradient(ellipse 50% 60% at 88% 0%, color-mix(in srgb, var(--accent-2) 18%, transparent), transparent 65%)"
+            : "radial-gradient(ellipse 50% 60% at 88% 0%, color-mix(in srgb, var(--accent-2) 10%, transparent), transparent 65%)",
+        }} />
+        {/* Left corner accent */}
+        <div style={{
+          position: "absolute", top: 0, left: 0, right: 0, height: "60%",
+          background: theme === "dark"
+            ? "radial-gradient(ellipse 40% 50% at 12% 0%, color-mix(in srgb, var(--accent-3) 14%, transparent), transparent 60%)"
+            : "radial-gradient(ellipse 40% 50% at 12% 0%, color-mix(in srgb, var(--accent-3) 8%, transparent), transparent 60%)",
+        }} />
+        {/* Grid overlay */}
+        <div style={{
+          position: "absolute", inset: 0,
+          backgroundImage:
+            "linear-gradient(to right, var(--panel-border) 1px, transparent 1px), linear-gradient(to bottom, var(--panel-border) 1px, transparent 1px)",
+          backgroundSize: "52px 52px",
+          opacity: theme === "dark" ? 0.07 : 0.10,
+        }} />
       </div>
 
       <div
