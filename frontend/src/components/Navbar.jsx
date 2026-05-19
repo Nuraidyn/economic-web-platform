@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
 import logoDark from "../assets/logo-dark-transparent.png";
@@ -6,6 +6,20 @@ import { useI18n } from "../context/I18nContext";
 import { useTheme } from "../context/ThemeContext";
 
 /* ── Icon helpers ── */
+const MenuIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+  </svg>
+);
+
+const CloseIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
 const ChevronDown = () => (
   <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor"
     strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -170,14 +184,15 @@ export default function Navbar({ onOpenAuth, isAuthenticated }) {
   const { language, setLanguage, t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleProductClick = (to, sectionId) => {
+    setMobileOpen(false);
     if (!sectionId) return;
     if (location.pathname === to) {
       document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
     } else {
       navigate(to);
-      // After navigation the DOM re-renders; give it a frame to mount
       setTimeout(() => {
         document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
       }, 120);
@@ -196,22 +211,12 @@ export default function Navbar({ onOpenAuth, isAuthenticated }) {
       <nav className="max-w-[1480px] mx-auto px-4 md:px-6 flex items-center justify-between gap-3" style={{ height: "var(--navbar-h)" }}>
 
         {/* ── Brand ── */}
-        <Link
-          to="/"
-          aria-label={t("navbar.title")}
-          className="shrink-0"
-        >
-          <img
-            src={logoDark}
-            alt={t("navbar.title")}
-            className="h-14 w-auto"
-          />
+        <Link to="/" aria-label={t("navbar.title")} className="shrink-0">
+          <img src={logoDark} alt={t("navbar.title")} className="h-10 sm:h-14 w-auto" />
         </Link>
 
         {/* ── Center: Products + Community (desktop) ── */}
         <div className="hidden md:flex items-center gap-0.5 flex-1 pl-3">
-
-          {/* Products */}
           <div className="nav-dropdown">
             <button type="button" className="nav-dropdown-trigger" aria-haspopup="menu">
               {t("navbar.products")} <ChevronDown />
@@ -219,13 +224,8 @@ export default function Navbar({ onOpenAuth, isAuthenticated }) {
             <div className="nav-dropdown-panel nav-products-panel" role="menu">
               {PRODUCTS.map(({ labelKey, descKey, to, icon, sectionId }) =>
                 sectionId ? (
-                  <button
-                    key={labelKey}
-                    type="button"
-                    role="menuitem"
-                    className="nav-product-item"
-                    onClick={() => handleProductClick(to, sectionId)}
-                  >
+                  <button key={labelKey} type="button" role="menuitem" className="nav-product-item"
+                    onClick={() => handleProductClick(to, sectionId)}>
                     <span className="nav-product-icon">{icon}</span>
                     <span>
                       <span className="nav-product-title">{t(labelKey)}</span>
@@ -233,7 +233,8 @@ export default function Navbar({ onOpenAuth, isAuthenticated }) {
                     </span>
                   </button>
                 ) : (
-                  <NavLink key={labelKey} to={to} role="menuitem" className="nav-product-item">
+                  <NavLink key={labelKey} to={to} role="menuitem" className="nav-product-item"
+                    onClick={() => setMobileOpen(false)}>
                     <span className="nav-product-icon">{icon}</span>
                     <span>
                       <span className="nav-product-title">{t(labelKey)}</span>
@@ -245,15 +246,13 @@ export default function Navbar({ onOpenAuth, isAuthenticated }) {
             </div>
           </div>
 
-          {/* Community */}
           <div className="nav-dropdown">
             <button type="button" className="nav-dropdown-trigger" aria-haspopup="menu">
               {t("navbar.community")} <ChevronDown />
             </button>
             <div className="nav-dropdown-panel" role="menu" style={{ minWidth: "12rem" }}>
               {COMMUNITY.map(({ label, icon, href }) => (
-                <a key={label} href={href} role="menuitem"
-                  target="_blank" rel="noreferrer noopener"
+                <a key={label} href={href} role="menuitem" target="_blank" rel="noreferrer noopener"
                   className="nav-community-item">
                   <span className="nav-community-icon">{icon}</span>
                   <span className="nav-product-title">{label}</span>
@@ -265,7 +264,6 @@ export default function Navbar({ onOpenAuth, isAuthenticated }) {
 
         {/* ── Right controls ── */}
         <div className="flex items-center gap-1.5 ml-auto">
-
           {/* Language globe */}
           <div className="nav-dropdown nav-dropdown-right">
             <button type="button" className="nav-icon-btn" aria-label={t("navbar.selectLanguage")}>
@@ -273,13 +271,9 @@ export default function Navbar({ onOpenAuth, isAuthenticated }) {
             </button>
             <div className="nav-dropdown-panel nav-lang-panel" role="menu">
               {LANGUAGES.map(({ code, flag, nativeName }) => (
-                <button
-                  key={code}
-                  type="button"
-                  role="menuitem"
+                <button key={code} type="button" role="menuitem"
                   className={["nav-lang-item", language === code ? "nav-lang-item-active" : ""].join(" ")}
-                  onClick={() => setLanguage(code)}
-                >
+                  onClick={() => setLanguage(code)}>
                   <span className="nav-lang-flag" aria-hidden="true">{flag}</span>
                   <span>{nativeName}</span>
                 </button>
@@ -288,29 +282,76 @@ export default function Navbar({ onOpenAuth, isAuthenticated }) {
           </div>
 
           {/* Theme toggle */}
-          <button
-            type="button"
-            className="nav-icon-btn"
-            onClick={toggleTheme}
+          <button type="button" className="nav-icon-btn" onClick={toggleTheme}
             aria-label={theme === "dark" ? t("navbar.themeLight") : t("navbar.themeDark")}
-            title={theme === "dark" ? t("navbar.themeLight") : t("navbar.themeDark")}
-          >
+            title={theme === "dark" ? t("navbar.themeLight") : t("navbar.themeDark")}>
             {theme === "dark" ? <SunIcon /> : <MoonIcon />}
           </button>
 
           {/* Sign In / Account */}
-          <button
-            type="button"
-            className="nav-signin-btn"
-            onClick={onOpenAuth}
-            aria-label={isAuthenticated ? t("navbar.openAccount") : t("navbar.openSignIn")}
-          >
+          <button type="button" className="nav-signin-btn" onClick={onOpenAuth}
+            aria-label={isAuthenticated ? t("navbar.openAccount") : t("navbar.openSignIn")}>
             <UserIcon />
             <span className="hidden sm:inline">{isAuthenticated ? t("navbar.account") : t("navbar.signIn")}</span>
           </button>
-        </div>
 
+          {/* ── Hamburger (mobile only) ── */}
+          <button
+            type="button"
+            className="nav-icon-btn md:hidden"
+            onClick={() => setMobileOpen((v) => !v)}
+            aria-label={mobileOpen ? t("navbar.closeMenu", "Close menu") : t("navbar.openMenu", "Open menu")}
+            aria-expanded={mobileOpen}
+          >
+            {mobileOpen ? <CloseIcon /> : <MenuIcon />}
+          </button>
+        </div>
       </nav>
+
+      {/* ── Mobile menu panel ── */}
+      {mobileOpen && (
+        <div
+          className="md:hidden border-t"
+          style={{
+            borderColor: "var(--panel-border-strong)",
+            background: "var(--panel)",
+            boxShadow: "0 8px 24px rgba(15,18,46,0.12)",
+          }}
+        >
+          <div className="max-w-[1480px] mx-auto px-4 py-3 space-y-1">
+            {/* Products section */}
+            <p className="label px-2 pt-1 pb-0.5">{t("navbar.products")}</p>
+            {PRODUCTS.map(({ labelKey, to, icon, sectionId }) =>
+              sectionId ? (
+                <button key={labelKey} type="button"
+                  className="nav-product-item w-full"
+                  onClick={() => handleProductClick(to, sectionId)}>
+                  <span className="nav-product-icon">{icon}</span>
+                  <span className="nav-product-title">{t(labelKey)}</span>
+                </button>
+              ) : (
+                <NavLink key={labelKey} to={to}
+                  className="nav-product-item block"
+                  onClick={() => setMobileOpen(false)}>
+                  <span className="nav-product-icon">{icon}</span>
+                  <span className="nav-product-title">{t(labelKey)}</span>
+                </NavLink>
+              )
+            )}
+
+            {/* Community section */}
+            <p className="label px-2 pt-3 pb-0.5">{t("navbar.community")}</p>
+            {COMMUNITY.map(({ label, icon, href }) => (
+              <a key={label} href={href} target="_blank" rel="noreferrer noopener"
+                className="nav-community-item flex"
+                onClick={() => setMobileOpen(false)}>
+                <span className="nav-community-icon">{icon}</span>
+                <span className="nav-product-title">{label}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </header>
   );
 }

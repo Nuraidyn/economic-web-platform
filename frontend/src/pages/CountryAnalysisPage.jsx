@@ -212,7 +212,7 @@ export default function CountryAnalysisPage() {
           <p className="text-[11px] text-muted mt-2">
             {t("home.availableYearRange", { min: minAnalysisYear, max: maxAnalysisYear })}
           </p>
-          <div className="flex items-center justify-between mt-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 mt-6">
             <button
               className="btn-primary"
               type="button"

@@ -1599,19 +1599,48 @@ html.dark .hero-bg-vignette {
     padding: var(--page-pt) var(--page-px) 3.5rem;
     gap: 2.25rem;
   }
-  .panel-wide { padding: 1.5rem; }
+  .panel-wide { padding: 1.25rem; }
+  .panel      { padding: 1.1rem; }
   .auth-modal-shell { max-height: calc(100vh - 1.5rem); padding: 1rem; }
   .hero-bg-blob { filter: blur(56px); }
   .hero-bg-blob-3 { display: none; }
+
+  /* Workspace action bar — tighter on mobile */
+  .workspace-action-bar .max-w-\[1480px\] { padding-left: 1rem; padding-right: 1rem; }
+
+  /* Chart cards — shorter height on mobile */
+  .chart-card { height: clamp(16rem, 55vw, 28rem); }
+
+  /* Correlation grid — single column on mobile */
+  .ineq-table th,
+  .ineq-table td { padding: 0.45rem 0.55rem; font-size: 0.78rem; }
+
+  /* Hero title */
+  .hero-title { font-size: clamp(1.7rem, 7vw, 2.8rem); }
+
+  /* Buttons full-width when stacked alone */
+  .btn-primary-full { width: 100%; justify-content: center; }
 }
 
 @media (max-width: 480px) {
   .page {
     --page-pt: 1.25rem;
-    --page-px: 0.9rem;
+    --page-px: 0.85rem;
     padding: var(--page-pt) var(--page-px) 3rem;
-    gap: 2rem;
+    gap: 1.75rem;
   }
+
+  /* Panels flat on very small screens */
+  .panel, .panel-wide, .panel-raised { padding: 1rem; border-radius: var(--r-md); }
+
+  /* Chip tags in selectors wrap cleanly */
+  .input { font-size: 0.82rem; }
+
+  /* Stat values scale down */
+  .stat-value { font-size: clamp(1.4rem, 6vw, 2rem); }
+
+  /* Nav sign-in button — icon only */
+  .nav-signin-btn { padding: 0.42rem 0.65rem; }
 }
 
 /* ══════════════════════════════════════════════════════
