@@ -52,13 +52,9 @@ export default function Home() {
         <NewsSection />
       </div>
 
-      {/* ── 6. Closing CTA — unauthenticated only ── */}
-      {!user && (
-        <>
-          <div className="section-divider" aria-hidden="true" />
-          <CTAFinal onOpenAuth={handleAuthCTA} />
-        </>
-      )}
+      {/* ── 6. Closing CTA ── */}
+      <div className="section-divider" aria-hidden="true" />
+      <CTAFinal onOpenAuth={handleAuthCTA} />
     </>
   );
 }
