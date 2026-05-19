@@ -26,7 +26,7 @@ export default function ConversationSidebar({
       <div className="p-3 border-b border-[var(--panel-border)]">
         <button
           type="button"
-          className="btn-primary w-full text-sm py-2"
+          className="btn-primary w-full py-2"
           onClick={onNew}
         >
           + New Conversation
@@ -43,7 +43,7 @@ export default function ConversationSidebar({
         )}
 
         {!isLoading && conversations.length === 0 && (
-          <p className="text-xs text-[var(--text-faint)] text-center mt-8 px-4">
+          <p className="text-sm text-[var(--text-faint)] text-center mt-8 px-4">
             No conversations yet
           </p>
         )}
@@ -51,7 +51,7 @@ export default function ConversationSidebar({
         {conversations.map((conv) => (
           <div
             key={conv.id}
-            className={`group flex items-start justify-between gap-2 px-3 py-2 mx-2 rounded-lg cursor-pointer transition-colors ${
+            className={`group flex items-start justify-between gap-2 px-3 py-2.5 mx-2 rounded-lg cursor-pointer transition-colors ${
               conv.id === activeId
                 ? "bg-[var(--tab-active-bg)]"
                 : "hover:bg-[var(--surface-hover)]"
@@ -59,14 +59,14 @@ export default function ConversationSidebar({
             onClick={() => onSelect(conv.id)}
           >
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium truncate">{conv.title}</p>
-              <p className="text-[10px] text-[var(--text-faint)]">
+              <p className="text-sm font-medium truncate">{conv.title}</p>
+              <p className="text-xs text-[var(--text-faint)] mt-0.5">
                 {formatRelative(conv.updated_at)} · {conv.message_count} msg
               </p>
             </div>
             <button
               type="button"
-              className="opacity-0 group-hover:opacity-100 text-[var(--text-faint)] hover:text-rose-400 text-xs flex-shrink-0 transition-opacity"
+              className="opacity-0 group-hover:opacity-100 text-[var(--text-faint)] hover:text-rose-400 text-sm flex-shrink-0 transition-opacity"
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete(conv.id);

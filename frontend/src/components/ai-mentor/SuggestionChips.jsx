@@ -5,7 +5,7 @@ export default function SuggestionChips({ suggestions = [], onSelect, isLoading 
     return (
       <div className="flex flex-wrap gap-2">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="skeleton h-7 w-32 rounded-full" />
+          <div key={i} className="skeleton h-8 w-32 rounded-full" />
         ))}
       </div>
     );
@@ -18,7 +18,7 @@ export default function SuggestionChips({ suggestions = [], onSelect, isLoading 
           key={i}
           type="button"
           onClick={() => onSelect(s)}
-          className="tab text-xs px-3 py-1 hover:bg-accent transition-colors cursor-pointer"
+          className="tab text-sm px-3 py-1.5 hover:bg-accent transition-colors cursor-pointer"
         >
           {s}
         </button>
