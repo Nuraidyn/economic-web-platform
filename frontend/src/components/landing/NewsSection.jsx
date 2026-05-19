@@ -4,8 +4,8 @@ import { fetchNews } from "../../api/newsApi";
 import { useReveal } from "../../hooks/useReveal";
 import { useI18n } from "../../context/I18nContext";
 
-const INITIAL_COUNT = 6;
-const STEP_COUNT = 6;
+const INITIAL_COUNT = 8;
+const STEP_COUNT = 8;
 
 const RefreshIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -85,7 +85,14 @@ export default function NewsSection() {
     setShown(INITIAL_COUNT);
     try {
       const data = await fetchNews();
-      setArticles(data.articles || []);
+      const seen = new Set();
+      const unique = (data.articles || []).filter((a) => {
+        const key = a.link || a.title;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      setArticles(unique);
       setStatus({ loading: false, error: false });
     } catch {
       setStatus({ loading: false, error: true });
@@ -126,7 +133,7 @@ export default function NewsSection() {
       {/* Loading skeletons */}
       {status.loading && (
         <div className="news-grid">
-          {Array.from({ length: INITIAL_COUNT }).map((_, i) => (
+          {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="news-card-skeleton">
               <div className="skeleton news-card-image-skeleton mb-3" />
               <div className="skeleton skeleton-text w-20 mb-2" />
