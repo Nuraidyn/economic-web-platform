@@ -32,32 +32,52 @@ export default function AppLayout() {
           </ErrorBoundary>
         </div>
       </main>
-      <footer className="max-w-[1480px] mx-auto w-full px-6 pb-10 space-y-6">
-        <section className="panel">
-          <h3 className="panel-title">{t("footer.referencesTitle")}</h3>
-          <p className="text-xs text-muted mt-2">{t("footer.referencesSubtitle")}</p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <a
-              className="tab"
-              href={LINKS.worldBank}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {t("navbar.worldBank")}
-            </a>
-            <a
-              className="tab"
-              href={LINKS.github}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {t("navbar.labNotes")}
-            </a>
-          </div>
-        </section>
-        <div>
+      <footer className="max-w-[1480px] mx-auto w-full px-4 md:px-6 pb-12 space-y-4">
+
+        {/* ── Divider ── */}
+        <div className="section-divider" aria-hidden="true" />
+
+        {/* ── Main footer grid ── */}
+        <div className="grid md:grid-cols-2 gap-4">
+
+          {/* References panel */}
+          <section className="panel space-y-4">
+            <div>
+              <p className="page-section-kicker">{t("footer.referencesKicker")}</p>
+              <h3 className="panel-title mt-1">{t("footer.referencesTitle")}</h3>
+              <p className="text-xs text-muted mt-1 leading-relaxed">{t("footer.referencesSubtitle")}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: "World Bank Data", href: LINKS.worldBank },
+                { label: "World Bank Catalog", href: LINKS.worldBankOpen },
+                { label: "IMF Data", href: LINKS.imf },
+                { label: "UN Data", href: LINKS.unData },
+                { label: "OECD Stats", href: LINKS.oecd },
+                { label: "GitHub", href: LINKS.github },
+              ].map(({ label, href }) => (
+                <a
+                  key={label}
+                  className="tab"
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {label}
+                </a>
+              ))}
+            </div>
+          </section>
+
+          {/* Agreement panel */}
           <AgreementPanel />
         </div>
+
+        {/* ── Copyright bar ── */}
+        <p className="text-center text-[11px] text-faint pt-2">
+          {t("footer.copyright", { year: new Date().getFullYear() })}
+        </p>
+
       </footer>
       <AuthModal isOpen={authModalOpen} onClose={closeAuthModal} />
     </div>
