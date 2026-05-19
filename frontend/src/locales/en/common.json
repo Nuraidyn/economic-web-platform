@@ -13,5 +13,9 @@
   "layout.forecast": "Forecast",
   "layout.saved": "Saved",
   "footer.referencesTitle": "References",
-  "footer.referencesSubtitle": "Data sources and project links are placed in the footer."
+  "footer.referencesSubtitle": "Data sources and project links are placed in the footer.",
+  "notFound.title": "Page not found",
+  "notFound.subtitle": "The page you're looking for doesn't exist or has been moved.",
+  "notFound.goHome": "Go to Home",
+  "notFound.goCompare": "Open Compare"
 }

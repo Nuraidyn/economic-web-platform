@@ -13,5 +13,9 @@
   "layout.forecast": "Прогноз",
   "layout.saved": "Сохранённые",
   "footer.referencesTitle": "Референсы",
-  "footer.referencesSubtitle": "Источники данных и проектные ссылки перенесены в футер."
+  "footer.referencesSubtitle": "Источники данных и проектные ссылки перенесены в футер.",
+  "notFound.title": "Страница не найдена",
+  "notFound.subtitle": "Такой страницы не существует или она была перемещена.",
+  "notFound.goHome": "На главную",
+  "notFound.goCompare": "Открыть Compare"
 }

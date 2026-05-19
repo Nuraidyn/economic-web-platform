@@ -13,5 +13,9 @@
   "common.na": "жоқ",
   "common.close": "Жабу",
   "footer.referencesTitle": "Референстер",
-  "footer.referencesSubtitle": "Дереккөздер мен жоба сілтемелері футерге орналастырылды."
+  "footer.referencesSubtitle": "Дереккөздер мен жоба сілтемелері футерге орналастырылды.",
+  "notFound.title": "Бет табылмады",
+  "notFound.subtitle": "Мұндай бет жоқ немесе ол жылжытылды.",
+  "notFound.goHome": "Басты бетке",
+  "notFound.goCompare": "Compare ашу"
 }
