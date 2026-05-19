@@ -211,8 +211,8 @@ export default function Navbar({ onOpenAuth, isAuthenticated }) {
       <nav className="max-w-[1480px] mx-auto px-4 md:px-6 flex items-center justify-between gap-3" style={{ height: "var(--navbar-h)" }}>
 
         {/* ── Brand ── */}
-        <Link to="/" aria-label={t("navbar.title")} className="shrink-0">
-          <img src={logoDark} alt={t("navbar.title")} className="h-12 sm:h-16 w-auto" />
+        <Link to="/" aria-label={t("navbar.title")} className="shrink-0 no-underline" style={{ textDecoration: "none", lineHeight: 0 }}>
+          <img src={logoDark} alt={t("navbar.title")} className="h-12 sm:h-16 w-auto block" />
         </Link>
 
         {/* ── Center: Products + Community (desktop) ── */}
