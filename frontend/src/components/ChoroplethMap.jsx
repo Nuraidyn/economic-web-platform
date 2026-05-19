@@ -5,6 +5,8 @@ import { useI18n } from "../context/I18nContext";
 
 const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
+const USD_INDICATORS = new Set(["NY.GDP.PCAP.CD", "NY.GDP.MKTP.CD"]);
+
 // Predefined indicators available on the world map.
 // reverse: true  → high value is BAD (red), low value is GOOD (blue)
 // reverse: false → high value is GOOD (blue), low value is BAD (red)
@@ -13,7 +15,8 @@ const MAP_INDICATORS = [
   { code: "NY.GDP.MKTP.CD",    labelKey: "map.ind.gdpTotal",  reverse: false },
   { code: "FP.CPI.TOTL.ZG",   labelKey: "map.ind.inflation", reverse: true  },
   { code: "SL.UEM.TOTL.ZS",   labelKey: "map.ind.unemploy",  reverse: true  },
-  { code: "SI.POV.GINI",       labelKey: "map.ind.gini",      reverse: true  },
+  // World Bank reports Gini as 0–100; divide by 100 for display to show canonical 0–1 range
+  { code: "SI.POV.GINI",       labelKey: "map.ind.gini",      reverse: true,  displayScale: 0.01, legendMin: 0, legendMax: 1 },
   { code: "NY.GDP.PCAP.KD.ZG", labelKey: "map.ind.gdpGrowth", reverse: false },
   { code: "SI.POV.DDAY",       labelKey: "map.ind.poverty",   reverse: true  },
 ];
@@ -97,7 +100,11 @@ export default function ChoroplethMap() {
   const [fetchKey, setFetchKey]       = useState(0);  // increment to force re-fetch
 
   // Derived from activeCode — high value is bad for reversed indicators
-  const reversed = (MAP_INDICATORS.find((i) => i.code === activeCode) ?? MAP_INDICATORS[0]).reverse;
+  const activeInd = MAP_INDICATORS.find((i) => i.code === activeCode) ?? MAP_INDICATORS[0];
+  const reversed = activeInd.reverse;
+  const displayScale = activeInd.displayScale ?? 1;
+  const legendMinDisplay = activeInd.legendMin ?? null;
+  const legendMaxDisplay = activeInd.legendMax ?? null;
 
   // Retry counter resets when indicator changes
   const retryCountRef = useRef(0);
@@ -184,7 +191,7 @@ export default function ChoroplethMap() {
     if (!tooltipRef.current) return;
     if (tipName.current) tipName.current.textContent = name;
     if (tipVal.current)
-      tipVal.current.textContent = value != null ? formatValue(value) : t("map.noValue");
+      tipVal.current.textContent = value != null ? formatValue(value * displayScale) : t("map.noValue");
     tooltipRef.current.style.opacity = "1";
   };
   const hideTooltip = () => {
@@ -350,7 +357,9 @@ export default function ChoroplethMap() {
               For reversed indicators high is bad, so labels swap. */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <span className="text-xs text-muted tabular-nums shrink-0">
-              {formatValue(reversed ? maxVal : minVal)}
+              {legendMinDisplay != null
+                ? formatValue(reversed ? legendMaxDisplay : legendMinDisplay)
+                : formatValue((reversed ? maxVal : minVal) * displayScale)}
             </span>
             <div
               className="flex-1 h-2 rounded-full"
@@ -361,7 +370,9 @@ export default function ChoroplethMap() {
               }}
             />
             <span className="text-xs text-muted tabular-nums shrink-0">
-              {formatValue(reversed ? minVal : maxVal)}
+              {legendMinDisplay != null
+                ? formatValue(reversed ? legendMinDisplay : legendMaxDisplay)
+                : formatValue((reversed ? minVal : maxVal) * displayScale)}
             </span>
           </div>
 
@@ -369,6 +380,13 @@ export default function ChoroplethMap() {
           {countryCount > 0 && (
             <span className="badge badge-neutral shrink-0">
               {countryCount} {t("map.countries")}
+            </span>
+          )}
+
+          {/* Currency note — only for USD-denominated indicators */}
+          {USD_INDICATORS.has(activeCode) && (
+            <span className="badge badge-neutral shrink-0 font-medium">
+              $ {t("map.usdNote")}
             </span>
           )}
 
