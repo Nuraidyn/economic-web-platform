@@ -211,8 +211,21 @@ export default function Navbar({ onOpenAuth, isAuthenticated }) {
       <nav className="max-w-[1480px] mx-auto px-4 md:px-6 flex items-center justify-between gap-3" style={{ height: "var(--navbar-h)" }}>
 
         {/* ── Brand ── */}
-        <Link to="/" aria-label={t("navbar.title")} className="shrink-0" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
-          <img src={logoDark} alt={t("navbar.title")} className="h-12 sm:h-16 w-auto" style={{ display: "block" }} />
+        <Link
+          to="/"
+          aria-label={t("navbar.title")}
+          className="shrink-0"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            textDecoration: "none",
+            borderBottom: "none",
+            boxShadow: "none",
+            outline: "none",
+            lineHeight: 0,
+          }}
+        >
+          <img src={logoDark} alt={t("navbar.title")} className="h-12 sm:h-16 w-auto" style={{ display: "block", border: "none", clipPath: "inset(0 0 6% 0)" }} />
         </Link>
 
         {/* ── Center: Products + Community (desktop) ── */}

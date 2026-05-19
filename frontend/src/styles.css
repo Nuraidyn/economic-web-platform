@@ -1259,6 +1259,11 @@ html.dark .hero-bg-vignette {
 /* ══════════════════════════════════════════════════════
    NAV  DROPDOWNS
 ══════════════════════════════════════════════════════ */
+
+/* Brand logo link — remove every possible browser decoration */
+a.shrink-0,
+header a img { border: none; text-decoration: none; box-shadow: none; }
+
 .nav-dropdown { position: relative; }
 
 .nav-dropdown-trigger {
@@ -1304,6 +1309,16 @@ html.dark .hero-bg-vignette {
   transition:
     opacity   var(--dur-fast) var(--ease-out),
     transform var(--dur-fast) var(--ease-out);
+}
+
+/* Invisible bridge fills the gap between trigger and panel so hover doesn't break */
+.nav-dropdown-panel::before {
+  content: '';
+  position: absolute;
+  top: -0.75rem;
+  left: 0;
+  right: 0;
+  height: 0.75rem;
 }
 
 .nav-dropdown:hover .nav-dropdown-panel,

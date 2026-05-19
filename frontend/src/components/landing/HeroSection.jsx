@@ -79,6 +79,7 @@ export default function HeroSection({ onScrollToAnalysis, onOpenAuth }) {
           src={logoDark}
           alt="logo"
           className="mb-2 h-20 w-auto evision-logo-animate"
+          style={{ clipPath: "inset(0 0 6% 0)" }}
           aria-hidden="true"
         />
 
