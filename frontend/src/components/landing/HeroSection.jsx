@@ -18,11 +18,13 @@ export default function HeroSection({ onScrollToAnalysis, onOpenAuth }) {
   return (
     <section
       ref={ref}
-      className="relative hero-breakout overflow-hidden"
+      className="relative overflow-hidden"
       aria-label={t("landing.heroKicker")}
       style={{
         background: "var(--panel)",
-        borderBottom: "2px solid var(--panel-border-strong)",
+        border: "1px solid var(--panel-border-strong)",
+        borderRadius: "var(--r-xl)",
+        boxShadow: "var(--shadow-lg)",
       }}
     >
       {/* ── Background layers (same system as CTAFinal) ── */}
@@ -62,6 +64,7 @@ export default function HeroSection({ onScrollToAnalysis, onOpenAuth }) {
             "linear-gradient(to right, var(--panel-border) 1px, transparent 1px), linear-gradient(to bottom, var(--panel-border) 1px, transparent 1px)",
           backgroundSize: "52px 52px",
           opacity: theme === "dark" ? 0.07 : 0.10,
+          borderRadius: "var(--r-xl)",
         }} />
       </div>
 
