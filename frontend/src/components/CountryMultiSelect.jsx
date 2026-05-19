@@ -35,16 +35,36 @@ export default function CountryMultiSelect({
     onSelect([...selected, code]);
   };
 
+  const selectedCountries = countries.filter((c) => selected.includes(c.code));
+
   return (
     <div className="space-y-2">
       <label className="label">{t("selector.countries")}</label>
-      <input
-        className="input"
-        type="text"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder={t("selector.searchCountry")}
-      />
+      <div className="input flex flex-wrap gap-1.5 min-h-[2.5rem] items-center p-1.5">
+        {selectedCountries.map((country) => (
+          <span
+            key={country.code}
+            className="inline-flex items-center gap-1 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 text-xs px-2 py-0.5 font-medium"
+          >
+            {country.name}
+            <button
+              type="button"
+              onClick={() => toggleCountry(country.code)}
+              className="ml-0.5 hover:text-blue-800 dark:hover:text-blue-200 leading-none"
+              aria-label={`Remove ${country.name}`}
+            >
+              ×
+            </button>
+          </span>
+        ))}
+        <input
+          className="flex-1 min-w-[8rem] bg-transparent outline-none text-sm placeholder:text-muted"
+          type="text"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={selectedCountries.length === 0 ? t("selector.searchCountry") : ""}
+        />
+      </div>
       <div className="surface p-2 max-h-52 overflow-y-auto space-y-1">
         {filteredCountries.map((country) => {
           const checked = selected.includes(country.code);
