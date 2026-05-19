@@ -17,12 +17,20 @@ const normalizePayload = (payload) => {
   };
 };
 
-export default function SavedPresetsPanel({ user, currentPayload, onLoad }) {
+export default function SavedPresetsPanel({ user, currentPayload, onLoad, suggestedName = "" }) {
   const { t, language } = useI18n();
   const [presets, setPresets] = useState([]);
   const [name, setName] = useState("");
+  const [userEdited, setUserEdited] = useState(false);
   const [overwrite, setOverwrite] = useState(false);
   const [status, setStatus] = useState({ loading: false, error: "", info: "" });
+
+  // Sync suggested name only if user hasn't manually edited the field
+  useEffect(() => {
+    if (suggestedName && !userEdited) {
+      setName(suggestedName);
+    }
+  }, [suggestedName]);
 
   const canUse = Boolean(user);
 
@@ -71,6 +79,7 @@ export default function SavedPresetsPanel({ user, currentPayload, onLoad }) {
         await createPreset({ name: trimmed, payload });
       }
       setName("");
+      setUserEdited(false);
       setOverwrite(false);
       await loadPresets();
       setStatus({ loading: false, error: "", info: t("preset.saved") });
@@ -118,7 +127,10 @@ export default function SavedPresetsPanel({ user, currentPayload, onLoad }) {
             <input
               className="input"
               value={name}
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event) => {
+                setName(event.target.value);
+                setUserEdited(true);
+              }}
               placeholder={t("preset.placeholder")}
             />
             <label className="flex items-center gap-2 text-xs text-muted">

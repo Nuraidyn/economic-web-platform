@@ -43,6 +43,7 @@ export default function CountryAnalysisPage() {
   const [error, setError] = useState("");
   const [selectionWarning, setSelectionWarning] = useState("");
   const [presetDrawerOpen, setPresetDrawerOpen] = useState(false);
+  const [suggestedPresetName, setSuggestedPresetName] = useState("");
 
   const chartTypes = useMemo(
     () => [
@@ -114,6 +115,18 @@ export default function CountryAnalysisPage() {
       if (hasEmpty) {
         setSelectionWarning(t("home.warningNoData"));
       }
+
+      // Auto-generate preset name suggestion
+      const indLabels = selectedIndicators
+        .slice(0, 2)
+        .map((code) => {
+          const ind = indicators.find((i) => i.code === code);
+          return ind ? (ind.label || ind.name || code) : code;
+        })
+        .join(", ");
+      const countryLabels = selectedCountries.slice(0, 3).join(", ");
+      const extra = selectedIndicators.length > 2 ? ` +${selectedIndicators.length - 2}` : "";
+      setSuggestedPresetName(`${indLabels}${extra} · ${countryLabels} (${startYear}–${endYear})`);
     } catch (err) {
       const status = err?.response?.status;
       if (status === 401) {
@@ -264,10 +277,6 @@ export default function CountryAnalysisPage() {
 
       <div className="section-divider" aria-hidden="true" />
 
-      <ChoroplethMap />
-
-      <div className="section-divider" aria-hidden="true" />
-
       <AIInsightPreview>
         <ChartInsightAgent
           datasets={datasets}
@@ -277,9 +286,14 @@ export default function CountryAnalysisPage() {
         />
       </AIInsightPreview>
 
+      <div className="section-divider" aria-hidden="true" />
+
+      <ChoroplethMap />
+
       <PresetDrawer
         isOpen={presetDrawerOpen}
         onClose={() => setPresetDrawerOpen(false)}
+        suggestedName={suggestedPresetName}
       />
     </>
   );

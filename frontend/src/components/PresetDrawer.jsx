@@ -13,7 +13,7 @@ import { useAnalysis } from "../context/AnalysisContext";
 import { useI18n } from "../context/I18nContext";
 import SavedPresetsPanel from "./SavedPresetsPanel";
 
-export default function PresetDrawer({ isOpen, onClose }) {
+export default function PresetDrawer({ isOpen, onClose, suggestedName = "" }) {
   const { t } = useI18n();
   const { user } = useContext(AuthContext);
   const { presetPayload, applyPresetPayload } = useAnalysis();
@@ -90,6 +90,7 @@ export default function PresetDrawer({ isOpen, onClose }) {
             user={user}
             currentPayload={presetPayload}
             onLoad={handleLoad}
+            suggestedName={suggestedName}
           />
         </div>
       </div>
