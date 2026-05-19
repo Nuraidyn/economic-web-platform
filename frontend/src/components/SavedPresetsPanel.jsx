@@ -25,7 +25,6 @@ export default function SavedPresetsPanel({ user, currentPayload, onLoad, sugges
   const [overwrite, setOverwrite] = useState(false);
   const [status, setStatus] = useState({ loading: false, error: "", info: "" });
 
-  // Sync suggested name only if user hasn't manually edited the field
   useEffect(() => {
     if (suggestedName && !userEdited) {
       setName(suggestedName);
@@ -41,34 +40,23 @@ export default function SavedPresetsPanel({ user, currentPayload, onLoad, sugges
   }, [presets]);
 
   const loadPresets = async () => {
-    if (!canUse) {
-      setPresets([]);
-      return;
-    }
+    if (!canUse) { setPresets([]); return; }
     setStatus({ loading: true, error: "", info: "" });
     try {
       const data = await listPresets();
       setPresets(Array.isArray(data) ? data : []);
       setStatus({ loading: false, error: "", info: "" });
-    } catch (err) {
+    } catch {
       setStatus({ loading: false, error: t("preset.errorLoad"), info: "" });
     }
   };
 
-  useEffect(() => {
-    loadPresets();
-  }, [canUse]);
+  useEffect(() => { loadPresets(); }, [canUse]);
 
   const handleSave = async () => {
     const trimmed = name.trim();
-    if (!trimmed) {
-      setStatus({ loading: false, error: t("preset.errorName"), info: "" });
-      return;
-    }
-    if (!canUse) {
-      setStatus({ loading: false, error: t("preset.errorSignIn"), info: "" });
-      return;
-    }
+    if (!trimmed) { setStatus({ loading: false, error: t("preset.errorName"), info: "" }); return; }
+    if (!canUse)  { setStatus({ loading: false, error: t("preset.errorSignIn"), info: "" }); return; }
     setStatus({ loading: true, error: "", info: "" });
     try {
       const payload = normalizePayload(currentPayload);
@@ -84,13 +72,8 @@ export default function SavedPresetsPanel({ user, currentPayload, onLoad, sugges
       await loadPresets();
       setStatus({ loading: false, error: "", info: t("preset.saved") });
     } catch (err) {
-      const httpStatus = err?.response?.status;
-      if (httpStatus === 409) {
-        setStatus({
-          loading: false,
-          error: t("preset.errorExists"),
-          info: "",
-        });
+      if (err?.response?.status === 409) {
+        setStatus({ loading: false, error: t("preset.errorExists"), info: "" });
         return;
       }
       setStatus({ loading: false, error: t("preset.errorSave"), info: "" });
@@ -98,8 +81,7 @@ export default function SavedPresetsPanel({ user, currentPayload, onLoad, sugges
   };
 
   const handleLoad = (preset) => {
-    const payload = normalizePayload(preset?.payload);
-    onLoad?.(payload);
+    onLoad?.(normalizePayload(preset?.payload));
     setStatus({ loading: false, error: "", info: t("preset.loaded", { name: preset.name }) });
   };
 
@@ -110,85 +92,88 @@ export default function SavedPresetsPanel({ user, currentPayload, onLoad, sugges
       await deletePreset(preset.id);
       await loadPresets();
       setStatus({ loading: false, error: "", info: t("preset.deleted") });
-    } catch (err) {
+    } catch {
       setStatus({ loading: false, error: t("preset.errorDelete"), info: "" });
     }
   };
 
+  const locale = language === "ru" ? "ru-RU" : language === "kz" ? "kk-KZ" : "en-US";
+
+  if (!canUse) {
+    return <p className="text-sm text-muted">{t("preset.signInHint")}</p>;
+  }
+
   return (
-    <div className="panel">
-      <h3 className="panel-title">{t("preset.title")}</h3>
-      {!canUse ? (
-        <p className="text-xs text-muted mt-2">{t("preset.signInHint")}</p>
-      ) : (
-        <div className="space-y-3 mt-4">
-          <div className="space-y-2">
-            <label className="label">{t("preset.name")}</label>
-            <input
-              className="input"
-              value={name}
-              onChange={(event) => {
-                setName(event.target.value);
-                setUserEdited(true);
-              }}
-              placeholder={t("preset.placeholder")}
-            />
-            <label className="flex items-center gap-2 text-xs text-muted">
-              <input
-                type="checkbox"
-                checked={overwrite}
-                onChange={(event) => setOverwrite(event.target.checked)}
-              />
-              {t("preset.overwrite")}
-            </label>
-            <button className="btn-secondary" type="button" onClick={handleSave} disabled={status.loading}>
-              {status.loading ? t("preset.saving") : t("preset.saveCurrent")}
-            </button>
-          </div>
+    <div className="space-y-5">
 
-          {status.error && <p className="text-xs text-rose-200/90">{status.error}</p>}
-          {status.info && <p className="text-xs text-emerald-200/90">{status.info}</p>}
-
-          <div className="pt-2 border-t border-slate-900/10 dark:border-white/10">
-            {presets.length === 0 ? (
-              <p className="text-xs text-muted">{t("preset.none")}</p>
-            ) : (
-              <div className="space-y-2">
-                {presets.map((preset) => (
-                  <div
-                    key={preset.id}
-                    className="flex items-center justify-between gap-3 surface px-4 py-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{preset.name}</p>
-                      <p className="text-[11px] text-muted">
-                        {t("preset.updated", {
-                          date: new Date(preset.updated_at).toLocaleString(
-                            language === "ru" ? "ru-RU" : language === "kz" ? "kk-KZ" : "en-US"
-                          ),
-                        })}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button className="btn-secondary" type="button" onClick={() => handleLoad(preset)}>
-                        {t("preset.load")}
-                      </button>
-                      <button
-                        className="btn-secondary"
-                        type="button"
-                        onClick={() => handleDelete(preset)}
-                        disabled={status.loading}
-                      >
-                        {t("preset.delete")}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+      {/* ── Save form ── */}
+      <div className="space-y-3">
+        <div className="space-y-1.5">
+          <label className="label">{t("preset.name")}</label>
+          <input
+            className="input"
+            value={name}
+            onChange={(e) => { setName(e.target.value); setUserEdited(true); }}
+            placeholder={t("preset.placeholder")}
+          />
         </div>
-      )}
+        <label className="flex items-center gap-2 text-sm text-muted cursor-pointer">
+          <input
+            type="checkbox"
+            checked={overwrite}
+            onChange={(e) => setOverwrite(e.target.checked)}
+          />
+          {t("preset.overwrite")}
+        </label>
+        <button
+          className="btn-secondary w-full"
+          type="button"
+          onClick={handleSave}
+          disabled={status.loading}
+        >
+          {status.loading ? t("preset.saving") : t("preset.saveCurrent")}
+        </button>
+
+        {status.error && <p className="text-sm text-rose-400">{status.error}</p>}
+        {status.info  && <p className="text-sm text-emerald-400">{status.info}</p>}
+      </div>
+
+      {/* ── Saved list ── */}
+      <div className="border-t border-[var(--panel-border)] pt-4 space-y-2">
+        {presets.length === 0 ? (
+          <p className="text-sm text-muted">{t("preset.none")}</p>
+        ) : (
+          presets.map((preset) => (
+            <div key={preset.id} className="surface rounded-lg px-4 py-3 space-y-2">
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">{preset.name}</p>
+                <p className="text-xs text-muted mt-0.5">
+                  {t("preset.updated", {
+                    date: new Date(preset.updated_at).toLocaleString(locale),
+                  })}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  className="btn-secondary flex-1"
+                  type="button"
+                  onClick={() => handleLoad(preset)}
+                >
+                  {t("preset.load")}
+                </button>
+                <button
+                  className="btn-secondary flex-1"
+                  type="button"
+                  onClick={() => handleDelete(preset)}
+                  disabled={status.loading}
+                >
+                  {t("preset.delete")}
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }

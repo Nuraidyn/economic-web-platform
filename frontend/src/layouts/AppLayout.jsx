@@ -1,10 +1,12 @@
 import React, { useContext, useEffect } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 
 import AgreementPanel from "../components/AgreementPanel";
 import AuthModal from "../components/AuthModal";
+import CookieConsentBanner from "../components/CookieConsentBanner";
 import ErrorBoundary from "../components/ErrorBoundary";
 import Navbar from "../components/Navbar";
+import SessionExpiredToast from "../components/SessionExpiredToast";
 import AuthContext from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
 import { useUI } from "../context/UIContext";
@@ -75,14 +77,20 @@ export default function AppLayout() {
               <AgreementPanel />
             </div>
 
-            <p className="text-center text-[11px] text-faint pt-2">
-              {t("footer.copyright", { year: new Date().getFullYear() })}
+            <p className="text-center text-[11px] text-faint pt-2 flex items-center justify-center gap-2 flex-wrap">
+              <span>{t("footer.copyright", { year: new Date().getFullYear() })}</span>
+              <span aria-hidden="true">·</span>
+              <Link to="/privacy" className="hover:text-[var(--text)] transition-colors underline-offset-2 hover:underline">
+                {t("footer.privacy")}
+              </Link>
             </p>
           </footer>
         </>
       )}
 
       <AuthModal isOpen={authModalOpen} onClose={closeAuthModal} />
+      <CookieConsentBanner />
+      <SessionExpiredToast />
     </div>
   );
 }

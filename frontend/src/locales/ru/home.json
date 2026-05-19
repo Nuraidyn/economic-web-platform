@@ -38,6 +38,8 @@
   "comparison.empty": "Выберите страны и индикаторы, затем запустите сравнение для построения графиков.",
   "comparison.historicalByCountry": "Исторические ряды по странам. Пропущенные значения оставляются пустыми для сохранения целостности данных.",
   "comparison.exportCsv": "Экспорт CSV",
+  "comparison.viewExpanded": "Развёрнуто",
+  "comparison.viewGrid": "Сетка",
   "comparison.correlationSnapshot": "Снимок корреляции",
   "comparison.correlationSubtitle": "Корреляция Пирсона между {{indicatorA}} и {{indicatorB}} на пересекающихся годах.",
   "comparison.title": "Сравнение доходов по странам",

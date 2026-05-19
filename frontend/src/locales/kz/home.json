@@ -38,6 +38,8 @@
   "comparison.empty": "Елдер мен индикаторларды таңдаңыз, содан кейін график құру үшін салыстыруды іске қосыңыз.",
   "comparison.historicalByCountry": "Елдер бойынша тарихи қатарлар. Бос мәндер дерек тұтастығын сақтау үшін өзгертілмейді.",
   "comparison.exportCsv": "CSV жүктеу",
+  "comparison.viewExpanded": "Толық",
+  "comparison.viewGrid": "Тор",
   "comparison.correlationSnapshot": "Корреляция көрінісі",
   "comparison.correlationSubtitle": "{{indicatorA}} және {{indicatorB}} индикаторларының қиылысатын жылдардағы Пирсон корреляциясы.",
   "comparison.title": "Елдер бойынша табысты салыстыру",

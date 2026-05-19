@@ -38,6 +38,8 @@
   "comparison.empty": "Select countries and indicators, then run the comparison to populate charts.",
   "comparison.historicalByCountry": "Historical series by country. Missing values are left blank to preserve data integrity.",
   "comparison.exportCsv": "Export CSV",
+  "comparison.viewExpanded": "Expanded",
+  "comparison.viewGrid": "Grid",
   "comparison.correlationSnapshot": "Correlation Snapshot",
   "comparison.correlationSubtitle": "Pearson correlation between {{indicatorA}} and {{indicatorB}} on overlapping years.",
   "comparison.title": "Compare Income Across Countries",

@@ -16,8 +16,15 @@
   "footer.referencesTitle": "Референстер",
   "footer.referencesSubtitle": "Барлық макроэкономикалық деректер ашық халықаралық базалардан алынған — Дүниежүзілік банк, ХВҚ, БҰҰ және ЭЫДҰ.",
   "footer.copyright": "© {{year}} EVision AI · Экономикалық аналитика платформасы. Деректер World Bank Open Data арқылы ұсынылған.",
+  "footer.privacy": "Құпиялылық саясаты",
   "notFound.title": "Бет табылмады",
   "notFound.subtitle": "Мұндай бет жоқ немесе ол жылжытылды.",
   "notFound.goHome": "Басты бетке",
-  "notFound.goCompare": "Compare ашу"
+  "notFound.goCompare": "Compare ашу",
+  "cookie.message": "Біз авторизация және параметрлерді сақтау үшін cookie пайдаланамыз. Деректер үшінші тұлғаларға берілмейді.",
+  "cookie.accept": "Қабылдау",
+  "cookie.decline": "Тек қажеттілер",
+  "cookie.learnMore": "Толығырақ",
+  "session.expired": "Сессия аяқталды. Қайта кіріңіз.",
+  "session.expiredAction": "Кіру"
 }

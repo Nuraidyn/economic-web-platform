@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const djangoClient = axios.create({
-  baseURL: import.meta.env.VITE_DJANGO_URL || "http://127.0.0.1:8000/api",
+  baseURL: import.meta.env.VITE_DJANGO_URL || "http://localhost:8000/api",
   timeout: 12000,
   withCredentials: true,  // send httpOnly refresh cookie to Django
 });
@@ -9,7 +9,7 @@ export const djangoClient = axios.create({
 // Public Django client — used for auth endpoints that don't need Bearer token.
 // withCredentials is required so the refresh cookie is sent on token/refresh calls.
 export const djangoPublicClient = axios.create({
-  baseURL: import.meta.env.VITE_DJANGO_URL || "http://127.0.0.1:8000/api",
+  baseURL: import.meta.env.VITE_DJANGO_URL || "http://localhost:8000/api",
   timeout: 12000,
   withCredentials: true,
 });

@@ -3,6 +3,7 @@ import React, { useMemo } from "react";
 import ChartDisplay from "./ChartDisplay";
 import { useI18n } from "../context/I18nContext";
 
+
 const exportIndicatorCsv = (entry) => {
   const years = new Set();
   entry.series.forEach((series) => series.data.forEach((row) => years.add(row.year)));
@@ -76,8 +77,10 @@ function SkeletonDashboard() {
   );
 }
 
-export default function ComparisonDashboard({ datasets, chartType, correlationPair, indicators, isLoading }) {
+export default function ComparisonDashboard({ datasets, chartType, correlationPair, indicators, isLoading, viewMode = "expanded" }) {
   const { t } = useI18n();
+  const isGrid = viewMode === "grid";
+
   const indicatorLabel = (code) =>
     indicators.find((item) => item.code === code)?.label || code;
 
@@ -111,30 +114,71 @@ export default function ComparisonDashboard({ datasets, chartType, correlationPa
   }
 
   return (
-    <section className="space-y-8">
-      {datasets.map((entry) => (
-        <div className="panel-wide" key={entry.indicator}>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h3 className="panel-title">{indicatorLabel(entry.indicator)}</h3>
-              <p className="text-xs text-muted mb-4">{t("comparison.historicalByCountry")}</p>
-            </div>
-            <button
-              className="btn-secondary shrink-0"
-              type="button"
-              onClick={() => exportIndicatorCsv(entry)}
+    <section className="space-y-6">
+      {/* ── Charts ── */}
+      {isGrid ? (
+        <div className="grid grid-cols-2 gap-3">
+          {datasets.slice(0, 4).map((entry) => (
+            <div
+              key={entry.indicator}
+              className="panel space-y-2"
+              style={{ minWidth: 0 }}
             >
-              {t("comparison.exportCsv")}
-            </button>
-          </div>
-          <ChartDisplay
-            datasets={entry.series}
-            chartType={chartType}
-            viewMode="timeSeries"
-            indicatorLabel={indicatorLabel(entry.indicator)}
-          />
+              <div className="flex items-center justify-between gap-2">
+                <h3
+                  className="font-semibold text-sm truncate"
+                  title={indicatorLabel(entry.indicator)}
+                >
+                  {indicatorLabel(entry.indicator)}
+                </h3>
+                <button
+                  className="tab text-xs px-2 py-1 shrink-0"
+                  type="button"
+                  onClick={() => exportIndicatorCsv(entry)}
+                  title={t("comparison.exportCsv")}
+                >
+                  CSV
+                </button>
+              </div>
+              <div style={{ height: "220px" }}>
+                <ChartDisplay
+                  datasets={entry.series}
+                  chartType={chartType}
+                  viewMode="timeSeries"
+                  indicatorLabel={indicatorLabel(entry.indicator)}
+                  compact
+                />
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
+      ) : (
+        <div className="space-y-8">
+          {datasets.map((entry) => (
+            <div className="panel-wide" key={entry.indicator}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="panel-title">{indicatorLabel(entry.indicator)}</h3>
+                  <p className="text-xs text-muted mb-4">{t("comparison.historicalByCountry")}</p>
+                </div>
+                <button
+                  className="btn-secondary shrink-0"
+                  type="button"
+                  onClick={() => exportIndicatorCsv(entry)}
+                >
+                  {t("comparison.exportCsv")}
+                </button>
+              </div>
+              <ChartDisplay
+                datasets={entry.series}
+                chartType={chartType}
+                viewMode="timeSeries"
+                indicatorLabel={indicatorLabel(entry.indicator)}
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       {correlationTable.length > 0 && (
         <div className="panel-wide">

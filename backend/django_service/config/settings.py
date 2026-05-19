@@ -123,7 +123,7 @@ SIMPLE_JWT = {
 REFRESH_COOKIE_NAME = os.getenv("REFRESH_COOKIE_NAME", "ewp_refresh")
 REFRESH_COOKIE_PATH = "/api/auth/"
 REFRESH_COOKIE_HTTPONLY = True
-REFRESH_COOKIE_SAMESITE = "Strict"
+REFRESH_COOKIE_SAMESITE = os.getenv("REFRESH_COOKIE_SAMESITE", "Lax")
 # Secure=True requires HTTPS; set to False only in local dev.
 REFRESH_COOKIE_SECURE = _APP_ENV == "production"
 REFRESH_COOKIE_MAX_AGE = int(os.getenv("JWT_REFRESH_TTL_DAYS", "7")) * 24 * 60 * 60

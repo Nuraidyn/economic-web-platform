@@ -219,7 +219,7 @@ const ANIMATION = {
 /* ═══════════════════════════════════════════
    Main component
 ═══════════════════════════════════════════ */
-export default function ChartDisplay({ datasets, chartType, viewMode, appear, indicatorLabel }) {
+export default function ChartDisplay({ datasets, chartType, viewMode, appear, indicatorLabel, compact = false }) {
   const { theme } = useTheme();
   const palette = theme === "dark" ? PALETTE_DARK : PALETTE_LIGHT;
   const { t, language } = useI18n();
@@ -494,9 +494,9 @@ export default function ChartDisplay({ datasets, chartType, viewMode, appear, in
 
   /* ─── Render ─── */
   return (
-    <div className="space-y-3">
-      {/* ════ Toolbar ════ */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <div className={compact ? "h-full flex flex-col" : "space-y-3"}>
+      {/* ════ Toolbar — hidden in compact mode ════ */}
+      {!compact && <div className="flex flex-wrap items-center justify-between gap-2">
 
         {/* Left — timeframe chips */}
         <div className="flex gap-1" role="group" aria-label="Timeframe">
@@ -586,23 +586,27 @@ export default function ChartDisplay({ datasets, chartType, viewMode, appear, in
             </button>
           )}
         </div>
-      </div>
+      </div>}
 
-      {/* ════ Chart canvas ════
-          key={localType} forces a clean remount (with entrance animation)
-          when switching chart types. Timeframe changes happen in-place
-          with data animations (no remount).
-      ════════════════════════ */}
+      {/* ════ Chart canvas ════ */}
       <div
         key={localType}
-        className={appear ? "chart-card chart-card-appear" : "chart-card"}
+        className={compact ? "flex-1 min-h-0" : (appear ? "chart-card chart-card-appear" : "chart-card")}
         style={{ position: "relative" }}
       >
         <Chart
           type={localType}
           ref={chartRef}
           data={chartData}
-          options={options}
+          options={{
+            ...options,
+            plugins: {
+              ...options.plugins,
+              legend: compact
+                ? { display: false }
+                : options.plugins.legend,
+            },
+          }}
           plugins={[crosshairPlugin]}
         />
       </div>

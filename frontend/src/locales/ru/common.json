@@ -16,8 +16,15 @@
   "footer.referencesTitle": "Референсы",
   "footer.referencesSubtitle": "Все макроэкономические данные получены из открытых международных баз — Всемирный банк, МВФ, ООН и ОЭСР.",
   "footer.copyright": "© {{year}} EVision AI · Платформа экономической аналитики. Данные предоставлены World Bank Open Data.",
+  "footer.privacy": "Политика конфиденциальности",
   "notFound.title": "Страница не найдена",
   "notFound.subtitle": "Такой страницы не существует или она была перемещена.",
   "notFound.goHome": "На главную",
-  "notFound.goCompare": "Открыть Compare"
+  "notFound.goCompare": "Открыть Compare",
+  "cookie.message": "Мы используем cookies для авторизации и сохранения настроек. Никакие данные не передаются третьим лицам.",
+  "cookie.accept": "Принять",
+  "cookie.decline": "Только необходимые",
+  "cookie.learnMore": "Подробнее",
+  "session.expired": "Сессия истекла. Пожалуйста, войдите снова.",
+  "session.expiredAction": "Войти"
 }

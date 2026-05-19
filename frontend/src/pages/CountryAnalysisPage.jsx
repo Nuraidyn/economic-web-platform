@@ -44,6 +44,7 @@ export default function CountryAnalysisPage() {
   const [selectionWarning, setSelectionWarning] = useState("");
   const [presetDrawerOpen, setPresetDrawerOpen] = useState(false);
   const [suggestedPresetName, setSuggestedPresetName] = useState("");
+  const [viewMode, setViewMode] = useState("expanded");
 
   const chartTypes = useMemo(
     () => [
@@ -226,15 +227,47 @@ export default function CountryAnalysisPage() {
             {t("home.availableYearRange", { min: minAnalysisYear, max: maxAnalysisYear })}
           </p>
           <div className="flex flex-wrap items-center justify-between gap-3 mt-6">
-            <button
-              className="btn-primary"
-              type="button"
-              onClick={runComparison}
-              disabled={isLoading}
-              aria-busy={isLoading}
-            >
-              {isLoading ? t("home.loading") : t("home.runComparison")}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                className="btn-primary"
+                type="button"
+                onClick={runComparison}
+                disabled={isLoading}
+                aria-busy={isLoading}
+              >
+                {isLoading ? t("home.loading") : t("home.runComparison")}
+              </button>
+
+              {/* View toggle — shown only when charts are rendered */}
+              {datasets.length > 1 && (
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    title={t("comparison.viewExpanded")}
+                    onClick={() => setViewMode("expanded")}
+                    className={`tab flex items-center gap-1.5 px-3 py-1.5 text-sm ${viewMode === "expanded" ? "tab-active" : ""}`}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <rect x="3" y="3" width="18" height="18" rx="2" /><line x1="3" y1="9" x2="21" y2="9" />
+                    </svg>
+                    <span className="hidden sm:inline">{t("comparison.viewExpanded")}</span>
+                  </button>
+                  <button
+                    type="button"
+                    title={t("comparison.viewGrid")}
+                    onClick={() => setViewMode("grid")}
+                    className={`tab flex items-center gap-1.5 px-3 py-1.5 text-sm ${viewMode === "grid" ? "tab-active" : ""}`}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <rect x="3" y="3" width="8" height="8" rx="1" /><rect x="13" y="3" width="8" height="8" rx="1" />
+                      <rect x="3" y="13" width="8" height="8" rx="1" /><rect x="13" y="13" width="8" height="8" rx="1" />
+                    </svg>
+                    <span className="hidden sm:inline">{t("comparison.viewGrid")}</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
             <div className="text-xs text-muted">
               {t("home.countSummary", {
                 countries: selectedCountries.length,
@@ -272,6 +305,7 @@ export default function CountryAnalysisPage() {
           correlationPair={correlationPair}
           indicators={indicators}
           isLoading={isLoading}
+          viewMode={viewMode}
         />
       </AnalyticsPreview>
 

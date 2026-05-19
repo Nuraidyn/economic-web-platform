@@ -16,8 +16,15 @@
   "footer.referencesTitle": "References",
   "footer.referencesSubtitle": "All macroeconomic data is sourced from open international databases — World Bank, IMF, UN, and OECD.",
   "footer.copyright": "© {{year}} EVision AI · Economic Intelligence Platform. Data provided by World Bank Open Data.",
+  "footer.privacy": "Privacy Policy",
   "notFound.title": "Page not found",
   "notFound.subtitle": "The page you're looking for doesn't exist or has been moved.",
   "notFound.goHome": "Go to Home",
-  "notFound.goCompare": "Open Compare"
+  "notFound.goCompare": "Open Compare",
+  "cookie.message": "We use cookies for authentication and saving your preferences. No data is shared with third parties.",
+  "cookie.accept": "Accept",
+  "cookie.decline": "Essential only",
+  "cookie.learnMore": "Learn more",
+  "session.expired": "Your session has expired. Please sign in again.",
+  "session.expiredAction": "Sign in"
 }
