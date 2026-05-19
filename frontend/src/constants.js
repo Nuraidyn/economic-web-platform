@@ -8,4 +8,5 @@ export const LINKS = {
   unData: "https://data.un.org",
   oecd: "https://stats.oecd.org",
   github: "https://github.com/Nuraidyn/economic-web-platform",
+  telegram: "https://t.me/evisionkz",
 };

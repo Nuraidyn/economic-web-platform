@@ -7,6 +7,7 @@
  * Reads user + preset context directly so callers only need isOpen/onClose.
  */
 import React, { useContext, useEffect } from "react";
+import { Link } from "react-router-dom";
 
 import AuthContext from "../context/AuthContext";
 import { useAnalysis } from "../context/AnalysisContext";
@@ -92,6 +93,20 @@ export default function PresetDrawer({ isOpen, onClose, suggestedName = "" }) {
             onLoad={handleLoad}
             suggestedName={suggestedName}
           />
+        </div>
+
+        {/* Footer link to saved page */}
+        <div
+          className="shrink-0 px-5 py-3 flex justify-center"
+          style={{ borderTop: "1px solid var(--panel-border)" }}
+        >
+          <Link
+            to="/saved"
+            onClick={onClose}
+            className="text-xs text-muted hover:text-[var(--accent)] transition-colors"
+          >
+            {t("workspace.viewAllPresets")}
+          </Link>
         </div>
       </div>
     </>

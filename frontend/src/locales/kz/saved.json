@@ -24,5 +24,6 @@
   "workspace.title": "Compare жұмыс кеңістігі",
   "workspace.openPresets": "Пресеттер",
   "workspace.presetsDrawerTitle": "Сақталған пресеттер",
-  "workspace.closeDrawer": "Пресеттерді жабу"
+  "workspace.closeDrawer": "Пресеттерді жабу",
+  "workspace.viewAllPresets": "Барлық пресеттер →"
 }

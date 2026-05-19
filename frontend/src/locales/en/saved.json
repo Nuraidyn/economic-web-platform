@@ -24,5 +24,6 @@
   "workspace.title": "Compare Workspace",
   "workspace.openPresets": "Presets",
   "workspace.presetsDrawerTitle": "Saved Presets",
-  "workspace.closeDrawer": "Close presets"
+  "workspace.closeDrawer": "Close presets",
+  "workspace.viewAllPresets": "View all presets →"
 }

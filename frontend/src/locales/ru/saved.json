@@ -24,5 +24,6 @@
   "workspace.title": "Рабочее пространство Compare",
   "workspace.openPresets": "Пресеты",
   "workspace.presetsDrawerTitle": "Сохранённые пресеты",
-  "workspace.closeDrawer": "Закрыть пресеты"
+  "workspace.closeDrawer": "Закрыть пресеты",
+  "workspace.viewAllPresets": "Все пресеты →"
 }

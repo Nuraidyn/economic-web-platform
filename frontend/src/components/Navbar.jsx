@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
 import logoDark from "../assets/logo-dark-transparent.png";
+import { LINKS } from "../constants";
 import { useI18n } from "../context/I18nContext";
 import { useTheme } from "../context/ThemeContext";
 
@@ -166,10 +167,8 @@ const PRODUCTS = [
 ];
 
 const COMMUNITY = [
-  { label: "GitHub",      icon: <GithubIcon />,   href: "#" },
-  { label: "Twitter / X", icon: <TwitterIcon />,  href: "#" },
-  { label: "LinkedIn",    icon: <LinkedinIcon />,  href: "#" },
-  { label: "Telegram",    icon: <TelegramIcon />,  href: "#" },
+  { label: "GitHub",   icon: <GithubIcon />,   href: LINKS.github },
+  { label: "Telegram", icon: <TelegramIcon />, href: LINKS.telegram },
 ];
 
 /* Language list — always shown in native script */
