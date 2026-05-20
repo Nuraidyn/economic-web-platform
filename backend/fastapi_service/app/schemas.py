@@ -1,3 +1,4 @@
+import json
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -118,9 +119,53 @@ class ForecastResponse(BaseModel):
     assumptions: str | None = None
     metrics: str | None = None
     points: list[ForecastPointSchema]
+    # ── Enhanced analytics fields (optional; backward-compatible) ─────────────
+    confidence_score: float | None = None
+    trend_direction: str | None = None
+    anomaly_years: list[int] = Field(default_factory=list)
+    statistical_summary: dict | None = None
+    model_comparison: list[dict] = Field(default_factory=list)
 
     @classmethod
-    def from_run(cls, run, points, country, indicator):
+    def from_run(cls, run, points, country, indicator, bundle=None):
+        """
+        Build a ForecastResponse from ORM objects.
+        When `bundle` is provided (fresh run), the rich analytics fields are
+        populated directly.  For stored runs the metrics JSON is parsed instead.
+        """
+        base_points = [
+            ForecastPointSchema(
+                year=item.year,
+                value=item.value,
+                lower=item.lower,
+                upper=item.upper,
+            )
+            for item in points
+        ]
+
+        confidence_score: float | None = None
+        trend_direction: str | None = None
+        anomaly_years: list[int] = []
+        statistical_summary: dict | None = None
+        model_comparison: list[dict] = []
+
+        if bundle is not None:
+            confidence_score = bundle.best.confidence_score
+            trend_direction = bundle.trend_direction
+            anomaly_years = bundle.anomaly_years
+            statistical_summary = bundle.statistical_summary
+            model_comparison = bundle.model_comparison
+        elif run.metrics:
+            try:
+                md = json.loads(run.metrics)
+                confidence_score = md.get("confidence_score")
+                trend_direction = md.get("trend_direction")
+                anomaly_years = md.get("anomaly_years") or []
+                statistical_summary = md.get("statistical_summary")
+                model_comparison = md.get("model_comparison") or []
+            except (json.JSONDecodeError, TypeError, AttributeError):
+                pass
+
         return cls(
             country=country,
             indicator=indicator,
@@ -128,15 +173,12 @@ class ForecastResponse(BaseModel):
             horizon_years=run.horizon_years,
             assumptions=run.assumptions,
             metrics=run.metrics,
-            points=[
-                ForecastPointSchema(
-                    year=item.year,
-                    value=item.value,
-                    lower=item.lower,
-                    upper=item.upper,
-                )
-                for item in points
-            ],
+            points=base_points,
+            confidence_score=confidence_score,
+            trend_direction=trend_direction,
+            anomaly_years=anomaly_years,
+            statistical_summary=statistical_summary,
+            model_comparison=model_comparison,
         )
 
 
