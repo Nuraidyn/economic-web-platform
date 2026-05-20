@@ -37,5 +37,22 @@
   "forecast.change": "Изменение",
   "forecast.avgAnnual": "Среднегодовое: {{value}}",
   "forecast.percent": "Процент",
-  "forecast.horizonShift": "Сдвиг за горизонт"
+  "forecast.horizonShift": "Сдвиг за горизонт",
+  "forecast.confidenceScore": "Достоверность",
+  "forecast.trendLabel": "Тренд",
+  "forecast.trendIncreasing": "Рост ↑",
+  "forecast.trendDecreasing": "Снижение ↓",
+  "forecast.trendStable": "Стабильно →",
+  "forecast.rmseLabel": "RMSE",
+  "forecast.maeLabel": "MAE",
+  "forecast.anomalyWarning": "Аномалии выявлены в годах: {{years}}",
+  "forecast.statsTitle": "Статистический анализ",
+  "forecast.cagrLabel": "CAGR",
+  "forecast.avgYoyLabel": "Ср. рост г/г",
+  "forecast.volatilityLabel": "Волатильность (CV)",
+  "forecast.totalChangeLabel": "Общее изменение",
+  "forecast.dataRange": "Диапазон данных",
+  "forecast.dataPoints": "точек данных",
+  "forecast.modelComparisonTitle": "Сравнение моделей",
+  "forecast.selectedModel": "выбрана"
 }
