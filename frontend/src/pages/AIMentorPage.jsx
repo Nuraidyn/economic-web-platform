@@ -51,6 +51,26 @@ export default function AIMentorPage() {
   const hasAgreement = user?.agreement_accepted;
   const canUse = isAuthed && hasAgreement;
 
+  const loadMessages = useCallback(async (convId) => {
+    setMsgLoading(true);
+    setMessages([]);
+    setSuggestions([]);
+    try {
+      const data = await getMessages(convId);
+      const mapped = data.map((m) => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        structured: m.structured_response,
+      }));
+      setMessages(mapped);
+    } catch {
+      // silently ignore — conversation may be empty
+    } finally {
+      setMsgLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!canUse) return;
     setConvLoading(true);
@@ -74,26 +94,6 @@ export default function AIMentorPage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, sending]);
-
-  const loadMessages = useCallback(async (convId) => {
-    setMsgLoading(true);
-    setMessages([]);
-    setSuggestions([]);
-    try {
-      const data = await getMessages(convId);
-      const mapped = data.map((m) => ({
-        id: m.id,
-        role: m.role,
-        content: m.content,
-        structured: m.structured_response,
-      }));
-      setMessages(mapped);
-    } catch {
-      // silently ignore — conversation may be empty
-    } finally {
-      setMsgLoading(false);
-    }
-  }, []);
 
   const handleSelect = useCallback(
     (id) => {
