@@ -147,9 +147,7 @@ export default function AIMentorPage() {
           await refreshConvList();
         }
 
-        if (data.suggested_next_steps?.length) {
-          setSuggestions(data.suggested_next_steps);
-        }
+        // chips are already rendered inside the message bubble via structured.suggested_next_steps
       } catch (err) {
         if (err.name !== "CanceledError" && err.name !== "AbortError") {
           setMessages((prev) => [
