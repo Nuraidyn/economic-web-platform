@@ -8,12 +8,6 @@ import { useTheme } from "../context/ThemeContext";
 
 const FORECAST_HISTORY_WINDOW_YEARS = 20;
 
-const getCssVar = (name, fallback) => {
-  if (typeof window === "undefined") return fallback;
-  const value = window.getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  return value || fallback;
-};
-
 const buildForecastChart = (history, forecast, labels) => {
   const sortByYear = (left, right) => left.x - right.x;
   const historyPoints = history
@@ -76,46 +70,24 @@ const lastValidValue = (series) => {
 };
 
 const computeCoverage = (series) => {
-  if (!series.length) {
-    return null;
-  }
+  if (!series.length) return null;
   const years = series.map((row) => row.year);
   const minYear = Math.min(...years);
   const maxYear = Math.max(...years);
   const expected = maxYear - minYear + 1;
   const actual = series.filter((row) => typeof row.value === "number").length;
-  if (expected <= 0) {
-    return null;
-  }
-  return {
-    minYear,
-    maxYear,
-    expected,
-    actual,
-    percent: Math.round((actual / expected) * 100),
-  };
+  if (expected <= 0) return null;
+  return { minYear, maxYear, expected, actual, percent: Math.round((actual / expected) * 100) };
 };
 
 const exportForecastCsv = (history, forecast, coverage) => {
   const rows = [
     ["type", "year", "value", "lower", "upper"],
     coverage
-      ? [
-          "meta",
-          "coverage",
-          `${coverage.percent}% (${coverage.actual}/${coverage.expected})`,
-          coverage.minYear,
-          coverage.maxYear,
-        ]
+      ? ["meta", "coverage", `${coverage.percent}% (${coverage.actual}/${coverage.expected})`, coverage.minYear, coverage.maxYear]
       : ["meta", "coverage", "n/a", "", ""],
     ...history.map((row) => ["historical", row.year, row.value, "", ""]),
-    ...forecast.points.map((row) => [
-      "forecast",
-      row.year,
-      row.value,
-      row.lower ?? "",
-      row.upper ?? "",
-    ]),
+    ...forecast.points.map((row) => ["forecast", row.year, row.value, row.lower ?? "", row.upper ?? ""]),
   ];
   const csv = rows.map((row) => row.join(",")).join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -125,6 +97,26 @@ const exportForecastCsv = (history, forecast, coverage) => {
   link.download = `forecast_${forecast.country}_${forecast.indicator}.csv`;
   link.click();
   URL.revokeObjectURL(url);
+};
+
+// Parse the metrics field — may be JSON (new format) or a plain string (legacy).
+const parseForecastMetrics = (metrics) => {
+  if (!metrics) return null;
+  try {
+    const md = JSON.parse(metrics);
+    return {
+      rmse: md.rmse != null ? Number(md.rmse).toFixed(4) : null,
+      mae: md.mae != null ? Number(md.mae).toFixed(4) : null,
+    };
+  } catch {
+    return { raw: metrics };
+  }
+};
+
+const TREND_STYLES = {
+  increasing: "text-emerald-700 dark:text-emerald-300",
+  decreasing: "text-rose-700 dark:text-rose-300",
+  stable: "text-slate-500 dark:text-slate-400",
 };
 
 export default function ForecastPanel({
@@ -146,6 +138,7 @@ export default function ForecastPanel({
   const [history, setHistory] = useState([]);
   const [historyMeta, setHistoryMeta] = useState(null);
   const [status, setStatus] = useState({ loading: false, error: "" });
+  const [showModelComparison, setShowModelComparison] = useState(false);
   const abortRef = useRef(null);
 
   useEffect(() => {
@@ -164,14 +157,10 @@ export default function ForecastPanel({
     abortRef.current = controller;
     const { signal } = controller;
     setStatus({ loading: true, error: "" });
+    setShowModelComparison(false);
     try {
       const [historyData, forecastData] = await Promise.all([
-        fetchObservationsWithMeta({
-          country,
-          indicator,
-          start_year: historyStartYear,
-          end_year: historyEndYear,
-        }, signal),
+        fetchObservationsWithMeta({ country, indicator, start_year: historyStartYear, end_year: historyEndYear }, signal),
         createForecast({ country, indicator, horizon_years: horizon }, signal),
       ]);
       if (signal.aborted) return;
@@ -181,10 +170,7 @@ export default function ForecastPanel({
       setStatus({ loading: false, error: "" });
     } catch (err) {
       if (signal.aborted) return;
-      setStatus({
-        loading: false,
-        error: t("forecast.errorGenerate"),
-      });
+      setStatus({ loading: false, error: t("forecast.errorGenerate") });
     }
   };
 
@@ -198,21 +184,17 @@ export default function ForecastPanel({
     abortRef.current = controller;
     const { signal } = controller;
     setStatus({ loading: true, error: "" });
+    setShowModelComparison(false);
     try {
-      const historyData = await fetchObservationsWithMeta({
-        country,
-        indicator,
-        start_year: historyStartYear,
-        end_year: historyEndYear,
-      }, signal);
-
+      const historyData = await fetchObservationsWithMeta(
+        { country, indicator, start_year: historyStartYear, end_year: historyEndYear },
+        signal,
+      );
       let forecastData = await fetchLatestForecast({ country, indicator }, signal);
       const assumptions = String(forecastData?.assumptions || "").toLowerCase();
-      // Legacy runs (without robust preprocessing) can produce extreme, misleading values.
-      if (!assumptions.includes("winsorized")) {
+      if (!assumptions.includes("winsorized") && !assumptions.includes("smoothing") && !assumptions.includes("holt")) {
         forecastData = await createForecast({ country, indicator, horizon_years: horizon }, signal);
       }
-
       if (signal.aborted) return;
       setHistory(historyData.data);
       setHistoryMeta(historyData.meta);
@@ -220,17 +202,12 @@ export default function ForecastPanel({
       setStatus({ loading: false, error: "" });
     } catch (err) {
       if (signal.aborted) return;
-      setStatus({
-        loading: false,
-        error: t("forecast.errorLatest"),
-      });
+      setStatus({ loading: false, error: t("forecast.errorLatest") });
     }
   };
 
   const chartData = useMemo(() => {
-    if (!forecast) {
-      return null;
-    }
+    if (!forecast) return null;
     return buildForecastChart(history, forecast, {
       historical: t("forecast.chartHistorical"),
       forecast: t("forecast.chartForecast"),
@@ -240,41 +217,39 @@ export default function ForecastPanel({
   }, [history, forecast, t]);
 
   const coverage = useMemo(() => computeCoverage(history), [history]);
-  const axisColor = theme === "dark" ? "rgba(226,232,240,0.7)"  : "rgba(15,23,42,0.66)";
+  const axisColor = theme === "dark" ? "rgba(226,232,240,0.7)" : "rgba(15,23,42,0.66)";
   const gridColor = theme === "dark" ? "rgba(148,163,184,0.2)" : "rgba(15,23,42,0.12)";
 
   const summary = useMemo(() => {
-    if (!forecast) {
-      return null;
-    }
+    if (!forecast) return null;
     const lastHistory = lastValidValue(history);
     const firstForecast = forecast.points[0] || null;
     const lastForecast = forecast.points[forecast.points.length - 1] || null;
-    if (!lastHistory || !firstForecast || !lastForecast) {
-      return null;
-    }
+    if (!lastHistory || !firstForecast || !lastForecast) return null;
     const absoluteChange = lastForecast.value - lastHistory.value;
-    const percentChange =
-      lastHistory.value !== 0 ? (absoluteChange / lastHistory.value) * 100 : null;
-    const avgAnnualChange = absoluteChange / forecast.horizon_years;
-    return {
-      lastHistory,
-      firstForecast,
-      lastForecast,
-      absoluteChange,
-      percentChange,
-      avgAnnualChange,
-    };
+    const percentChange = lastHistory.value !== 0 ? (absoluteChange / lastHistory.value) * 100 : null;
+    return { lastHistory, firstForecast, lastForecast, absoluteChange, percentChange, avgAnnualChange: absoluteChange / forecast.horizon_years };
   }, [history, forecast]);
+
+  const parsedMetrics = useMemo(() => parseForecastMetrics(forecast?.metrics), [forecast]);
+
+  const stat = forecast?.statistical_summary ?? null;
+  const trendDir = forecast?.trend_direction ?? null;
+  const trendKey = trendDir === "increasing" ? "forecast.trendIncreasing" : trendDir === "decreasing" ? "forecast.trendDecreasing" : "forecast.trendStable";
+  const trendClass = TREND_STYLES[trendDir] || TREND_STYLES.stable;
+  const anomalyYears = forecast?.anomaly_years ?? [];
+  const modelComparison = forecast?.model_comparison ?? [];
+  const confidenceScore = forecast?.confidence_score ?? null;
+
+  const fmtPct = (v) => (v != null ? `${v > 0 ? "+" : ""}${Number(v).toFixed(2)}%` : "—");
+  const fmtNum = (v, digits = 4) => (v != null ? Number(v).toFixed(digits) : "—");
 
   return (
     <section className="panel-wide">
       <div className="flex items-start justify-between gap-6">
         <div>
           <h3 className="panel-title">{t("forecast.title")}</h3>
-          <p className="text-sm text-muted mt-2 max-w-2xl">
-            {t("forecast.subtitle")}
-          </p>
+          <p className="text-sm text-muted mt-2 max-w-2xl">{t("forecast.subtitle")}</p>
         </div>
         <div className="text-xs uppercase tracking-[0.2em] text-amber-700/80 dark:text-amber-200/80">
           {t("forecast.predictionsOnly")}
@@ -282,35 +257,24 @@ export default function ForecastPanel({
       </div>
 
       <div className="mt-6 grid lg:grid-cols-[1.2fr_1fr] gap-6">
+        {/* ── Controls ── */}
         <div className="surface p-4 space-y-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className="label">{t("forecast.country")}</label>
-              <select
-                className="input"
-                value={country}
-                onChange={(event) => setCountry(event.target.value)}
-              >
+              <select className="input" value={country} onChange={(e) => setCountry(e.target.value)}>
                 <option value="">{t("forecast.selectCountry")}</option>
                 {countries.map((item) => (
-                  <option key={item.code} value={item.code}>
-                    {item.name}
-                  </option>
+                  <option key={item.code} value={item.code}>{item.name}</option>
                 ))}
               </select>
             </div>
             <div>
               <label className="label">{t("forecast.indicator")}</label>
-              <select
-                className="input"
-                value={indicator}
-                onChange={(event) => setIndicator(event.target.value)}
-              >
+              <select className="input" value={indicator} onChange={(e) => setIndicator(e.target.value)}>
                 <option value="">{t("forecast.selectIndicator")}</option>
                 {indicators.map((item) => (
-                  <option key={item.code} value={item.code}>
-                    {item.label || item.name}
-                  </option>
+                  <option key={item.code} value={item.code}>{item.label || item.name}</option>
                 ))}
               </select>
             </div>
@@ -324,43 +288,27 @@ export default function ForecastPanel({
                 min="1"
                 max="20"
                 value={horizon}
-                onChange={(event) => setHorizon(Number(event.target.value))}
+                onChange={(e) => setHorizon(Number(e.target.value))}
               />
             </div>
             <div className="flex items-end gap-3">
-              <button
-                className="btn-primary"
-                type="button"
-                onClick={handleForecast}
-                disabled={!canAccess}
-              >
+              <button className="btn-primary" type="button" onClick={handleForecast} disabled={!canAccess}>
                 {status.loading ? t("forecast.running") : t("forecast.generate")}
               </button>
-              <button
-                className="btn-secondary"
-                type="button"
-                onClick={handleLatest}
-                disabled={!canAccess}
-              >
+              <button className="btn-secondary" type="button" onClick={handleLatest} disabled={!canAccess}>
                 {t("forecast.latestRun")}
               </button>
             </div>
           </div>
           {status.error && <p className="text-xs text-rose-200/90">{status.error}</p>}
           {!canAccess && (
-            <p className="text-xs text-amber-700/80 dark:text-amber-200/80">
-              {t("forecast.needAgreement")}
-            </p>
+            <p className="text-xs text-amber-700/80 dark:text-amber-200/80">{t("forecast.needAgreement")}</p>
           )}
           {coverage && (
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
               <span className="uppercase tracking-[0.2em] text-faint">{t("forecast.dataQuality")}</span>
               <span className="rounded-full border border-slate-900/10 dark:border-slate-100/20 px-3 py-1">
-                {t("forecast.coverage", {
-                  percent: coverage.percent,
-                  actual: coverage.actual,
-                  expected: coverage.expected,
-                })}
+                {t("forecast.coverage", { percent: coverage.percent, actual: coverage.actual, expected: coverage.expected })}
               </span>
               {historyMeta?.source && (
                 <span className="rounded-full border border-slate-900/10 dark:border-slate-100/20 px-3 py-1">
@@ -372,56 +320,126 @@ export default function ForecastPanel({
                   {t("forecast.lowCoverage")}
                 </span>
               )}
-              <span className="text-[11px] text-faint">
-                {coverage.minYear}–{coverage.maxYear}
-              </span>
+              <span className="text-[11px] text-faint">{coverage.minYear}–{coverage.maxYear}</span>
             </div>
           )}
         </div>
 
+        {/* ── Disclaimer + model info ── */}
         <div className="rounded-2xl border border-amber-300/45 bg-amber-100/55 dark:border-amber-200/30 dark:bg-amber-200/10 p-4 text-sm text-amber-900 dark:text-amber-50">
           <p className="font-semibold mb-2">{t("forecast.disclaimerTitle")}</p>
-          <p className="leading-relaxed">
-            {t("forecast.disclaimerText")}
-          </p>
+          <p className="leading-relaxed">{t("forecast.disclaimerText")}</p>
           {forecast && (
-            <div className="mt-4 text-xs text-amber-900/80 dark:text-amber-100/80 space-y-1">
+            <div className="mt-4 text-xs text-amber-900/80 dark:text-amber-100/80 space-y-1.5">
               <p>{t("forecast.model", { value: forecast.model_name })}</p>
-              <p>{t("forecast.assumptions", { value: forecast.assumptions })}</p>
-              <p>{t("forecast.metrics", { value: forecast.metrics })}</p>
+              {forecast.assumptions && (
+                <p className="leading-relaxed">{t("forecast.assumptions", { value: forecast.assumptions })}</p>
+              )}
+              {/* Structured metrics from new engine */}
+              <div className="flex flex-wrap gap-3 pt-1">
+                {confidenceScore != null && (
+                  <span className="flex items-center gap-1">
+                    <span className="text-faint">{t("forecast.confidenceScore")}:</span>
+                    <span className="font-semibold">{(confidenceScore * 100).toFixed(1)}%</span>
+                  </span>
+                )}
+                {trendDir && (
+                  <span className="flex items-center gap-1">
+                    <span className="text-faint">{t("forecast.trendLabel")}:</span>
+                    <span className={`font-semibold ${trendClass}`}>{t(trendKey)}</span>
+                  </span>
+                )}
+                {parsedMetrics?.rmse && (
+                  <span className="flex items-center gap-1">
+                    <span className="text-faint">{t("forecast.rmseLabel")}:</span>
+                    <span className="font-mono">{parsedMetrics.rmse}</span>
+                  </span>
+                )}
+                {parsedMetrics?.mae && (
+                  <span className="flex items-center gap-1">
+                    <span className="text-faint">{t("forecast.maeLabel")}:</span>
+                    <span className="font-mono">{parsedMetrics.mae}</span>
+                  </span>
+                )}
+                {/* Legacy plain-string metrics fallback */}
+                {parsedMetrics?.raw && (
+                  <span className="text-faint">{parsedMetrics.raw}</span>
+                )}
+              </div>
+              {/* Anomaly warning */}
+              {anomalyYears.length > 0 && (
+                <p className="mt-2 rounded border border-amber-400/40 bg-amber-300/20 px-2 py-1 text-amber-900 dark:text-amber-100">
+                  ⚠ {t("forecast.anomalyWarning", { years: anomalyYears.join(", ") })}
+                </p>
+              )}
             </div>
           )}
         </div>
       </div>
 
+      {/* ── Summary cards ── */}
       {forecast && summary && (
         <div className="mt-6 grid md:grid-cols-3 gap-4">
           <div className="surface p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-faint">{t("forecast.baseline")}</p>
-            <p className="text-xl font-semibold mt-2">
-              {summary.lastHistory.value.toFixed(2)}
-            </p>
+            <p className="text-xl font-semibold mt-2">{summary.lastHistory.value.toFixed(2)}</p>
             <p className="text-xs text-muted">{t("forecast.lastHistorical")}</p>
           </div>
           <div className="surface p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-faint">{t("forecast.change")}</p>
-            <p className="text-xl font-semibold mt-2">
-              {summary.absoluteChange.toFixed(2)}
-            </p>
-            <p className="text-xs text-muted">
-              {t("forecast.avgAnnual", { value: summary.avgAnnualChange.toFixed(2) })}
-            </p>
+            <p className="text-xl font-semibold mt-2">{summary.absoluteChange.toFixed(2)}</p>
+            <p className="text-xs text-muted">{t("forecast.avgAnnual", { value: summary.avgAnnualChange.toFixed(2) })}</p>
           </div>
           <div className="surface p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-faint">{t("forecast.percent")}</p>
             <p className="text-xl font-semibold mt-2">
-              {summary.percentChange == null ? t("common.na") : `${summary.percentChange.toFixed(2)}%`}
+              {summary.percentChange == null ? "—" : `${summary.percentChange.toFixed(2)}%`}
             </p>
             <p className="text-xs text-muted">{t("forecast.horizonShift")}</p>
           </div>
         </div>
       )}
 
+      {/* ── Statistical Analysis section ── */}
+      {forecast && stat && (
+        <div className="mt-4 surface p-4">
+          <p className="text-xs uppercase tracking-[0.2em] text-faint mb-3">{t("forecast.statsTitle")}</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+            <div>
+              <p className="text-xs text-muted">{t("forecast.cagrLabel")}</p>
+              <p className="font-semibold mt-0.5">{fmtPct(stat.cagr_pct)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted">{t("forecast.avgYoyLabel")}</p>
+              <p className="font-semibold mt-0.5">{fmtPct(stat.avg_yoy_growth_pct)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted">{t("forecast.volatilityLabel")}</p>
+              <p className="font-semibold mt-0.5">{fmtNum(stat.volatility_cv)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted">{t("forecast.totalChangeLabel")}</p>
+              <p className="font-semibold mt-0.5">{fmtPct(stat.pct_change_total)}</p>
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted">
+            {stat.year_range && (
+              <span>{t("forecast.dataRange")}: <span className="font-mono">{stat.year_range}</span></span>
+            )}
+            {stat.data_points != null && (
+              <span><span className="font-mono">{stat.data_points}</span> {t("forecast.dataPoints")}</span>
+            )}
+            {stat.mean != null && (
+              <span>μ = <span className="font-mono">{fmtNum(stat.mean, 2)}</span></span>
+            )}
+            {stat.std != null && (
+              <span>σ = <span className="font-mono">{fmtNum(stat.std, 2)}</span></span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Chart ── */}
       {forecast && chartData && (
         <div className="mt-6 chart-card">
           <Line
@@ -448,13 +466,58 @@ export default function ForecastPanel({
         </div>
       )}
 
+      {/* ── Model Comparison ── */}
+      {forecast && modelComparison.length > 1 && (
+        <div className="mt-4 surface p-4">
+          <button
+            type="button"
+            className="text-xs uppercase tracking-[0.2em] text-faint flex items-center gap-2 w-full text-left"
+            onClick={() => setShowModelComparison((v) => !v)}
+          >
+            {t("forecast.modelComparisonTitle")}
+            <span className="ml-auto opacity-60">{showModelComparison ? "▲" : "▼"}</span>
+          </button>
+          {showModelComparison && (
+            <div className="mt-3 overflow-x-auto">
+              <table className="w-full text-xs border-collapse">
+                <thead>
+                  <tr className="text-faint uppercase tracking-wider">
+                    <th className="text-left pb-2 pr-4">Model</th>
+                    <th className="text-right pb-2 pr-4">{t("forecast.confidenceScore")}</th>
+                    <th className="text-right pb-2 pr-4">{t("forecast.rmseLabel")}</th>
+                    <th className="text-right pb-2">{t("forecast.maeLabel")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {modelComparison.map((m) => (
+                    <tr
+                      key={m.model}
+                      className={m.selected ? "font-semibold text-amber-700 dark:text-amber-300" : "text-muted"}
+                    >
+                      <td className="py-1 pr-4 font-mono">
+                        {m.model}
+                        {m.selected && (
+                          <span className="ml-2 text-[10px] uppercase opacity-70">
+                            ✓ {t("forecast.selectedModel")}
+                          </span>
+                        )}
+                      </td>
+                      <td className="text-right py-1 pr-4">{m.confidence_score != null ? `${(m.confidence_score * 100).toFixed(1)}%` : "—"}</td>
+                      <td className="text-right py-1 pr-4 font-mono">{m.rmse != null ? Number(m.rmse).toFixed(4) : "—"}</td>
+                      <td className="text-right py-1 font-mono">{m.mae != null ? Number(m.mae).toFixed(4) : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Export ── */}
       {forecast && (
         <div className="mt-4 flex items-center justify-end">
-          <button
-            className="btn-secondary"
-            type="button"
-            onClick={() => exportForecastCsv(history, forecast, coverage)}
-          >
+          <button className="btn-secondary" type="button" onClick={() => exportForecastCsv(history, forecast, coverage)}>
             {t("comparison.exportCsv")}
           </button>
         </div>

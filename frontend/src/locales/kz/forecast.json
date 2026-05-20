@@ -37,5 +37,22 @@
   "forecast.change": "Өзгеріс",
   "forecast.avgAnnual": "Орташа жылдық: {{value}}",
   "forecast.percent": "Пайыз",
-  "forecast.horizonShift": "Горизонт бойынша өзгеріс"
+  "forecast.horizonShift": "Горизонт бойынша өзгеріс",
+  "forecast.confidenceScore": "Сенімділік",
+  "forecast.trendLabel": "Тренд",
+  "forecast.trendIncreasing": "Өсу ↑",
+  "forecast.trendDecreasing": "Төмендеу ↓",
+  "forecast.trendStable": "Тұрақты →",
+  "forecast.rmseLabel": "RMSE",
+  "forecast.maeLabel": "MAE",
+  "forecast.anomalyWarning": "Жылдарда аномалиялар анықталды: {{years}}",
+  "forecast.statsTitle": "Статистикалық талдау",
+  "forecast.cagrLabel": "CAGR",
+  "forecast.avgYoyLabel": "Орт. жылдық өсу",
+  "forecast.volatilityLabel": "Тербеліс (CV)",
+  "forecast.totalChangeLabel": "Жалпы өзгеріс",
+  "forecast.dataRange": "Деректер ауқымы",
+  "forecast.dataPoints": "деректер нүктесі",
+  "forecast.modelComparisonTitle": "Модельдерді салыстыру",
+  "forecast.selectedModel": "таңдалды"
 }
