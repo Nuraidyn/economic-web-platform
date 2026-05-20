@@ -11,7 +11,7 @@ import { useI18n } from "../context/I18nContext";
 import { useAnalysis } from "../context/AnalysisContext";
 import IncomeForm from "../components/income-analysis/IncomeForm";
 import ResultSummary from "../components/income-analysis/ResultSummary";
-import AIInsights from "../components/income-analysis/AIInsights";
+import FinancialAdvisorChat from "../components/income-analysis/FinancialAdvisorChat";
 import IncomeComparisonSection from "../components/income-analysis/IncomeComparisonSection";
 import SavingsProjectionChart from "../components/income-analysis/SavingsProjectionChart";
 import {
@@ -136,11 +136,11 @@ export default function IncomeAnalysisPage() {
         </>
       )}
 
-      {/* ══ 4. AI INSIGHTS ══════════════════════════════════════ */}
+      {/* ══ 4. FINANCIAL ADVISOR CHAT ═══════════════════════════ */}
       {results && formData && (
         <>
           <div className="section-divider" aria-hidden="true" />
-          <AIInsights formData={formData} />
+          <FinancialAdvisorChat formData={formData} />
         </>
       )}
 

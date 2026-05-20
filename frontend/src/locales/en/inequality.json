@@ -108,5 +108,13 @@
   "incomeAnalysis.projectionGrowthDesc": "+{{pct}}% income per year, fixed expenses",
   "incomeAnalysis.projectionTargetDesc": "Saving 20% of income each year",
   "incomeAnalysis.projectionNote": "Values in {{currency}}. Inflation not applied. For illustration only.",
-  "comparison.currencyConverted": "{{amount}} {{currency}} ≈ {{usd}} — converted to USD for comparison"
+  "comparison.currencyConverted": "{{amount}} {{currency}} ≈ {{usd}} — converted to USD for comparison",
+  "incomeAnalysis.chatTitle": "Financial Advisor",
+  "incomeAnalysis.chatSubtitle": "Ask anything about your finances — budgeting, savings, career growth, relocation.",
+  "incomeAnalysis.chatEmptyTitle": "Your personal finance advisor",
+  "incomeAnalysis.chatEmpty": "Ask a question or pick one of the suggestions below.",
+  "incomeAnalysis.chatPlaceholder": "Ask about your finances...",
+  "incomeAnalysis.chatSend": "Send",
+  "incomeAnalysis.chatError": "Something went wrong. Please try again.",
+  "incomeAnalysis.chatDisclaimer": "For educational purposes only. Not financial advice."
 }

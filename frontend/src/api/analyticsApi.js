@@ -67,6 +67,11 @@ export const fetchIncomeInsights = async (payload, signal) => {
   return res.data;
 };
 
+export const fetchIncomeChat = async (payload, signal) => {
+  const res = await fastapiClient.post("/income/chat", payload, { signal, timeout: 30000 });
+  return res.data;
+};
+
 export const fetchWorldSnapshot = async ({ indicator, year } = {}, signal) => {
   const params = { indicator };
   if (year != null) params.year = year;

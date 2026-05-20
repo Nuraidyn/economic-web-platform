@@ -108,5 +108,13 @@
   "incomeAnalysis.projectionGrowthDesc": "+{{pct}}% доходов в год, расходы фиксированы",
   "incomeAnalysis.projectionTargetDesc": "Сбережение 20% дохода каждый год",
   "incomeAnalysis.projectionNote": "Значения в {{currency}}. Инфляция не учитывается. Только для иллюстрации.",
-  "comparison.currencyConverted": "{{amount}} {{currency}} ≈ {{usd}} — конвертировано в USD для сравнения"
+  "comparison.currencyConverted": "{{amount}} {{currency}} ≈ {{usd}} — конвертировано в USD для сравнения",
+  "incomeAnalysis.chatTitle": "Финансовый советник",
+  "incomeAnalysis.chatSubtitle": "Задайте вопрос о личных финансах — бюджет, сбережения, карьера, переезд.",
+  "incomeAnalysis.chatEmptyTitle": "Ваш личный финансовый советник",
+  "incomeAnalysis.chatEmpty": "Задайте вопрос или выберите один из вариантов ниже.",
+  "incomeAnalysis.chatPlaceholder": "Спросите о ваших финансах...",
+  "incomeAnalysis.chatSend": "Отправить",
+  "incomeAnalysis.chatError": "Что-то пошло не так. Попробуйте ещё раз.",
+  "incomeAnalysis.chatDisclaimer": "Только для образовательных целей. Не является финансовой консультацией."
 }

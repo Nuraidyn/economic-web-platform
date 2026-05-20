@@ -268,6 +268,24 @@ class IncomeInsightsResponse(BaseModel):
     provider: str
 
 
+# ── Income Chat ───────────────────────────────────────────────────────────────
+
+class IncomeChatMessage(BaseModel):
+    role: str = Field(..., pattern="^(user|assistant)$")
+    content: str = Field(..., min_length=1, max_length=4000)
+
+
+class IncomeChatRequest(BaseModel):
+    profile: IncomeInsightsRequest
+    messages: list[IncomeChatMessage] = Field(..., min_length=1, max_length=40)
+    language: str = Field(default="en", max_length=5)
+
+
+class IncomeChatResponse(BaseModel):
+    reply: str
+    provider: str
+
+
 # ── AI Mentor ─────────────────────────────────────────────────────────────────
 
 class AIChatRequest(BaseModel):

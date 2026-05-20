@@ -108,5 +108,13 @@
   "incomeAnalysis.projectionGrowthDesc": "Жылына +{{pct}}% табыс, шығыстар тұрақты",
   "incomeAnalysis.projectionTargetDesc": "Жыл сайын табыстың 20%-ын жинау",
   "incomeAnalysis.projectionNote": "Мәндер {{currency}} валютасында. Инфляция есепке алынбаған. Тек иллюстрация үшін.",
-  "comparison.currencyConverted": "{{amount}} {{currency}} ≈ {{usd}} — салыстыру үшін USD-ге аударылды"
+  "comparison.currencyConverted": "{{amount}} {{currency}} ≈ {{usd}} — салыстыру үшін USD-ге аударылды",
+  "incomeAnalysis.chatTitle": "Қаржылық кеңесші",
+  "incomeAnalysis.chatSubtitle": "Жеке қаржы туралы сұраңыз — бюджет, жинақ, мансап, көшу.",
+  "incomeAnalysis.chatEmptyTitle": "Жеке қаржылық кеңесшіңіз",
+  "incomeAnalysis.chatEmpty": "Сұрақ қойыңыз немесе төмендегі ұсыныстардың бірін таңдаңыз.",
+  "incomeAnalysis.chatPlaceholder": "Қаржыңыз туралы сұраңыз...",
+  "incomeAnalysis.chatSend": "Жіберу",
+  "incomeAnalysis.chatError": "Бірдеңе дұрыс болмады. Қайталап көріңіз.",
+  "incomeAnalysis.chatDisclaimer": "Тек білім беру мақсатында. Қаржылық кеңес емес."
 }

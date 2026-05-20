@@ -21,7 +21,10 @@ from app.core.config import (
     OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL, OPENAI_TIMEOUT_SECONDS,
     CHART_EXPLAIN_PROVIDER,
 )
-from app.schemas import IncomeInsightsRequest, IncomeInsightsResponse, PotentialCountry
+from app.schemas import (
+    IncomeChatRequest, IncomeChatResponse,
+    IncomeInsightsRequest, IncomeInsightsResponse, PotentialCountry,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -300,6 +303,177 @@ def _call_groq(prompt: str) -> str:
 
 
 import sys as _sys
+
+# ── Income Chat ────────────────────────────────────────────────────────────────
+
+_LANG_MAP = {"ru": "Russian", "kz": "Kazakh", "en": "English"}
+
+_CHAT_SYSTEM_TEMPLATE = """\
+You are a friendly personal finance advisor assistant.
+The user has provided their financial profile. Use it as context for every answer.
+
+Financial Profile:
+- Age: {age}
+- Country: {country}
+- Profession: {profession}
+- Experience: {experience_years} years
+- Monthly income: {monthly_income} {currency}
+- Monthly expenses: {monthly_expenses} {currency}
+- Monthly savings: {savings:.0f} {currency} ({savings_rate:.0f}% savings rate)
+- Income growth target: {yearly_growth_percent}% per year
+
+Rules:
+- Be concise (2–4 sentences unless a deeper explanation is clearly needed).
+- Reference the user's specific numbers when relevant.
+- Frame advice as educational guidance, not guarantees.
+- Never promise specific returns or income amounts.
+- Always respond in {language}.
+"""
+
+_CHAT_FALLBACK_RESPONSES = {
+    "en": (
+        "I'm currently running in offline mode. Based on your profile, I can see your "
+        "monthly savings of {savings:.0f} {currency} ({savings_rate:.0f}% rate). "
+        "For AI-powered advice, please ensure an API key (OpenAI, Gemini, or Groq) "
+        "is configured in the backend."
+    ),
+    "ru": (
+        "Сейчас я работаю в офлайн-режиме. По вашему профилю: ежемесячные сбережения "
+        "{savings:.0f} {currency} (норма {savings_rate:.0f}%). "
+        "Для ИИ-советов настройте API-ключ (OpenAI, Gemini или Groq) на бэкенде."
+    ),
+    "kz": (
+        "Қазір офлайн режимінде жұмыс істеп жатырмын. Профиліңіз бойынша: ай сайынғы "
+        "жинақ {savings:.0f} {currency} (норма {savings_rate:.0f}%). "
+        "ЖИ кеңестері үшін бэкендте API кілтін (OpenAI, Gemini немесе Groq) баптаңыз."
+    ),
+}
+
+
+def _chat_system_prompt(req: IncomeChatRequest) -> str:
+    p = req.profile
+    savings = p.monthly_income - p.monthly_expenses
+    savings_rate = (savings / p.monthly_income * 100) if p.monthly_income > 0 else 0
+    language = _LANG_MAP.get(req.language, "English")
+    return _CHAT_SYSTEM_TEMPLATE.format(
+        age=p.age,
+        country=p.country,
+        profession=p.profession,
+        experience_years=p.experience_years,
+        monthly_income=p.monthly_income,
+        monthly_expenses=p.monthly_expenses,
+        currency=p.currency,
+        savings=savings,
+        savings_rate=savings_rate,
+        yearly_growth_percent=p.yearly_growth_percent,
+        language=language,
+    )
+
+
+def _call_openai_chat(system: str, messages: list[dict]) -> str:
+    with httpx.Client(timeout=OPENAI_TIMEOUT_SECONDS) as client:
+        resp = client.post(
+            f"{OPENAI_BASE_URL.rstrip('/')}/chat/completions",
+            headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
+            json={
+                "model": OPENAI_MODEL,
+                "temperature": 0.55,
+                "max_tokens": 600,
+                "messages": [{"role": "system", "content": system}] + messages,
+            },
+        )
+        resp.raise_for_status()
+    choices = resp.json().get("choices") or []
+    if not choices:
+        raise RuntimeError("OpenAI returned no choices")
+    content = (choices[0].get("message") or {}).get("content", "").strip()
+    if not content:
+        raise RuntimeError("OpenAI returned empty content")
+    return content
+
+
+def _call_gemini_chat(system: str, messages: list[dict]) -> str:
+    # Gemini doesn't have a system role — prepend to first user message
+    combined = [{"role": "user", "parts": [{"text": f"{system}\n\n{messages[0]['content']}"}]}]
+    for m in messages[1:]:
+        role = "model" if m["role"] == "assistant" else "user"
+        combined.append({"role": role, "parts": [{"text": m["content"]}]})
+    with httpx.Client(timeout=GEMINI_TIMEOUT_SECONDS) as client:
+        resp = client.post(
+            f"{GEMINI_BASE_URL.rstrip('/')}/models/{GEMINI_MODEL}:generateContent",
+            headers={"x-goog-api-key": GEMINI_API_KEY, "Content-Type": "application/json"},
+            json={
+                "contents": combined,
+                "generationConfig": {"temperature": 0.55, "maxOutputTokens": 600},
+            },
+        )
+        resp.raise_for_status()
+    candidates = resp.json().get("candidates") or []
+    if not candidates:
+        raise RuntimeError("Gemini returned no candidates")
+    parts = ((candidates[0].get("content") or {}).get("parts")) or []
+    content = "\n".join(p.get("text", "").strip() for p in parts if isinstance(p, dict)).strip()
+    if not content:
+        raise RuntimeError("Gemini returned empty content")
+    return content
+
+
+def _call_groq_chat(system: str, messages: list[dict]) -> str:
+    with httpx.Client(timeout=GROQ_TIMEOUT_SECONDS) as client:
+        resp = client.post(
+            f"{GROQ_BASE_URL.rstrip('/')}/chat/completions",
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
+            json={
+                "model": GROQ_MODEL,
+                "temperature": 0.55,
+                "max_tokens": 600,
+                "messages": [{"role": "system", "content": system}] + messages,
+            },
+        )
+        resp.raise_for_status()
+    choices = resp.json().get("choices") or []
+    if not choices:
+        raise RuntimeError("Groq returned no choices")
+    content = (choices[0].get("message") or {}).get("content", "").strip()
+    if not content:
+        raise RuntimeError("Groq returned empty content")
+    return content
+
+
+_CHAT_CALL_FNS = {
+    "openai": _call_openai_chat,
+    "gemini": _call_gemini_chat,
+    "groq":   _call_groq_chat,
+}
+
+
+def generate_income_chat(req: IncomeChatRequest) -> IncomeChatResponse:
+    provider = _resolve_provider()
+    p = req.profile
+    savings = p.monthly_income - p.monthly_expenses
+    savings_rate = (savings / p.monthly_income * 100) if p.monthly_income > 0 else 0
+
+    if provider == "fallback" or provider not in _CHAT_CALL_FNS:
+        tmpl = _CHAT_FALLBACK_RESPONSES.get(req.language, _CHAT_FALLBACK_RESPONSES["en"])
+        reply = tmpl.format(savings=savings, savings_rate=savings_rate, currency=p.currency)
+        return IncomeChatResponse(reply=reply, provider="fallback")
+
+    if not _KEY_FNS.get(provider, lambda: None)():
+        tmpl = _CHAT_FALLBACK_RESPONSES.get(req.language, _CHAT_FALLBACK_RESPONSES["en"])
+        reply = tmpl.format(savings=savings, savings_rate=savings_rate, currency=p.currency)
+        return IncomeChatResponse(reply=reply, provider="fallback")
+
+    system = _chat_system_prompt(req)
+    messages = [{"role": m.role, "content": m.content} for m in req.messages]
+    try:
+        reply = _CHAT_CALL_FNS[provider](system, messages)
+        return IncomeChatResponse(reply=reply, provider=provider)
+    except Exception as exc:
+        logger.warning("income_chat: %s call failed (%s), using fallback", provider, exc)
+        tmpl = _CHAT_FALLBACK_RESPONSES.get(req.language, _CHAT_FALLBACK_RESPONSES["en"])
+        reply = tmpl.format(savings=savings, savings_rate=savings_rate, currency=p.currency)
+        return IncomeChatResponse(reply=reply, provider="fallback")
+
 
 _KEY_FNS = {
     "openai": lambda: OPENAI_API_KEY,
