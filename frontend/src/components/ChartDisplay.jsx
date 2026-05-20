@@ -2,9 +2,8 @@
  * ChartDisplay — EVision chart renderer
  *
  * Props:
- *   datasets        {Array}   — [{country, data:[{year,value}], ...}] or lorenz shape
+ *   datasets        {Array}   — [{country, data:[{year,value}], ...}]
  *   chartType       {string}  — 'line' | 'bar' | 'scatter'  (parent-controlled default)
- *   viewMode        {string}  — 'timeSeries' | 'lorenz'
  *   appear          {boolean} — triggers chart-card-appear CSS animation
  *   indicatorLabel  {string}  — used as filename for CSV/PNG exports
  */
@@ -279,107 +278,6 @@ export default function ChartDisplay({ datasets, chartType, viewMode, appear, in
   ═══════════════════════════════════════════ */
   if (!datasets || datasets.length === 0) {
     return <p className="text-muted text-center mt-4 text-sm">{t("chart.selectFilters")}</p>;
-  }
-
-  /* ═══════════════════════════════════════════
-     LORENZ VIEW — minimal toolbar (PNG only)
-  ═══════════════════════════════════════════ */
-  if (viewMode === "lorenz") {
-    const equalitySet = {
-      label: t("chart.lineOfEquality"),
-      data: [{ x: 0, y: 0 }, { x: 1, y: 1 }],
-      borderColor: theme === "dark" ? "rgba(148,163,184,0.55)" : "rgba(71,85,105,0.5)",
-      backgroundColor: "transparent",
-      borderDash: [6, 4],
-      showLine: true,
-      pointRadius: 0,
-      tension: 0,
-      order: 0,
-      borderWidth: 1.5,
-    };
-
-    const lorenzData = {
-      datasets: [
-        equalitySet,
-        ...datasets.map((dset, i) => {
-          const pal = palette[i % palette.length];
-          return {
-            label: `${dset.country.toUpperCase()} (${dset.year ?? "n/a"})`,
-            data: dset.data,
-            borderColor: pal.border,
-            backgroundColor: pal.bg,
-            showLine: true,
-            fill: false,
-            tension: 0.3,
-            borderWidth: pal.width,
-            borderDash: pal.dash,
-            pointRadius: 0,
-            pointHoverRadius: 5,
-            pointHoverBackgroundColor: pal.border,
-          };
-        }),
-      ],
-    };
-
-    const lorenzOptions = {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: ANIMATION,
-      plugins: {
-        legend: {
-          position: "bottom",
-          labels: { color: axisColor, usePointStyle: true, pointStyleWidth: 10, padding: 16 },
-        },
-        tooltip: {
-          enabled: false,
-          external: buildExternalTooltip,
-          mode: "nearest",
-          intersect: false,
-          callbacks: {
-            label: (ctx) => {
-              const { x, y } = ctx.parsed;
-              return ` ${ctx.dataset.label} — ${(x * 100).toFixed(0)}% pop / ${(y * 100).toFixed(1)}% inc`;
-            },
-          },
-        },
-      },
-      interaction: { mode: "nearest", axis: "xy", intersect: false },
-      scales: {
-        x: {
-          type: "linear", min: 0, max: 1,
-          ticks: { callback: (v) => `${(v * 100).toFixed(0)}%`, color: axisColor, maxTicksLimit: 6 },
-          title: { display: true, text: t("chart.populationShare"), color: axisColor, font: { size: 11 } },
-          grid: { color: gridColor, borderDash: [4, 4] },
-          border: { color: "transparent" },
-        },
-        y: {
-          type: "linear", min: 0, max: 1,
-          ticks: { callback: (v) => `${(v * 100).toFixed(0)}%`, color: axisColor, maxTicksLimit: 6 },
-          title: { display: true, text: t("chart.incomeShare"), color: axisColor, font: { size: 11 } },
-          grid: { color: gridColor, borderDash: [4, 4] },
-          border: { color: "transparent" },
-        },
-      },
-    };
-
-    return (
-      <div className="space-y-2">
-        <div className="flex justify-end">
-          <button className="tab" type="button" onClick={handlePng} aria-label={t("chart.downloadPng")}>
-            PNG
-          </button>
-        </div>
-        <div className={appear ? "chart-card chart-card-appear" : "chart-card"} style={{ position: "relative" }}>
-          <Chart
-            type="scatter"
-            ref={chartRef}
-            data={lorenzData}
-            options={lorenzOptions}
-            plugins={[crosshairPlugin]}
-          />
-        </div>
-      </div>
-    );
   }
 
   /* ═══════════════════════════════════════════

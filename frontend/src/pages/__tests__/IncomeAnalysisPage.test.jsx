@@ -36,8 +36,6 @@ vi.mock("../../api/analyticsApi", () => ({
     disclaimer: "Educational purposes only.",
     provider: "fallback",
   }),
-  fetchGiniTrend: vi.fn(),
-  fetchGiniRanking: vi.fn(),
 }));
 
 import IncomeAnalysisPage from "../IncomeAnalysisPage";
