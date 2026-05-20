@@ -116,5 +116,15 @@
   "incomeAnalysis.chatPlaceholder": "Спросите о ваших финансах...",
   "incomeAnalysis.chatSend": "Отправить",
   "incomeAnalysis.chatError": "Что-то пошло не так. Попробуйте ещё раз.",
-  "incomeAnalysis.chatDisclaimer": "Только для образовательных целей. Не является финансовой консультацией."
+  "incomeAnalysis.chatDisclaimer": "Только для образовательных целей. Не является финансовой консультацией.",
+  "incomeAnalysis.careerStage": "Карьерный уровень",
+  "incomeAnalysis.stageJunior": "Джуниор",
+  "incomeAnalysis.stageMid": "Мидл",
+  "incomeAnalysis.stageSenior": "Сениор",
+  "incomeAnalysis.stageExpert": "Эксперт / Лид",
+  "incomeAnalysis.yearsExperience": "{{n}} лет опыта",
+  "incomeAnalysis.retirementTitle": "До пенсии",
+  "incomeAnalysis.retirementYears": "лет осталось",
+  "incomeAnalysis.retirementNote": "Стандартный пенсионный возраст — 65 лет",
+  "incomeAnalysis.retirementAge": "Пенсионный возраст достигнут"
 }

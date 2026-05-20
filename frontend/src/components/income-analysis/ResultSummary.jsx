@@ -1,5 +1,6 @@
 import React from "react";
 import { useI18n } from "../../context/I18nContext";
+import { getCareerStage, yearsToRetirement } from "../../utils/incomeAnalysis";
 
 function statusClass(status) {
   if (status === "deficit") return "text-rose-400";
@@ -25,7 +26,7 @@ function StatCard({ label, value, sub, highlight }) {
 
 export default function ResultSummary({ data }) {
   const { t } = useI18n();
-  const { netSavings, savingsRate, projectedIncome, financialStatus, currency } = data;
+  const { netSavings, savingsRate, projectedIncome, financialStatus, currency, age, experienceYears } = data;
 
   const fmt = (n) =>
     new Intl.NumberFormat(undefined, {
@@ -40,9 +41,14 @@ export default function ResultSummary({ data }) {
     strong:  t("incomeAnalysis.statusStrong"),
   }[financialStatus] || financialStatus;
 
+  const careerStage    = experienceYears != null ? getCareerStage(experienceYears) : null;
+  const retirementYrs  = age != null ? yearsToRetirement(age) : null;
+
   return (
     <div className="space-y-4">
       <h3 className="panel-title">{t("incomeAnalysis.resultsTitle")}</h3>
+
+      {/* Row 1 — financial KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label={t("incomeAnalysis.netSavings")}
@@ -70,6 +76,35 @@ export default function ResultSummary({ data }) {
           </p>
         </div>
       </div>
+
+      {/* Row 2 — career profile (only when age/experience provided) */}
+      {(careerStage || retirementYrs != null) && (
+        <div className="grid grid-cols-2 gap-4">
+          {careerStage && (
+            <div className="panel space-y-2">
+              <p className="label">{t("incomeAnalysis.careerStage")}</p>
+              <p className={`text-xl font-semibold tracking-tight ${careerStage.color}`}>
+                {t(careerStage.labelKey)}
+              </p>
+              <p className="text-xs text-muted">
+                {t("incomeAnalysis.yearsExperience", { n: experienceYears })}
+              </p>
+            </div>
+          )}
+          {retirementYrs != null && (
+            <div className="panel space-y-2">
+              <p className="label">{t("incomeAnalysis.retirementTitle")}</p>
+              <p className="text-xl font-semibold tracking-tight">
+                {retirementYrs === 0
+                  ? <span className="text-emerald-400">{t("incomeAnalysis.retirementAge")}</span>
+                  : <span>{retirementYrs} <span className="text-base font-normal text-muted">{t("incomeAnalysis.retirementYears")}</span></span>
+                }
+              </p>
+              <p className="text-xs text-muted">{t("incomeAnalysis.retirementNote")}</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

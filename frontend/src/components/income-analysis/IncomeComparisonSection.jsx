@@ -22,6 +22,8 @@ import {
   calcSalaryGapPercent,
   calcCumulativeInflation,
   calcRealIncome,
+  calcPPPSalary,
+  estimatePercentile,
   rankCountriesByRealEarnings,
 } from "../../utils/incomeAnalysis";
 
@@ -90,6 +92,7 @@ export default function IncomeComparisonSection({ userSalary, userCountry, userC
   const [comparisonCountries, setComparisonCountries] = useState(DEFAULT_COMPARISON);
   const [period, setPeriod] = useState("3Y");
   const [adjustInflation, setAdjustInflation] = useState(true);
+  const [adjustPPP, setAdjustPPP] = useState(false);
   const [showMyLine, setShowMyLine] = useState(true);
 
   const years = PERIOD_YEARS[period];
@@ -98,17 +101,32 @@ export default function IncomeComparisonSection({ userSalary, userCountry, userC
   /* ── selected-country data ── */
   const selectedData = COUNTRY_INCOME_DATA[selectedCountry];
 
+  /* ── effective salary & avg after PPP ── */
+  const effectiveSalary = adjustPPP && selectedData?.pppIndex
+    ? calcPPPSalary(salary, selectedData.pppIndex)
+    : salary;
+
+  const effectiveAvg = (code) => {
+    const d = COUNTRY_INCOME_DATA[code];
+    if (!d) return 0;
+    return adjustPPP && d.pppIndex ? calcPPPSalary(d.avgMonthlyIncome, d.pppIndex) : d.avgMonthlyIncome;
+  };
+
   /* ── KPI calculations ── */
   const kpiData = useMemo(() => {
     if (!selectedData) return null;
     const cumInfl = calcCumulativeInflation(selectedData.yearlyInflation, years);
-    const gap = calcSalaryGap(salary, selectedData.avgMonthlyIncome);
-    const gapPct = calcSalaryGapPercent(salary, selectedData.avgMonthlyIncome);
-    const realIncome = calcRealIncome(salary > 0 ? salary : selectedData.avgMonthlyIncome, cumInfl);
+    const countryAvg = adjustPPP && selectedData.pppIndex
+      ? calcPPPSalary(selectedData.avgMonthlyIncome, selectedData.pppIndex)
+      : selectedData.avgMonthlyIncome;
+    const gap = calcSalaryGap(effectiveSalary, countryAvg);
+    const gapPct = calcSalaryGapPercent(effectiveSalary, countryAvg);
+    const realIncome = calcRealIncome(effectiveSalary > 0 ? effectiveSalary : countryAvg, cumInfl);
+    const percentile = salary > 0 ? estimatePercentile(salary, selectedData.avgMonthlyIncome) : null;
     const ranking = rankCountriesByRealEarnings(COUNTRY_INCOME_DATA, years);
     const bestCountry = ranking[0];
-    return { cumInfl, gap, gapPct, realIncome, bestCountry };
-  }, [selectedData, salary, years]);
+    return { cumInfl, gap, gapPct, realIncome, bestCountry, percentile };
+  }, [selectedData, salary, effectiveSalary, years, adjustPPP]);
 
   /* ── chart dataset ── */
   const chartData = useMemo(() => {
@@ -118,9 +136,7 @@ export default function IncomeComparisonSection({ userSalary, userCountry, userC
       .map((code) => COUNTRY_INCOME_DATA[code]?.name || code)
       .concat(showMyLine ? [t("comparison.yourSalary")] : []);
 
-    const nominalValues = comparisonCountries.map(
-      (code) => COUNTRY_INCOME_DATA[code]?.avgMonthlyIncome || 0
-    );
+    const nominalValues = comparisonCountries.map((code) => effectiveAvg(code));
 
     const datasets = [];
 
@@ -128,13 +144,14 @@ export default function IncomeComparisonSection({ userSalary, userCountry, userC
       const realValues = comparisonCountries.map((code) => {
         const d = COUNTRY_INCOME_DATA[code];
         if (!d) return 0;
+        const base = effectiveAvg(code);
         const cumInfl = calcCumulativeInflation(d.yearlyInflation, years);
-        return Math.round(calcRealIncome(d.avgMonthlyIncome, cumInfl));
+        return Math.round(calcRealIncome(base, cumInfl));
       });
 
       datasets.push({
         label: t("comparison.nominal"),
-        data: nominalValues.concat(showMyLine ? [salary] : []),
+        data: nominalValues.concat(showMyLine ? [effectiveSalary] : []),
         backgroundColor: comparisonCountries
           .map((_, i) => PALETTE_COLORS[i % PALETTE_COLORS.length].bg)
           .concat(showMyLine ? [MY_SALARY_COLOR.bg] : []),
@@ -148,7 +165,7 @@ export default function IncomeComparisonSection({ userSalary, userCountry, userC
       datasets.push({
         label: t("comparison.real"),
         data: realValues.concat(showMyLine ? [
-          Math.round(calcRealIncome(salary, calcCumulativeInflation(
+          Math.round(calcRealIncome(effectiveSalary, calcCumulativeInflation(
             selectedData?.yearlyInflation || {}, years
           )))
         ] : []),
@@ -165,7 +182,7 @@ export default function IncomeComparisonSection({ userSalary, userCountry, userC
     } else {
       datasets.push({
         label: t("comparison.nominal"),
-        data: nominalValues.concat(showMyLine ? [salary] : []),
+        data: nominalValues.concat(showMyLine ? [effectiveSalary] : []),
         backgroundColor: comparisonCountries
           .map((_, i) => PALETTE_COLORS[i % PALETTE_COLORS.length].bg)
           .concat(showMyLine ? [MY_SALARY_COLOR.bg] : []),
@@ -178,7 +195,7 @@ export default function IncomeComparisonSection({ userSalary, userCountry, userC
     }
 
     return { labels, datasets };
-  }, [comparisonCountries, showMyLine, adjustInflation, years, salary, selectedData, t]);
+  }, [comparisonCountries, showMyLine, adjustInflation, adjustPPP, years, salary, effectiveSalary, selectedData, t]);
 
   /* ── chart options ── */
   const chartOptions = useMemo(() => ({
@@ -253,7 +270,7 @@ export default function IncomeComparisonSection({ userSalary, userCountry, userC
 
       {/* ── KPI Cards ── */}
       {kpiData && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           <KpiCard
             label={t("comparison.yourSalaryVsAvg")}
             value={fmt(Math.abs(kpiData.gap))}
@@ -287,6 +304,14 @@ export default function IncomeComparisonSection({ userSalary, userCountry, userC
             sub={`${fmt(Math.round(kpiData.bestCountry.realIncome))} ${t("comparison.real").toLowerCase()}`}
             highlight="text-[var(--accent)]"
           />
+          {kpiData.percentile != null && (
+            <KpiCard
+              label={t("comparison.percentile")}
+              value={`${t("comparison.percentileTop")} ${100 - kpiData.percentile}%`}
+              sub={t("comparison.percentileOf", { country: selectedData?.name || "" })}
+              highlight={kpiData.percentile >= 70 ? "text-emerald-400" : kpiData.percentile >= 40 ? "text-amber-400" : "text-rose-400"}
+            />
+          )}
         </div>
       )}
 
@@ -349,6 +374,29 @@ export default function IncomeComparisonSection({ userSalary, userCountry, userC
               />
             </span>
             <span className="text-xs text-muted">{t("comparison.adjustInflation")}</span>
+          </label>
+
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              className="sr-only"
+              checked={adjustPPP}
+              onChange={(e) => setAdjustPPP(e.target.checked)}
+            />
+            <span
+              className={`w-9 h-5 rounded-full transition-colors duration-200 flex-shrink-0 ${
+                adjustPPP
+                  ? "bg-[var(--accent)]"
+                  : "bg-[var(--panel-border)]"
+              }`}
+              style={{ padding: "2px" }}
+            >
+              <span
+                className="w-4 h-4 rounded-full bg-white block transition-transform duration-200"
+                style={{ transform: adjustPPP ? "translateX(16px)" : "translateX(0)" }}
+              />
+            </span>
+            <span className="text-xs text-muted">{t("comparison.pppAdjusted")}</span>
           </label>
 
           <label className="flex items-center gap-2 cursor-pointer select-none">

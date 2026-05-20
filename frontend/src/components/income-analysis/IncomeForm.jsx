@@ -126,27 +126,44 @@ function validate(fields, t) {
   return errors;
 }
 
+const LS_KEY = "evision_income_form";
+
+const DEFAULT_FIELDS = {
+  age: "",
+  country: "",
+  profession: "",
+  experienceYears: "",
+  monthlyIncome: "",
+  monthlyExpenses: "",
+  growthPct: "0",
+  currency: "USD",
+};
+
+function loadSaved() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    return raw ? { ...DEFAULT_FIELDS, ...JSON.parse(raw) } : DEFAULT_FIELDS;
+  } catch {
+    return DEFAULT_FIELDS;
+  }
+}
+
 export default function IncomeForm({ onSubmit, countries = [] }) {
   const { t } = useI18n();
   const professionId = "ia-profession-list";
 
-  const [fields, setFields] = useState({
-    age: "",
-    country: "",
-    profession: "",
-    experienceYears: "",
-    monthlyIncome: "",
-    monthlyExpenses: "",
-    growthPct: "0",
-    currency: "USD",
-  });
+  const [fields, setFields] = useState(loadSaved);
   const [errors, setErrors] = useState({});
 
   const countryNames = countries.map((c) => c.name);
 
   function handleChange(e) {
     const { name, value } = e.target;
-    setFields((prev) => ({ ...prev, [name]: value }));
+    setFields((prev) => {
+      const next = { ...prev, [name]: value };
+      try { localStorage.setItem(LS_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: undefined }));
   }
 

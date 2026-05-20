@@ -36,7 +36,7 @@ export default function IncomeAnalysisPage() {
     const salaryUSD       = data.monthlyIncome * (USD_RATES[data.currency] ?? 1);
 
     setFormData({ ...data, salaryUSD });
-    setResults({ netSavings, savingsRate, projectedIncome, financialStatus, currency: data.currency });
+    setResults({ netSavings, savingsRate, projectedIncome, financialStatus, currency: data.currency, age: data.age, experienceYears: data.experienceYears });
   }
 
   return (

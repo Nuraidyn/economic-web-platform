@@ -116,5 +116,15 @@
   "incomeAnalysis.chatPlaceholder": "Қаржыңыз туралы сұраңыз...",
   "incomeAnalysis.chatSend": "Жіберу",
   "incomeAnalysis.chatError": "Бірдеңе дұрыс болмады. Қайталап көріңіз.",
-  "incomeAnalysis.chatDisclaimer": "Тек білім беру мақсатында. Қаржылық кеңес емес."
+  "incomeAnalysis.chatDisclaimer": "Тек білім беру мақсатында. Қаржылық кеңес емес.",
+  "incomeAnalysis.careerStage": "Мансап деңгейі",
+  "incomeAnalysis.stageJunior": "Джуниор",
+  "incomeAnalysis.stageMid": "Мид-деңгей",
+  "incomeAnalysis.stageSenior": "Сениор",
+  "incomeAnalysis.stageExpert": "Эксперт / Лид",
+  "incomeAnalysis.yearsExperience": "{{n}} жыл тәжірибе",
+  "incomeAnalysis.retirementTitle": "Зейнетке дейін",
+  "incomeAnalysis.retirementYears": "жыл қалды",
+  "incomeAnalysis.retirementNote": "Стандартты зейнет жасы — 65",
+  "incomeAnalysis.retirementAge": "Зейнет жасына жеттіңіз"
 }

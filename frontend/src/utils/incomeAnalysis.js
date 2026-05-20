@@ -179,3 +179,59 @@ export function rankCountriesByRealEarnings(countriesData, years) {
     })
     .sort((a, b) => b.realIncome - a.realIncome);
 }
+
+/**
+ * PPP-adjusted salary: converts nominalUSD to purchasing-power equivalent
+ * relative to the user's country price level.
+ * pppIndex: price level vs USA (100). Higher = more expensive.
+ * pppSalary = nominalUSD * (100 / pppIndex)
+ */
+export function calcPPPSalary(nominalUSD, pppIndex) {
+  if (!pppIndex || pppIndex <= 0) return nominalUSD;
+  return nominalUSD * (100 / pppIndex);
+}
+
+/**
+ * Estimate income percentile within a country using a lognormal approximation
+ * (coefficient of variation ≈ 0.8, typical for working-population income).
+ * Returns integer 1–99.
+ */
+export function estimatePercentile(salaryUSD, countryAvgUSD) {
+  if (!countryAvgUSD || countryAvgUSD <= 0 || salaryUSD <= 0) return null;
+  const r = salaryUSD / countryAvgUSD;
+  if (r < 0.20) return  4;
+  if (r < 0.30) return  9;
+  if (r < 0.42) return 16;
+  if (r < 0.55) return 25;
+  if (r < 0.68) return 34;
+  if (r < 0.82) return 43;
+  if (r < 0.97) return 50;
+  if (r < 1.15) return 58;
+  if (r < 1.35) return 65;
+  if (r < 1.60) return 72;
+  if (r < 1.90) return 78;
+  if (r < 2.30) return 83;
+  if (r < 2.80) return 88;
+  if (r < 3.50) return 92;
+  if (r < 4.50) return 95;
+  return 97;
+}
+
+/**
+ * Career stage based on years of experience.
+ * Returns { stage, color, labelKey }
+ */
+export function getCareerStage(experienceYears) {
+  if (experienceYears <= 2)  return { stage: "junior",  labelKey: "incomeAnalysis.stageJunior",  color: "text-amber-400" };
+  if (experienceYears <= 6)  return { stage: "mid",     labelKey: "incomeAnalysis.stageMid",     color: "text-sky-400"   };
+  if (experienceYears <= 14) return { stage: "senior",  labelKey: "incomeAnalysis.stageSenior",  color: "text-emerald-400" };
+  return                            { stage: "expert",  labelKey: "incomeAnalysis.stageExpert",  color: "text-[var(--accent)]" };
+}
+
+/**
+ * Years remaining until typical retirement age (65).
+ * Returns 0 if already past retirement age.
+ */
+export function yearsToRetirement(age) {
+  return Math.max(65 - age, 0);
+}

@@ -116,5 +116,15 @@
   "incomeAnalysis.chatPlaceholder": "Ask about your finances...",
   "incomeAnalysis.chatSend": "Send",
   "incomeAnalysis.chatError": "Something went wrong. Please try again.",
-  "incomeAnalysis.chatDisclaimer": "For educational purposes only. Not financial advice."
+  "incomeAnalysis.chatDisclaimer": "For educational purposes only. Not financial advice.",
+  "incomeAnalysis.careerStage": "Career Stage",
+  "incomeAnalysis.stageJunior": "Junior",
+  "incomeAnalysis.stageMid": "Mid-level",
+  "incomeAnalysis.stageSenior": "Senior",
+  "incomeAnalysis.stageExpert": "Expert / Lead",
+  "incomeAnalysis.yearsExperience": "{{n}} years of experience",
+  "incomeAnalysis.retirementTitle": "Years to Retirement",
+  "incomeAnalysis.retirementYears": "years left",
+  "incomeAnalysis.retirementNote": "Based on standard retirement age of 65",
+  "incomeAnalysis.retirementAge": "Retirement age reached"
 }
