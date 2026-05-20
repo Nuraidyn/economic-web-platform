@@ -92,5 +92,21 @@
   "incomeAnalysis.poweredBy": "Работает на",
   "incomeAnalysis.errorFetch": "Не удалось сгенерировать инсайты. Попробуйте ещё раз.",
   "incomeAnalysis.errorAuth": "Войдите в аккаунт и примите пользовательское соглашение для доступа к ИИ-инсайтам.",
-  "incomeAnalysis.retry": "Повторить"
+  "incomeAnalysis.retry": "Повторить",
+  "incomeAnalysis.searchCountry": "Поиск страны...",
+  "incomeAnalysis.statusDeficitDesc": "Расходы превышают доходы",
+  "incomeAnalysis.statusStableDesc": "Норма сбережений < 20%",
+  "incomeAnalysis.statusStrongDesc": "Норма сбережений ≥ 20%",
+  "incomeAnalysis.projectionTitle": "Прогноз сбережений",
+  "incomeAnalysis.projectionSubtitle": "10-летний прогноз на основе текущего профиля. Расходы фиксированы, доход растёт с указанной скоростью.",
+  "incomeAnalysis.projectionNow": "Сейчас",
+  "incomeAnalysis.projectionYear": "Год",
+  "incomeAnalysis.projectionCurrent": "Без роста (базовый)",
+  "incomeAnalysis.projectionWithGrowth": "С ростом {{pct}}% в год",
+  "incomeAnalysis.projectionTarget": "При норме 20%",
+  "incomeAnalysis.projectionCurrentDesc": "Фиксированный доход, без роста",
+  "incomeAnalysis.projectionGrowthDesc": "+{{pct}}% доходов в год, расходы фиксированы",
+  "incomeAnalysis.projectionTargetDesc": "Сбережение 20% дохода каждый год",
+  "incomeAnalysis.projectionNote": "Значения в {{currency}}. Инфляция не учитывается. Только для иллюстрации.",
+  "comparison.currencyConverted": "{{amount}} {{currency}} ≈ {{usd}} — конвертировано в USD для сравнения"
 }

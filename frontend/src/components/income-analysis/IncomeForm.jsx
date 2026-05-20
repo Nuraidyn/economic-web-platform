@@ -1,7 +1,114 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useI18n } from "../../context/I18nContext";
 
 const CURRENCIES = ["USD", "EUR", "KZT", "RUB", "GBP", "CNY", "JPY", "AUD", "CAD", "CHF", "SGD", "AED", "TRY", "BRL", "INR"];
+
+const PROFESSIONS = [
+  "Software Engineer", "Frontend Developer", "Backend Developer", "Full Stack Developer",
+  "Mobile Developer", "DevOps Engineer", "Cloud Architect", "Cybersecurity Analyst",
+  "Data Scientist", "Data Analyst", "Data Engineer", "Machine Learning Engineer", "AI Researcher",
+  "Product Manager", "Project Manager", "Scrum Master", "Business Analyst",
+  "UX Designer", "UI Designer", "Graphic Designer", "Web Designer",
+  "Doctor", "Surgeon", "Dentist", "Nurse", "Pharmacist", "Psychologist", "Therapist",
+  "Lawyer", "Attorney", "Legal Advisor", "Judge",
+  "Teacher", "Professor", "Tutor", "Academic Researcher",
+  "Accountant", "Auditor", "Financial Analyst", "Investment Banker", "Portfolio Manager",
+  "Marketing Manager", "Digital Marketer", "SEO Specialist", "Content Creator",
+  "Sales Manager", "Sales Representative", "Account Manager",
+  "HR Manager", "Recruiter", "Talent Acquisition Specialist",
+  "Civil Engineer", "Mechanical Engineer", "Electrical Engineer", "Chemical Engineer", "Structural Engineer",
+  "Architect", "Interior Designer", "Urban Planner",
+  "Journalist", "Writer", "Editor", "Translator",
+  "Economist", "Consultant", "Strategy Analyst",
+  "Entrepreneur", "Business Owner", "Startup Founder",
+  "Physicist", "Chemist", "Biologist", "Geologist",
+  "Operations Manager", "Supply Chain Manager", "Logistics Coordinator",
+  "Social Worker", "NGO Specialist",
+  "Chef", "Restaurant Manager",
+  "Pilot", "Air Traffic Controller",
+  "Police Officer", "Military Officer",
+  "Бухгалтер", "Программист", "Врач", "Учитель", "Юрист", "Инженер", "Менеджер",
+  "Аналитик", "Дизайнер", "Маркетолог", "Архитектор", "Экономист",
+];
+
+/* Searchable country combobox */
+function CountrySearch({ id, name, options, value, onChange, placeholder, error }) {
+  const [query, setQuery] = useState(value || "");
+  const [open, setOpen] = useState(false);
+  const [filtered, setFiltered] = useState([]);
+  const containerRef = useRef(null);
+
+  /* sync external value reset (e.g. form reset) */
+  useEffect(() => {
+    if (!value) setQuery("");
+  }, [value]);
+
+  function handleInput(e) {
+    const q = e.target.value;
+    setQuery(q);
+    if (q.length >= 1) {
+      const lower = q.toLowerCase();
+      setFiltered(options.filter((o) => o.toLowerCase().includes(lower)).slice(0, 8));
+      setOpen(true);
+    } else {
+      setFiltered([]);
+      setOpen(false);
+      onChange({ target: { name, value: "" } });
+    }
+  }
+
+  function handleSelect(opt) {
+    setQuery(opt);
+    setOpen(false);
+    onChange({ target: { name, value: opt } });
+  }
+
+  function handleBlur() {
+    /* slight delay so click on option registers first */
+    setTimeout(() => setOpen(false), 150);
+    /* if typed value doesn't match any option, clear */
+    if (!options.includes(query)) {
+      setQuery("");
+      onChange({ target: { name, value: "" } });
+    }
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <input
+        id={id}
+        type="text"
+        className={`input mt-1 w-full${error ? " border-rose-400" : ""}`}
+        value={query}
+        onChange={handleInput}
+        onBlur={handleBlur}
+        onFocus={() => query.length >= 1 && filtered.length > 0 && setOpen(true)}
+        placeholder={placeholder}
+        autoComplete="off"
+        aria-autocomplete="list"
+        aria-expanded={open}
+      />
+      {open && filtered.length > 0 && (
+        <div
+          className="absolute z-50 w-full mt-1 rounded-lg border border-[var(--panel-border-strong)] bg-[var(--modal-surface)] shadow-xl max-h-52 overflow-y-auto"
+          role="listbox"
+        >
+          {filtered.map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              role="option"
+              className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--surface)] transition-colors"
+              onMouseDown={() => handleSelect(opt)}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function validate(fields, t) {
   const errors = {};
@@ -21,6 +128,7 @@ function validate(fields, t) {
 
 export default function IncomeForm({ onSubmit, countries = [] }) {
   const { t } = useI18n();
+  const professionId = "ia-profession-list";
 
   const [fields, setFields] = useState({
     age: "",
@@ -33,6 +141,8 @@ export default function IncomeForm({ onSubmit, countries = [] }) {
     currency: "USD",
   });
   const [errors, setErrors] = useState({});
+
+  const countryNames = countries.map((c) => c.name);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -78,48 +188,44 @@ export default function IncomeForm({ onSubmit, countries = [] }) {
             onChange={handleChange}
             placeholder="e.g. 28"
           />
-          {errors.age && (
-            <p className="text-xs text-rose-400 mt-1" role="alert">{errors.age}</p>
-          )}
+          {errors.age && <p className="text-xs text-rose-400 mt-1" role="alert">{errors.age}</p>}
         </div>
 
-        {/* Country */}
+        {/* Country — searchable */}
         <div>
           <label className="label" htmlFor="ia-country">{t("incomeAnalysis.country")}</label>
-          <select
+          <CountrySearch
             id="ia-country"
             name="country"
-            className="input mt-1"
+            options={countryNames}
             value={fields.country}
             onChange={handleChange}
-          >
-            <option value="">{t("incomeAnalysis.selectCountry")}</option>
-            {countries.map((c) => (
-              <option key={c.code} value={c.name}>{c.name}</option>
-            ))}
-          </select>
-          {errors.country && (
-            <p className="text-xs text-rose-400 mt-1" role="alert">{errors.country}</p>
-          )}
+            placeholder={t("incomeAnalysis.searchCountry")}
+            error={errors.country}
+          />
+          {errors.country && <p className="text-xs text-rose-400 mt-1" role="alert">{errors.country}</p>}
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        {/* Profession */}
+        {/* Profession — with datalist suggestions */}
         <div>
           <label className="label" htmlFor="ia-profession">{t("incomeAnalysis.profession")}</label>
           <input
             id="ia-profession"
             name="profession"
             type="text"
+            list={professionId}
             className="input mt-1"
             value={fields.profession}
             onChange={handleChange}
             placeholder={t("incomeAnalysis.professionPlaceholder")}
+            autoComplete="off"
           />
-          {errors.profession && (
-            <p className="text-xs text-rose-400 mt-1" role="alert">{errors.profession}</p>
-          )}
+          <datalist id={professionId}>
+            {PROFESSIONS.map((p) => <option key={p} value={p} />)}
+          </datalist>
+          {errors.profession && <p className="text-xs text-rose-400 mt-1" role="alert">{errors.profession}</p>}
         </div>
 
         {/* Experience */}
@@ -135,9 +241,7 @@ export default function IncomeForm({ onSubmit, countries = [] }) {
             onChange={handleChange}
             placeholder="e.g. 3"
           />
-          {errors.experienceYears && (
-            <p className="text-xs text-rose-400 mt-1" role="alert">{errors.experienceYears}</p>
-          )}
+          {errors.experienceYears && <p className="text-xs text-rose-400 mt-1" role="alert">{errors.experienceYears}</p>}
         </div>
       </div>
 
@@ -155,9 +259,7 @@ export default function IncomeForm({ onSubmit, countries = [] }) {
             onChange={handleChange}
             placeholder="e.g. 3000"
           />
-          {errors.monthlyIncome && (
-            <p className="text-xs text-rose-400 mt-1" role="alert">{errors.monthlyIncome}</p>
-          )}
+          {errors.monthlyIncome && <p className="text-xs text-rose-400 mt-1" role="alert">{errors.monthlyIncome}</p>}
         </div>
 
         {/* Monthly Expenses */}
@@ -173,9 +275,7 @@ export default function IncomeForm({ onSubmit, countries = [] }) {
             onChange={handleChange}
             placeholder="e.g. 2000"
           />
-          {errors.monthlyExpenses && (
-            <p className="text-xs text-rose-400 mt-1" role="alert">{errors.monthlyExpenses}</p>
-          )}
+          {errors.monthlyExpenses && <p className="text-xs text-rose-400 mt-1" role="alert">{errors.monthlyExpenses}</p>}
         </div>
       </div>
 
@@ -204,9 +304,7 @@ export default function IncomeForm({ onSubmit, countries = [] }) {
             value={fields.currency}
             onChange={handleChange}
           >
-            {CURRENCIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
+            {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
       </div>

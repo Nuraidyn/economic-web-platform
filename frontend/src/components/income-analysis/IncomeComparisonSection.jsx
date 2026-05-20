@@ -78,7 +78,7 @@ function KpiCard({ label, value, sub, highlight }) {
 }
 
 /* ── Main component ───────────────────────────────────────────────────────── */
-export default function IncomeComparisonSection({ userSalary, userCountry }) {
+export default function IncomeComparisonSection({ userSalary, userCountry, userCurrency, originalSalary }) {
   const { t } = useI18n();
   const { theme } = useTheme();
   const isDark = theme === "dark";
@@ -235,9 +235,20 @@ export default function IncomeComparisonSection({ userSalary, userCountry }) {
   return (
     <div className="panel-wide space-y-6">
       {/* Header */}
-      <div>
-        <span className="page-section-kicker">{t("comparison.title")}</span>
-        <p className="text-xs text-muted mt-1">{t("comparison.subtitle")}</p>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <span className="page-section-kicker">{t("comparison.title")}</span>
+          <p className="text-xs text-muted mt-1">{t("comparison.subtitle")}</p>
+        </div>
+        {userCurrency && userCurrency !== "USD" && originalSalary > 0 && (
+          <span className="text-xs text-faint italic self-end">
+            {t("comparison.currencyConverted", {
+              amount: new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(originalSalary),
+              currency: userCurrency,
+              usd: new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(userSalary),
+            })}
+          </span>
+        )}
       </div>
 
       {/* ── KPI Cards ── */}

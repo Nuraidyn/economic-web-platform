@@ -64,9 +64,9 @@ export default function ResultSummary({ data }) {
           <p className="label">{t("incomeAnalysis.financialStatus")}</p>
           <span className={statusBadgeClass(financialStatus)}>{statusLabel}</span>
           <p className={`text-xs ${statusClass(financialStatus)}`}>
-            {financialStatus === "deficit" && "Expenses exceed income"}
-            {financialStatus === "stable" && "Savings rate < 20%"}
-            {financialStatus === "strong" && "Savings rate ≥ 20%"}
+            {financialStatus === "deficit" && t("incomeAnalysis.statusDeficitDesc")}
+            {financialStatus === "stable"  && t("incomeAnalysis.statusStableDesc")}
+            {financialStatus === "strong"  && t("incomeAnalysis.statusStrongDesc")}
           </p>
         </div>
       </div>

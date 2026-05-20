@@ -13,12 +13,14 @@ import IncomeForm from "../components/income-analysis/IncomeForm";
 import ResultSummary from "../components/income-analysis/ResultSummary";
 import AIInsights from "../components/income-analysis/AIInsights";
 import IncomeComparisonSection from "../components/income-analysis/IncomeComparisonSection";
+import SavingsProjectionChart from "../components/income-analysis/SavingsProjectionChart";
 import {
   calcSavings,
   calcSavingsRate,
   calcProjectedIncome,
   calcFinancialStatus,
 } from "../utils/incomeAnalysis";
+import { USD_RATES } from "../data/countryIncomeData";
 
 export default function IncomeAnalysisPage() {
   const { t } = useI18n();
@@ -27,12 +29,13 @@ export default function IncomeAnalysisPage() {
   const [formData, setFormData] = useState(null);
 
   function handleSubmit(data) {
-    const netSavings     = calcSavings(data.monthlyIncome, data.monthlyExpenses);
-    const savingsRate    = calcSavingsRate(data.monthlyIncome, data.monthlyExpenses);
+    const netSavings      = calcSavings(data.monthlyIncome, data.monthlyExpenses);
+    const savingsRate     = calcSavingsRate(data.monthlyIncome, data.monthlyExpenses);
     const projectedIncome = calcProjectedIncome(data.monthlyIncome, data.growthPct, 1);
     const financialStatus = calcFinancialStatus(data.monthlyIncome, data.monthlyExpenses);
+    const salaryUSD       = data.monthlyIncome * (USD_RATES[data.currency] ?? 1);
 
-    setFormData(data);
+    setFormData({ ...data, salaryUSD });
     setResults({ netSavings, savingsRate, projectedIncome, financialStatus, currency: data.currency });
   }
 
@@ -125,7 +128,15 @@ export default function IncomeAnalysisPage() {
         </div>
       </section>
 
-      {/* ══ 3. AI INSIGHTS ═══════════════���═══════════════════════ */}
+      {/* ══ 3. SAVINGS PROJECTION ═══════════════════════════════ */}
+      {results && formData && (
+        <>
+          <div className="section-divider" aria-hidden="true" />
+          <SavingsProjectionChart formData={formData} />
+        </>
+      )}
+
+      {/* ══ 4. AI INSIGHTS ══════════════════════════════════════ */}
       {results && formData && (
         <>
           <div className="section-divider" aria-hidden="true" />
@@ -133,13 +144,15 @@ export default function IncomeAnalysisPage() {
         </>
       )}
 
-      {/* ══ 4. INCOME COMPARISON ═════════════════════════════════ */}
+      {/* ══ 5. INCOME COMPARISON ════════════════════════════════ */}
       {results && formData && (
         <>
           <div className="section-divider" aria-hidden="true" />
           <IncomeComparisonSection
-            userSalary={formData.monthlyIncome}
+            userSalary={formData.salaryUSD}
             userCountry={formData.country}
+            userCurrency={formData.currency}
+            originalSalary={formData.monthlyIncome}
           />
         </>
       )}

@@ -92,5 +92,21 @@
   "incomeAnalysis.poweredBy": "Powered by",
   "incomeAnalysis.errorFetch": "Failed to generate insights. Please try again.",
   "incomeAnalysis.errorAuth": "Sign in and accept the user agreement to use AI Insights.",
-  "incomeAnalysis.retry": "Retry"
+  "incomeAnalysis.retry": "Retry",
+  "incomeAnalysis.searchCountry": "Search country...",
+  "incomeAnalysis.statusDeficitDesc": "Expenses exceed income",
+  "incomeAnalysis.statusStableDesc": "Savings rate < 20%",
+  "incomeAnalysis.statusStrongDesc": "Savings rate ≥ 20%",
+  "incomeAnalysis.projectionTitle": "Savings Projection",
+  "incomeAnalysis.projectionSubtitle": "10-year forecast based on your current profile. Expenses are assumed fixed; income grows by your stated rate.",
+  "incomeAnalysis.projectionNow": "Now",
+  "incomeAnalysis.projectionYear": "Yr",
+  "incomeAnalysis.projectionCurrent": "No growth (baseline)",
+  "incomeAnalysis.projectionWithGrowth": "With {{pct}}% annual growth",
+  "incomeAnalysis.projectionTarget": "At 20% savings rate",
+  "incomeAnalysis.projectionCurrentDesc": "Fixed income, no growth",
+  "incomeAnalysis.projectionGrowthDesc": "+{{pct}}% income per year, fixed expenses",
+  "incomeAnalysis.projectionTargetDesc": "Saving 20% of income each year",
+  "incomeAnalysis.projectionNote": "Values in {{currency}}. Inflation not applied. For illustration only.",
+  "comparison.currencyConverted": "{{amount}} {{currency}} ≈ {{usd}} — converted to USD for comparison"
 }

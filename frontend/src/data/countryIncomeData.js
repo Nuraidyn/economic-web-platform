@@ -1,6 +1,25 @@
 // Mock data layer — replace with API calls when backend endpoint is available
 // Structure: { [countryCode]: { name, avgMonthlyIncome (USD), yearlyInflation: { [year]: pct }, currency } }
 
+// Approximate exchange rates to USD (1 unit of currency → USD)
+export const USD_RATES = {
+  USD: 1,
+  EUR: 1.08,
+  GBP: 1.27,
+  KZT: 0.00221,
+  RUB: 0.011,
+  CNY: 0.138,
+  JPY: 0.0065,
+  AUD: 0.65,
+  CAD: 0.73,
+  CHF: 1.12,
+  SGD: 0.74,
+  AED: 0.272,
+  TRY: 0.029,
+  BRL: 0.19,
+  INR: 0.012,
+};
+
 export const COUNTRY_INCOME_DATA = {
   US: { name: "United States", avgMonthlyIncome: 5800, currency: "USD", yearlyInflation: { 2020: 1.2, 2021: 4.7, 2022: 8.0, 2023: 4.1, 2024: 3.2 } },
   DE: { name: "Germany",       avgMonthlyIncome: 3900, currency: "EUR", yearlyInflation: { 2020: 0.5, 2021: 3.1, 2022: 7.9, 2023: 5.9, 2024: 2.5 } },

@@ -92,5 +92,21 @@
   "incomeAnalysis.poweredBy": "Негізгі провайдер",
   "incomeAnalysis.errorFetch": "Инсайттарды жасау мүмкін болмады. Қайталап көріңіз.",
   "incomeAnalysis.errorAuth": "ЖИ инсайттарын пайдалану үшін жүйеге кіріп, пайдаланушы келісімін қабылдаңыз.",
-  "incomeAnalysis.retry": "Қайталау"
+  "incomeAnalysis.retry": "Қайталау",
+  "incomeAnalysis.searchCountry": "Ел іздеу...",
+  "incomeAnalysis.statusDeficitDesc": "Шығыс табыстан асады",
+  "incomeAnalysis.statusStableDesc": "Жинақ нормасы < 20%",
+  "incomeAnalysis.statusStrongDesc": "Жинақ нормасы ≥ 20%",
+  "incomeAnalysis.projectionTitle": "Жинақ болжамы",
+  "incomeAnalysis.projectionSubtitle": "Ағымдағы профильге негізделген 10 жылдық болжам. Шығыстар тұрақты, табыс көрсетілген қарқынмен өседі.",
+  "incomeAnalysis.projectionNow": "Қазір",
+  "incomeAnalysis.projectionYear": "Жыл",
+  "incomeAnalysis.projectionCurrent": "Өсімсіз (базалық)",
+  "incomeAnalysis.projectionWithGrowth": "{{pct}}% жылдық өсіммен",
+  "incomeAnalysis.projectionTarget": "20% нормасында",
+  "incomeAnalysis.projectionCurrentDesc": "Тұрақты табыс, өсімсіз",
+  "incomeAnalysis.projectionGrowthDesc": "Жылына +{{pct}}% табыс, шығыстар тұрақты",
+  "incomeAnalysis.projectionTargetDesc": "Жыл сайын табыстың 20%-ын жинау",
+  "incomeAnalysis.projectionNote": "Мәндер {{currency}} валютасында. Инфляция есепке алынбаған. Тек иллюстрация үшін.",
+  "comparison.currencyConverted": "{{amount}} {{currency}} ≈ {{usd}} — салыстыру үшін USD-ге аударылды"
 }
