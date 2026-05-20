@@ -816,6 +816,10 @@ h4, h5, h6 {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ── Skeleton shimmer ── */
 @keyframes shimmer {
   from { background-position: -200% center; }

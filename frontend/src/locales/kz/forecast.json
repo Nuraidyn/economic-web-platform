@@ -54,5 +54,8 @@
   "forecast.dataRange": "Деректер ауқымы",
   "forecast.dataPoints": "деректер нүктесі",
   "forecast.modelComparisonTitle": "Модельдерді салыстыру",
-  "forecast.selectedModel": "таңдалды"
+  "forecast.selectedModel": "таңдалды",
+  "forecast.historyWindow": "Тарих",
+  "forecast.forecastFrom": "{{year}} жылдан бастап болжам",
+  "forecast.emptyState": "Ел мен индикаторды таңдаңыз, горизонтты орнатыңыз, «Генерациялау» батырмасын басыңыз."
 }

@@ -54,5 +54,8 @@
   "forecast.dataRange": "Диапазон данных",
   "forecast.dataPoints": "точек данных",
   "forecast.modelComparisonTitle": "Сравнение моделей",
-  "forecast.selectedModel": "выбрана"
+  "forecast.selectedModel": "выбрана",
+  "forecast.historyWindow": "История",
+  "forecast.forecastFrom": "Прогноз с {{year}} года",
+  "forecast.emptyState": "Выберите страну и индикатор, задайте горизонт и нажмите «Генерировать»."
 }

@@ -54,5 +54,8 @@
   "forecastPage.heroTitle": "Generate transparent baseline forecasts.",
   "forecastPage.heroSubtitle": "Forecasts include confidence bands and backtesting metrics (MAE/RMSE) for defensible interpretation.",
   "forecastPage.accessTitle": "Access",
-  "forecastPage.accessSubtitle": "Agreement acceptance is required to access forecasting endpoints."
+  "forecastPage.accessSubtitle": "Agreement acceptance is required to access forecasting endpoints.",
+  "forecast.historyWindow": "History",
+  "forecast.forecastFrom": "Forecast starts from {{year}}",
+  "forecast.emptyState": "Select a country and indicator, set the horizon, then click Generate to run the forecast."
 }
