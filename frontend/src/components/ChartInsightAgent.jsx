@@ -161,6 +161,7 @@ export default function ChartInsightAgent({
         </div>
         <Link
           to="/ai-mentor"
+          state={convId ? { convId } : undefined}
           className="tab text-[10px] px-2 py-1 whitespace-nowrap flex-shrink-0"
         >
           Open in AI Mentor →

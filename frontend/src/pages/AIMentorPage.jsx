@@ -1,4 +1,5 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 import {
   chat,
@@ -21,6 +22,9 @@ export default function AIMentorPage() {
   const { t, lang } = useI18n();
   const { user } = useContext(AuthContext);
   const { openAuthModal } = useUI();
+  const location = useLocation();
+  /* convId passed via state from ChartInsightAgent "Open in AI Mentor" link */
+  const incomingConvIdRef = useRef(location.state?.convId ?? null);
 
   const [conversations, setConversations] = useState([]);
   const [activeConvId, setActiveConvId] = useState(null);
@@ -51,10 +55,21 @@ export default function AIMentorPage() {
     if (!canUse) return;
     setConvLoading(true);
     listConversations()
-      .then((data) => setConversations(data))
+      .then((data) => {
+        setConversations(data);
+        const pending = incomingConvIdRef.current;
+        if (pending) {
+          incomingConvIdRef.current = null;
+          const found = data.find((c) => c.id === pending);
+          if (found) {
+            setActiveConvId(found.id);
+            loadMessages(found.id);
+          }
+        }
+      })
       .catch(() => {})
       .finally(() => setConvLoading(false));
-  }, [canUse]);
+  }, [canUse, loadMessages]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
